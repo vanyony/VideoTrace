@@ -1,0 +1,29 @@
+# Build and local dependencies
+.idea/
+.vscode/
+.DS_Store
+*.iml
+server/target/
+client/node_modules/
+client/dist/
+
+# Local secrets
+.env
+.env.*
+!.env.example
+
+# Local service data
+mysql/data/
+mysql/logs/
+redis/data/
+qdrant/data/
+minio/data/
+
+# All working documents stay local; third-party licenses are retained.
+*.md
+/docs/
+*.log
+
+# Python local runner artifacts
+__pycache__/
+*.pyc
