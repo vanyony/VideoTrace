@@ -21,6 +21,7 @@ minio/data/
 
 # All working documents stay local; third-party licenses are retained.
 *.md
+!README.md
 /docs/
 *.log
 

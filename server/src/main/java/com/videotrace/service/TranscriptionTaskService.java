@@ -1,152 +1,106 @@
 package com.videotrace.service;
 
+import com.videotrace.dto.AnalysisTaskMsg;
 import com.videotrace.dto.TaskStatus;
 import com.videotrace.dto.TaskStage;
 import com.videotrace.entity.MediaFile;
 import com.videotrace.mapper.MediaFileMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import java.time.Duration;
+import java.util.NoSuchElementException;
 
 @Service
 public class TranscriptionTaskService {
-
     private static final Logger log = LoggerFactory.getLogger(TranscriptionTaskService.class);
-    private static final Duration ACTIVE_TTL = Duration.ofHours(2);
-
     private final MediaFileMapper mediaFileMapper;
     private final VideoTranscriptionService videoTranscriptionService;
     private final MediaService mediaService;
     private final StringRedisTemplate redisTemplate;
     private final TaskEventService taskEventService;
+    private final AnalysisDeliveryService deliveries;
+    private final AnalysisExecutionService executions;
 
     public TranscriptionTaskService(MediaFileMapper mediaFileMapper,
-                                    VideoTranscriptionService videoTranscriptionService,
-                                    MediaService mediaService,
-                                    StringRedisTemplate redisTemplate,
-                                    TaskEventService taskEventService) {
+            VideoTranscriptionService videoTranscriptionService, MediaService mediaService,
+            StringRedisTemplate redisTemplate, TaskEventService taskEventService,
+            AnalysisDeliveryService deliveries, AnalysisExecutionService executions) {
         this.mediaFileMapper = mediaFileMapper;
         this.videoTranscriptionService = videoTranscriptionService;
         this.mediaService = mediaService;
         this.redisTemplate = redisTemplate;
         this.taskEventService = taskEventService;
+        this.deliveries = deliveries;
+        this.executions = executions;
     }
 
-    public boolean queue(Long mediaId) {
-        Boolean accepted = redisTemplate.opsForValue().setIfAbsent(activeKey(mediaId), "1", ACTIVE_TTL);
-        if (!Boolean.TRUE.equals(accepted)) return false;
-        setState(mediaId, TaskStatus.State.QUEUED, ACTIVE_TTL);
-        taskEventService.publishTranscription(mediaId,
-                TaskStatus.of(TaskStatus.State.QUEUED, "文字提取任务已排队"), TaskStage.QUEUED);
+    public boolean submit(MediaFile mediaFile) {
+        try {
+            deliveries.enqueue(mediaFile.getUserId(), new AnalysisTaskMsg(mediaFile.getId(),
+                    AnalysisTaskMsg.TRANSCRIBE, mediaFile.getContentHash(), AnalysisTaskMsg.TRANSCRIPTION_GOAL), null);
+        } catch (DuplicateKeyException e) {
+            return false;
+        }
+        // The durable task is accepted even if its progress notification cannot be sent.
+        notify(mediaFile.getId(), TaskStatus.of(TaskStatus.State.QUEUED, "文字提取任务已持久化"), TaskStage.QUEUED);
         return true;
     }
 
-    @Async("aiTaskExecutor")
+    /** Runs synchronously inside the durable worker's lease, never in a detached @Async task. */
     public void transcribe(Long mediaId) {
-        try {
-            MediaFile mediaFile = mediaFileMapper.selectById(mediaId);
-            if (mediaFile == null) return;
-            setState(mediaId, TaskStatus.State.PROCESSING, ACTIVE_TTL);
-            taskEventService.publishTranscription(mediaId,
-                    TaskStatus.of(TaskStatus.State.PROCESSING, "正在识别视频语音"), TaskStage.ASR);
-            String transcript = videoTranscriptionService.transcribe(
-                    mediaService.readableSource(mediaFile.getFilePath()));
+        TaskExecutionContext.check();
+        MediaFile mediaFile = mediaFileMapper.selectById(mediaId);
+        if (mediaFile == null) throw new NoSuchElementException("视频已删除");
+        notify(mediaId, TaskStatus.of(TaskStatus.State.PROCESSING, "正在识别视频语音"), TaskStage.ASR);
+        String transcript = videoTranscriptionService.transcribe(mediaService.readableSource(mediaFile.getFilePath()));
+        TaskExecutionContext.guarded(() -> {
             MediaFile update = new MediaFile();
             update.setId(mediaId);
             update.setTranscriptText(transcript);
-            // Analysis can finish while ASR is running. Update only the transcript so an older
-            // MediaFile snapshot cannot overwrite the newly saved AI result or other fields.
-            if (mediaFileMapper.updateById(update) == 0) return;
-            mediaService.invalidateUserList(mediaFile.getUserId());
-            setState(mediaId, TaskStatus.State.COMPLETED, Duration.ofDays(7));
-            taskEventService.publishTranscription(mediaId,
-                    TaskStatus.completed(transcript), TaskStage.COMPLETED);
-            log.info("transcription_completed mediaId={}", mediaId);
-        } catch (Exception e) {
-            setState(mediaId, TaskStatus.State.FAILED, Duration.ofHours(1));
-            taskEventService.publishTranscription(mediaId,
-                    TaskStatus.of(TaskStatus.State.FAILED, "文字提取失败，请稍后重试"), TaskStage.FAILED);
-            log.error("transcription_failed mediaId={}", mediaId, e);
-        } finally {
-            clearActive(mediaId);
-        }
+            // Update only the transcript; concurrent analysis and metadata must remain intact.
+            if (mediaFileMapper.updateById(update) != 1) throw new NoSuchElementException("视频已删除");
+        });
+        mediaService.invalidateUserList(mediaFile.getUserId());
     }
 
-    public void rejectQueued(Long mediaId) {
-        clearActive(mediaId);
-        setState(mediaId, TaskStatus.State.FAILED, Duration.ofMinutes(10));
-        taskEventService.publishTranscription(mediaId,
-                TaskStatus.of(TaskStatus.State.FAILED, "任务队列已满，请稍后重试"), TaskStage.DISPATCH_FAILED);
+    public void publishOutcome(Long mediaId, AnalysisExecutionService.Outcome outcome) {
+        if (outcome == AnalysisExecutionService.Outcome.IGNORED) return;
+        try {
+            MediaFile mediaFile = mediaFileMapper.selectById(mediaId);
+            if (mediaFile != null) notify(mediaId, status(mediaFile),
+                    outcome == AnalysisExecutionService.Outcome.SUCCEEDED ? TaskStage.COMPLETED
+                    : outcome == AnalysisExecutionService.Outcome.FAILED ? TaskStage.FAILED : TaskStage.RETRYING);
+        } catch (RuntimeException e) {
+            log.warn("transcription_outcome_notification_failed mediaId={}", mediaId, e);
+        }
     }
 
     public TaskStatus status(MediaFile mediaFile) {
-        boolean hasTranscript = mediaFile.getTranscriptText() != null && !mediaFile.getTranscriptText().isBlank();
-        String stateValue;
-        try {
-            stateValue = redisTemplate.opsForValue().get(stateKey(mediaFile.getId()));
-            if ((TaskStatus.State.QUEUED.name().equals(stateValue)
-                    || TaskStatus.State.PROCESSING.name().equals(stateValue))
-                    && Boolean.TRUE.equals(redisTemplate.hasKey(activeKey(mediaFile.getId())))) {
-                TaskStatus.State state = TaskStatus.State.valueOf(stateValue);
-                return TaskStatus.of(state, state == TaskStatus.State.QUEUED ? "文字提取任务已排队" : "正在提取文字");
-            }
-        } catch (RuntimeException e) {
-            // Runtime state is advisory when a durable transcript is already available.
-            if (!hasTranscript) throw e;
-            log.warn("transcription_state_read_failed_using_saved_text mediaId={}", mediaFile.getId(), e);
+        var task = executions.latestTranscription(mediaFile.getId());
+        if (task != null) {
+            return switch (task.state()) {
+                case "QUEUED" -> TaskStatus.of(TaskStatus.State.QUEUED, "文字提取已排队，等待执行或自动重试");
+                case "RUNNING" -> TaskStatus.of(TaskStatus.State.PROCESSING, "正在提取文字，执行中断后将自动恢复");
+                case "SUCCEEDED" -> TaskStatus.completed(mediaFile.getTranscriptText());
+                case "FAILED" -> TaskStatus.of(TaskStatus.State.FAILED, "文字提取失败，请重新提交");
+                default -> TaskStatus.of(TaskStatus.State.FAILED, "文字提取任务状态不可用");
+            };
+        }
+        // Legacy in-memory tasks cannot survive process restarts. Never trust their old active flag.
+        if (mediaFile.getTranscriptText() != null && !mediaFile.getTranscriptText().isBlank())
             return TaskStatus.completed(mediaFile.getTranscriptText());
-        }
-        if (hasTranscript) {
-            return TaskStatus.completed(mediaFile.getTranscriptText());
-        }
-        if (stateValue == null) {
-            boolean active = Boolean.TRUE.equals(redisTemplate.hasKey(activeKey(mediaFile.getId())));
-            return active
-                    ? TaskStatus.of(TaskStatus.State.PROCESSING, "正在提取文字")
-                    : TaskStatus.of(TaskStatus.State.NOT_STARTED, "尚未提交文字提取任务");
-        }
-        try {
-            return statusFor(TaskStatus.State.valueOf(stateValue), mediaFile);
-        } catch (IllegalArgumentException e) {
-            log.warn("invalid_transcription_state mediaId={} state={}", mediaFile.getId(), stateValue);
-            return TaskStatus.of(TaskStatus.State.NOT_STARTED, "任务状态不可用");
-        }
+        String legacy = redisTemplate.opsForValue().get("transcription:state:" + mediaFile.getId());
+        return legacy == null ? TaskStatus.of(TaskStatus.State.NOT_STARTED, "尚未提交文字提取任务")
+                : TaskStatus.of(TaskStatus.State.FAILED, "旧文字提取任务已中断，请重新提交");
     }
 
-    private TaskStatus statusFor(TaskStatus.State state, MediaFile mediaFile) {
-        return switch (state) {
-            case COMPLETED -> TaskStatus.completed(mediaFile.getTranscriptText());
-            case FAILED -> TaskStatus.of(state, "文字提取失败，请稍后重试");
-            case QUEUED, PROCESSING -> TaskStatus.of(TaskStatus.State.FAILED, "文字提取任务已中断，请重新提交");
-            case NOT_STARTED -> TaskStatus.of(state, "尚未提交文字提取任务");
-        };
-    }
-
-    private void setState(Long mediaId, TaskStatus.State state, Duration ttl) {
+    private void notify(Long mediaId, TaskStatus status, TaskStage stage) {
         try {
-            redisTemplate.opsForValue().set(stateKey(mediaId), state.name(), ttl);
+            taskEventService.publishTranscription(mediaId, status, stage);
         } catch (RuntimeException e) {
-            log.warn("transcription_state_write_failed mediaId={} state={}", mediaId, state, e);
+            log.warn("transcription_notification_failed mediaId={}", mediaId, e);
         }
-    }
-
-    private void clearActive(Long mediaId) {
-        try {
-            redisTemplate.delete(activeKey(mediaId));
-        } catch (RuntimeException e) {
-            log.warn("transcription_active_cleanup_failed mediaId={}", mediaId, e);
-        }
-    }
-
-    private String activeKey(Long mediaId) {
-        return "transcription:active:" + mediaId;
-    }
-
-    private String stateKey(Long mediaId) {
-        return "transcription:state:" + mediaId;
     }
 }

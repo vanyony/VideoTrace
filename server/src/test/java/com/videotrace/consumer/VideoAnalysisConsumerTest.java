@@ -28,6 +28,8 @@ class VideoAnalysisConsumerTest {
     private final RedissonClient redisson = mock(RedissonClient.class);
     private final ValueOperations<String, String> values = mock(ValueOperations.class);
     private final AnalysisDeliveryService deliveries = mock(AnalysisDeliveryService.class);
+    private final AnalysisExecutionService executions = mock(AnalysisExecutionService.class);
+    private final TranscriptionTaskService transcription = mock(TranscriptionTaskService.class);
     private VideoAnalysisConsumer consumer;
 
     @BeforeEach
@@ -39,7 +41,7 @@ class VideoAnalysisConsumerTest {
         when(values.increment(anyString())).thenReturn(1L);
         when(deliveries.observe(any())).thenAnswer(call -> call.getArgument(0));
         consumer = new VideoAnalysisConsumer(ai, redisson, redis, checkpoints, mq,
-                mock(FailedAnalysisTaskService.class), media, events, "dead-letter", deliveries, mock(AnalysisExecutionService.class));
+                mock(FailedAnalysisTaskService.class), media, events, "dead-letter", deliveries, executions, transcription);
     }
 
     @Test
@@ -70,6 +72,24 @@ class VideoAnalysisConsumerTest {
         verify(values).increment(AnalysisTaskKeys.attempts("media-7", digest));
         verify(contentLock).unlock();
         verify(lock).unlock();
+    }
+
+    @Test
+    void transcriptionUsesDurableWorkerAndDoesNotEnterAiAnalysis() {
+        AnalysisTaskMsg message = new AnalysisTaskMsg(7L, AnalysisTaskMsg.TRANSCRIBE, "hash", AnalysisTaskMsg.TRANSCRIPTION_GOAL);
+        message.setTaskId("00000000-0000-0000-0000-000000000007");
+        when(executions.execute(eq(message), any())).thenAnswer(c -> {
+            c.getArgument(1, Runnable.class).run();
+            return AnalysisExecutionService.Outcome.SUCCEEDED;
+        });
+        consumer.onMessage(message);
+        verify(transcription).transcribe(7L);
+        verify(transcription).publishOutcome(7L, AnalysisExecutionService.Outcome.SUCCEEDED);
+        verifyNoInteractions(ai);
+        // A duplicate delivery that loses the execution claim must not invoke ASR again.
+        when(executions.execute(eq(message), any())).thenReturn(AnalysisExecutionService.Outcome.IGNORED);
+        consumer.onMessage(message);
+        verify(transcription, times(1)).transcribe(7L);
     }
 
     @Test

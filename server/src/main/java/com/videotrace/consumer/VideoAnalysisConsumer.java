@@ -64,6 +64,7 @@ public class VideoAnalysisConsumer implements RocketMQListener<AnalysisTaskMsg>,
     private final String deadLetterTopic;
     private final com.videotrace.service.AnalysisExecutionService executions;
     private final com.videotrace.service.AnalysisDeliveryService deliveryService;
+    private final com.videotrace.service.TranscriptionTaskService transcriptionService;
 
     public VideoAnalysisConsumer(AiService aiService,
                                  RedissonClient redissonClient,
@@ -76,7 +77,8 @@ public class VideoAnalysisConsumer implements RocketMQListener<AnalysisTaskMsg>,
                                  @Value("${rocketmq.topic.video-analysis-dead:video-analysis-dead-topic}")
                                  String deadLetterTopic,
                                  com.videotrace.service.AnalysisDeliveryService deliveryService,
-                                 com.videotrace.service.AnalysisExecutionService executions) {
+                                 com.videotrace.service.AnalysisExecutionService executions,
+                                 com.videotrace.service.TranscriptionTaskService transcriptionService) {
         this.aiService = aiService;
         this.redissonClient = redissonClient;
         this.redisTemplate = redisTemplate;
@@ -88,6 +90,7 @@ public class VideoAnalysisConsumer implements RocketMQListener<AnalysisTaskMsg>,
         this.deadLetterTopic = deadLetterTopic;
         this.deliveryService = deliveryService;
         this.executions = executions;
+        this.transcriptionService = transcriptionService;
     }
 
     @Override
@@ -266,6 +269,12 @@ public class VideoAnalysisConsumer implements RocketMQListener<AnalysisTaskMsg>,
     }
 
     private void consumeDurable(AnalysisTaskMsg msg) {
+        if (msg.isTranscription()) {
+            var outcome = executions.execute(msg, () -> transcriptionService.transcribe(msg.getMediaId()));
+            recordDurableFailure(msg, outcome);
+            transcriptionService.publishOutcome(msg.getMediaId(), outcome);
+            return;
+        }
         AnalysisMode mode = AnalysisMode.fromNullable(msg.getMode());
         var outcome = executions.execute(msg, () -> {
             if (!mediaService.exists(msg.getMediaId())) throw new NoSuchElementException("视频已删除");
@@ -278,15 +287,7 @@ public class VideoAnalysisConsumer implements RocketMQListener<AnalysisTaskMsg>,
             if (!mediaService.exists(msg.getMediaId())) throw new NoSuchElementException("视频已删除");
             if (msg.isRevision()) checkpointService.completeStagedRevision(msg.getMediaId(), msg.getUserGoal(), mode);
         });
-        if (outcome == com.videotrace.service.AnalysisExecutionService.Outcome.FAILED) {
-            try {
-                var task = executions.snapshot(msg.getTaskId());
-                failedTaskService.record(msg, task == null ? 0 : task.attempts(),
-                    new IllegalStateException(task == null ? "AnalysisFailed" : task.lastError()));
-            } catch (RuntimeException e) {
-                log.warn("analysis_failed_ledger_write_failed taskId={}", msg.getTaskId());
-            }
-        }
+        recordDurableFailure(msg, outcome);
         // Business state is committed before notifications; notification failures never re-execute it.
         try {
             if (outcome == com.videotrace.service.AnalysisExecutionService.Outcome.SUCCEEDED) {
@@ -305,12 +306,24 @@ public class VideoAnalysisConsumer implements RocketMQListener<AnalysisTaskMsg>,
         }
     }
 
+    private void recordDurableFailure(AnalysisTaskMsg msg, com.videotrace.service.AnalysisExecutionService.Outcome outcome) {
+        if (outcome != com.videotrace.service.AnalysisExecutionService.Outcome.FAILED) return;
+        try {
+            var task = executions.snapshot(msg.getTaskId());
+            failedTaskService.record(msg, task == null ? 0 : task.attempts(),
+                    new IllegalStateException(task == null ? "TaskFailed" : task.lastError()));
+        } catch (RuntimeException e) {
+            log.warn("analysis_failed_ledger_write_failed taskId={}", msg.getTaskId());
+        }
+    }
+
     /** 结构性校验：返回拒绝原因，合法则返回 null。 */
     private String rejectionReason(AnalysisTaskMsg msg) {
         if (msg == null) return "消息体为空";
         if (msg.getMediaId() == null) return "缺少 mediaId";
         if (msg.getUserGoal() == null || msg.getUserGoal().isBlank()) return "缺少分析目标";
         if (!msg.hasSupportedAction()) return "不支持的 action=" + msg.getAction();
+        if (msg.isTranscription() && msg.getTaskId() == null) return "文字提取缺少持久任务身份";
         return null;
     }
 

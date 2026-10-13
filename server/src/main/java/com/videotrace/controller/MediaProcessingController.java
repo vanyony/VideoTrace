@@ -13,8 +13,6 @@ import com.videotrace.service.AuthService;
 import com.videotrace.service.MediaService;
 import com.videotrace.service.TaskEventService;
 import com.videotrace.service.TranscriptionTaskService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -36,8 +34,6 @@ import java.nio.file.Path;
 @RequestMapping("/analysis")
 public class MediaProcessingController {
 
-    private static final Logger log = LoggerFactory.getLogger(MediaProcessingController.class);
-
     private final AudioExportService audioExportService;
     private final MediaService mediaService;
     private final TranscriptionTaskService transcriptionTaskService;
@@ -57,17 +53,9 @@ public class MediaProcessingController {
     public ResponseEntity<Result<Void>> transcribe(
             @RequestParam Long id,
             @RequestAttribute(AuthService.REQUEST_USER_ID) Long userId) {
-        mediaService.requireOwnedMedia(id, userId);
-        if (!transcriptionTaskService.queue(id)) {
+        MediaFile mediaFile = mediaService.requireOwnedMedia(id, userId);
+        if (!transcriptionTaskService.submit(mediaFile)) {
             throw new BusinessException(ErrorCode.CONFLICT, "文字提取任务正在处理中");
-        }
-        try {
-            transcriptionTaskService.transcribe(id);
-        } catch (RuntimeException e) {
-            // 派发失败要回滚“已排队”标记，避免任务卡在处理中；这是真实的补偿逻辑，予以保留。
-            transcriptionTaskService.rejectQueued(id);
-            log.warn("transcription_dispatch_rejected mediaId={} userId={}", id, userId, e);
-            throw new BusinessException(ErrorCode.SERVICE_UNAVAILABLE, "任务队列已满，请稍后重试");
         }
         // 异步受理：202 Accepted，结果由 transcription-status / SSE 获取。
         return ResponseEntity.accepted().body(Result.ok());

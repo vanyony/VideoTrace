@@ -6,6 +6,8 @@ public class AnalysisTaskMsg implements Serializable {
 
     public static final String START_ANALYSIS = "START_ANALYSIS";
     public static final String REVISE_ANALYSIS = "REVISE_ANALYSIS";
+    public static final String TRANSCRIBE = "TRANSCRIBE";
+    public static final String TRANSCRIPTION_GOAL = "提取视频文字";
 
     private String taskId;
     private Long mediaId;
@@ -49,12 +51,15 @@ public class AnalysisTaskMsg implements Serializable {
         return REVISE_ANALYSIS.equals(action);
     }
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    public boolean isTranscription() { return TRANSCRIBE.equals(action); }
+
     public boolean hasSupportedAction() {
         return isSupportedAction(action);
     }
 
     /** 供失败台账等场景在没有消息实例时复用同一套 action 判定，避免两处规则漂移。 */
     public static boolean isSupportedAction(String action) {
-        return START_ANALYSIS.equals(action) || REVISE_ANALYSIS.equals(action);
+        return START_ANALYSIS.equals(action) || REVISE_ANALYSIS.equals(action) || TRANSCRIBE.equals(action);
     }
 }

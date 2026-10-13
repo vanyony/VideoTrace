@@ -46,6 +46,12 @@ class AnalysisDeliveryMapperMysqlTest {
                 statement.execute("CREATE TEMPORARY TABLE media_files(id BIGINT PRIMARY KEY)");
                 statement.execute("INSERT INTO media_files VALUES(7)");
             }
+            try (var resource=getClass().getResourceAsStream("/db/migration/V9__separate_transcription_tasks.sql")) {
+                assertNotNull(resource);
+                try (var statement=connection.createStatement()) {
+                    statement.execute(new String(resource.readAllBytes(),StandardCharsets.UTF_8));
+                }
+            }
             try (var resource=getClass().getResourceAsStream("/db/migration/V6__create_video_parse_stages.sql")) {
                 assertNotNull(resource);
                 String stageDdl=new String(resource.readAllBytes(),StandardCharsets.UTF_8)
@@ -159,6 +165,27 @@ class AnalysisDeliveryMapperMysqlTest {
             assertEquals(0,uploads.touch(expiredId));
             assertEquals(1,uploads.expire(expiredId));
             assertEquals("EXPIRED",uploads.find(expiredId).state());
+
+            // Transcription shares lease recovery, but cannot collide with an analysis of the same goal.
+            String transcriptId=UUID.randomUUID().toString();
+            String transcriptScope="transcription:7:"+digest;
+            assertEquals(1,execution.insertTranscription(transcriptId,1L,7L,digest,transcriptScope));
+            assertEquals(transcriptId,execution.latestTranscription(7L).taskId());
+            assertEquals(id,execution.latest(7L,digest).taskId());
+            assertThrows(org.apache.ibatis.exceptions.PersistenceException.class, () ->
+                    execution.insertTranscription(UUID.randomUUID().toString(),1L,7L,digest,transcriptScope));
+            assertEquals(1,execution.claim(transcriptId,"interrupted-worker",120));
+            try (var statement=connection.createStatement()) {
+                statement.executeUpdate("UPDATE analysis_executions SET lease_until=DATE_SUB(CURRENT_TIMESTAMP(3),INTERVAL 1 SECOND)"
+                        + " WHERE task_id='"+transcriptId+"'");
+            }
+            assertTrue(execution.expired().contains(transcriptId));
+            assertEquals(1,execution.recover(transcriptId));
+            assertEquals(1,execution.claim(transcriptId,"replacement-worker",120));
+            assertEquals(0,execution.finish(transcriptId,"interrupted-worker","SUCCEEDED",null));
+            assertEquals(1,execution.finish(transcriptId,"replacement-worker","SUCCEEDED",null));
+            assertEquals(0,execution.claim(transcriptId,"duplicate",120));
+            assertEquals(1,execution.insertTranscription(UUID.randomUUID().toString(),1L,7L,digest,transcriptScope));
 
             // Observation releases pending uniqueness, while both rows retain their audit history.
             assertEquals(1,mapper.insert(UUID.randomUUID().toString(),1L,7L,digest,"7:"+digest,"{}"));

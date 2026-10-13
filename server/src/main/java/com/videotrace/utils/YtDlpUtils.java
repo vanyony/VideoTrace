@@ -16,6 +16,9 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import com.videotrace.common.ErrorCode;
+import com.videotrace.exception.BusinessException;
+import com.videotrace.service.ExternalCallLimiter;
 
 @Component
 public class YtDlpUtils {
@@ -29,23 +32,78 @@ public class YtDlpUtils {
     private final String ffmpegDir;
     private final String cookiesFile;
     private final String cookiesFromBrowser;
+    private final String proxy;
+    private final ExternalCallLimiter limiter;
 
     public YtDlpUtils(@Value("${tool.ytdlp.path}") String ytDlpPath,
                       @Value("${tool.ffmpeg.dir}") String ffmpegDir,
                       @Value("${tool.ytdlp.cookies:}") String cookiesFile,
-                      @Value("${tool.ytdlp.cookies-from-browser:}") String cookiesFromBrowser) {
+                      @Value("${tool.ytdlp.cookies-from-browser:}") String cookiesFromBrowser,
+                      @Value("${tool.ytdlp.proxy:}") String proxy, ExternalCallLimiter limiter) {
         this.ytDlpPath = ytDlpPath;
         this.ffmpegDir = ffmpegDir;
         this.cookiesFile = cookiesFile;
         this.cookiesFromBrowser = cookiesFromBrowser;
+        this.proxy = proxy == null ? "" : proxy.trim();
+        if (!this.proxy.isEmpty()) {
+            URI uri = URI.create(this.proxy);
+            if (!"http".equalsIgnoreCase(uri.getScheme()) || uri.getHost() == null
+                    || uri.getPort() < 1 || uri.getPort() > 65535 || uri.getUserInfo() != null || uri.getRawQuery() != null
+                    || uri.getRawFragment() != null || (uri.getPath() != null && !uri.getPath().isEmpty()))
+                throw new IllegalArgumentException("下载出口必须配置为 http://host:port 代理");
+        }
+        this.limiter = limiter;
     }
 
     public File downloadVideo(String url) throws Exception {
+        if (proxy.isEmpty()) throw new BusinessException(ErrorCode.SERVICE_UNAVAILABLE,
+                "视频链接导入未启用，请配置受控下载代理或使用本地上传");
         validatePublicHttpUrl(url);
+        try (var permit = limiter.acquire("media")) {
+            return download(url);
+        }
+    }
+
+    private File download(String url) throws Exception {
         Path outputPath = Path.of(System.getProperty("java.io.tmpdir"), UUID.randomUUID() + ".mp4");
         Path logPath = Files.createTempFile("yt-dlp-", ".log");
+        Process process = null;
+        try {
+            process = new ProcessBuilder(downloadCommand(url, outputPath))
+                    .redirectErrorStream(true)
+                    .redirectOutput(logPath.toFile())
+                    .start();
+            if (!process.waitFor(30, TimeUnit.MINUTES)) {
+                throw new IllegalStateException("视频链接下载超时");
+            }
+            if (process.exitValue() != 0 || !Files.isRegularFile(outputPath)) {
+                String logs = Files.readString(logPath);
+                throw new IllegalStateException("yt-dlp 下载失败: " + recentLogs(logs));
+            }
+            log.info("url_video_downloaded host={} bytes={}", URI.create(url).getHost(), Files.size(outputPath));
+            return outputPath.toFile();
+        } catch (Exception e) {
+            if (process != null) {
+                process.descendants().forEach(ProcessHandle::destroyForcibly);
+                process.destroyForcibly();
+            }
+            Files.deleteIfExists(outputPath);
+            if (e instanceof InterruptedException) Thread.currentThread().interrupt();
+            throw e;
+        } finally {
+            if (process != null && process.isAlive()) process.destroyForcibly();
+            Files.deleteIfExists(logPath);
+        }
+    }
+
+    List<String> downloadCommand(String url, Path outputPath) {
         List<String> command = new ArrayList<>();
         command.add(ytDlpPath);
+        command.add("--ignore-config");
+        command.add("--no-plugin-dirs");
+        command.add("--proxy");
+        command.add(proxy);
+        command.add("--hls-prefer-native");
         command.add("--no-playlist");
         command.add("--socket-timeout");
         command.add("30");
@@ -80,31 +138,10 @@ public class YtDlpUtils {
         appendCookieArgs(command);
         command.add("-o");
         command.add(outputPath.toString());
+        command.add("--");
         command.add(url);
 
-        Process process = null;
-        try {
-            process = new ProcessBuilder(command)
-                    .redirectErrorStream(true)
-                    .redirectOutput(logPath.toFile())
-                    .start();
-            if (!process.waitFor(30, TimeUnit.MINUTES)) {
-                process.destroyForcibly();
-                throw new IllegalStateException("视频链接下载超时");
-            }
-            if (process.exitValue() != 0 || !Files.isRegularFile(outputPath)) {
-                String logs = Files.readString(logPath);
-                throw new IllegalStateException("yt-dlp 下载失败: " + recentLogs(logs));
-            }
-            log.info("url_video_downloaded host={} bytes={}", URI.create(url).getHost(), Files.size(outputPath));
-            return outputPath.toFile();
-        } catch (Exception e) {
-            Files.deleteIfExists(outputPath);
-            throw e;
-        } finally {
-            Files.deleteIfExists(logPath);
-            if (process != null && process.isAlive()) process.destroyForcibly();
-        }
+        return command;
     }
 
     /**
@@ -144,7 +181,8 @@ public class YtDlpUtils {
         // 注意：这里只是应用层的尽力校验（defense-in-depth）。yt-dlp 子进程会对 host
         // 重新做一次 DNS 解析并可能跟随 302 重定向，存在 DNS rebinding / 跳转到内网的
         // TOCTOU 风险，单靠应用层字符串/首次解析校验无法彻底封堵。生产环境必须叠加网络层
-        // 出口管控（egress 白名单、独立网络命名空间或出口代理），才能真正杜绝 SSRF。
+        // 出口管控。下载必须经过配置的受控 HTTP 代理，代理应逐次解析并拒绝内网目的地；
+        // 部署还应阻断下载进程绕过代理直接出网（包括媒体工具的子进程）。
     }
 
     /**

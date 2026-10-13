@@ -73,6 +73,16 @@ class AnalysisExecutionServiceTest {
         verify(deliveries).recoverUnclaimed();
         verify(deliveries).requeue(id,0);
     }
+    @Test void transcriptionLeaseRecoveryUsesTheSameDurableRetryPath() {
+        AnalysisTaskMsg transcription=message(); transcription.setAction(AnalysisTaskMsg.TRANSCRIBE);
+        when(mapper.expired()).thenReturn(List.of(id));
+        when(mapper.recover(id)).thenReturn(1);
+        when(mapper.find(id)).thenReturn(new AnalysisExecution(id,1L,7L,"QUEUED",1,null));
+        service.recover();
+        verify(deliveries).requeue(id,0);
+        assertEquals(AnalysisExecutionService.Outcome.SUCCEEDED, service.execute(transcription, () -> {}));
+        verify(mapper).finish(eq(id),anyString(),eq("SUCCEEDED"),isNull());
+    }
     @Test void saturationIsDeferredWithoutSpendingBusinessFailureAttempts() {
         when(mapper.defer(eq(id),anyString(),eq(30))).thenReturn(1);
         assertEquals(AnalysisExecutionService.Outcome.RETRYING,service.execute(message(),() -> {

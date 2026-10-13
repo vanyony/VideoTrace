@@ -13,6 +13,13 @@ public interface AnalysisExecutionMapper {
     int insert(@Param("id") String id,@Param("userId") Long userId,@Param("mediaId") Long mediaId,
                @Param("digest") String digest,@Param("scope") String scope);
 
+    @Insert("""
+        INSERT INTO analysis_executions(task_id,user_id,media_id,goal_digest,active_scope,task_kind)
+        VALUES(#{id},#{userId},#{mediaId},#{digest},#{scope},'TRANSCRIPTION')
+        """)
+    int insertTranscription(@Param("id") String id,@Param("userId") Long userId,@Param("mediaId") Long mediaId,
+               @Param("digest") String digest,@Param("scope") String scope);
+
     @Update("""
         UPDATE analysis_executions SET state='RUNNING',execution_token=#{token},
           attempts=attempts+1,lease_until=TIMESTAMPADD(SECOND,#{seconds},CURRENT_TIMESTAMP(3))
@@ -75,8 +82,15 @@ public interface AnalysisExecutionMapper {
 
     @Select("""
         SELECT task_id AS taskId,user_id AS userId,media_id AS mediaId,state,attempts,last_error AS lastError
-        FROM analysis_executions WHERE media_id=#{mediaId} AND goal_digest=#{digest}
+        FROM analysis_executions WHERE media_id=#{mediaId} AND goal_digest=#{digest} AND task_kind='ANALYSIS'
         ORDER BY creation_order DESC LIMIT 1
         """)
     AnalysisExecution latest(@Param("mediaId") Long mediaId,@Param("digest") String digest);
+
+    @Select("""
+        SELECT task_id AS taskId,user_id AS userId,media_id AS mediaId,state,attempts,last_error AS lastError
+        FROM analysis_executions WHERE media_id=#{mediaId} AND task_kind='TRANSCRIPTION'
+        ORDER BY creation_order DESC LIMIT 1
+        """)
+    AnalysisExecution latestTranscription(@Param("mediaId") Long mediaId);
 }

@@ -105,6 +105,20 @@ public class FailedAnalysisTaskService {
 
         com.videotrace.entity.MediaFile media = mediaMapper.selectById(task.getMediaId());
         if (media == null) throw new NoSuchElementException("视频已删除，不能重放任务");
+        if (AnalysisTaskMsg.TRANSCRIBE.equals(task.getAction())) {
+            deliveryService.enqueue(media.getUserId(), new AnalysisTaskMsg(task.getMediaId(),
+                    AnalysisTaskMsg.TRANSCRIBE, task.getContentHash(), AnalysisTaskMsg.TRANSCRIPTION_GOAL), null);
+            task.setStatus(STATUS_REQUEUED);
+            task.setUpdatedAt(LocalDateTime.now());
+            if (taskMapper.updateById(task) != 1) throw new IllegalStateException("失败任务重放台账更新失败");
+            try {
+                taskEventService.publishTranscription(task.getMediaId(),
+                        TaskStatus.of(TaskStatus.State.QUEUED, "文字提取任务已重新入队"), TaskStage.MANUAL_REPLAY);
+            } catch (RuntimeException e) {
+                log.warn("transcription_replay_event_failed mediaId={}", task.getMediaId(), e);
+            }
+            return;
+        }
         AnalysisMode mode = AnalysisMode.fromNullable(task.getMode());
         String contentHash = AnalysisTaskKeys.normalizeContentHash(task.getMediaId(), task.getContentHash());
         String goalDigest = AnalysisTaskKeys.goalDigest(task.getUserGoal(), mode);

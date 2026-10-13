@@ -23,6 +23,7 @@ class AnalysisDeliveryServiceTest {
     private final TransactionStatus status=mock(TransactionStatus.class);
     private final ObjectMapper json=new ObjectMapper();
     private AnalysisDeliveryService service;
+    private final AnalysisExecutionService executions=mock(AnalysisExecutionService.class);
 
     @BeforeEach
     void setUp() {
@@ -30,11 +31,23 @@ class AnalysisDeliveryServiceTest {
         when(mapper.insert(anyString(),anyLong(),anyLong(),anyString(),anyString(),anyString())).thenReturn(1);
         when(mapper.claim(anyString(),anyString(),eq(60))).thenReturn(1);
         when(mapper.attempts(anyString())).thenReturn(1);
-        service=new AnalysisDeliveryService(mapper,json,mq,transactions,"analysis",60,300,50,mock(AnalysisExecutionService.class));
+        service=new AnalysisDeliveryService(mapper,json,mq,transactions,"analysis",60,300,50,executions);
     }
 
     private AnalysisTaskMsg message() {
         return new AnalysisTaskMsg(7L,AnalysisTaskMsg.START_ANALYSIS,"hash","goal","GENERAL");
+    }
+
+    @Test
+    void transcriptionIsPersistedInItsOwnNamespaceBeforeSending() throws Exception {
+        AnalysisTaskMsg message=new AnalysisTaskMsg(7L,AnalysisTaskMsg.TRANSCRIBE,"hash",AnalysisTaskMsg.TRANSCRIPTION_GOAL);
+        when(mapper.payload(anyString())).thenAnswer(c -> json.writeValueAsString(message));
+        String id=service.enqueue(1L,message,null);
+        verify(mapper).insert(eq(id),eq(1L),eq(7L),anyString(),startsWith("transcription:7:"),anyString());
+        InOrder order=inOrder(executions,transactions,mq);
+        order.verify(executions).registerTranscription(eq(id),eq(1L),eq(7L),anyString(),startsWith("transcription:7:"));
+        order.verify(transactions).commit(status);
+        order.verify(mq).convertAndSend(eq("analysis"),any(AnalysisTaskMsg.class));
     }
 
     @Test

@@ -115,6 +115,13 @@ public class AnalysisExecutionService {
 
     public AnalysisExecution snapshot(String id) { return mapper.find(id); }
 
+    public void registerTranscription(String id,Long userId,Long mediaId,String digest,String scope) {
+        if (mapper.insertTranscription(id,userId,mediaId,digest,scope)!=1)
+            throw new IllegalStateException("Transcription task was not persisted");
+    }
+
+    public AnalysisExecution latestTranscription(Long mediaId) { return mapper.latestTranscription(mediaId); }
+
     public AnalysisExecution latest(Long mediaId,String goal,AnalysisMode mode) {
         return mapper.latest(mediaId,AnalysisTaskKeys.goalDigest(goal,mode));
     }

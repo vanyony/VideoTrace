@@ -49,8 +49,10 @@ public class AnalysisDeliveryService {
     public String enqueue(Long userId, AnalysisTaskMsg message, Runnable prepare) {
         String id=UUID.randomUUID().toString();
         message.setTaskId(id);
-        String digest=AnalysisTaskKeys.goalDigest(message.getUserGoal(),
-                AnalysisMode.fromNullable(message.getMode()));
+        String digest=AnalysisTaskKeys.goalDigest(message.isTranscription()
+                ? AnalysisTaskMsg.TRANSCRIPTION_GOAL : message.getUserGoal(),
+                message.isTranscription() ? AnalysisMode.GENERAL : AnalysisMode.fromNullable(message.getMode()));
+        String scope=(message.isTranscription()?"transcription:":"")+message.getMediaId()+":"+digest;
         String payload;
         try {
             payload=json.writeValueAsString(message);
@@ -60,9 +62,10 @@ public class AnalysisDeliveryService {
         transaction.executeWithoutResult(status -> {
             if (prepare!=null) prepare.run();
             if (mapper.insert(id,userId,message.getMediaId(),digest,
-                    message.getMediaId()+":"+digest,payload)!=1)
+                    scope,payload)!=1)
                 throw new IllegalStateException("Analysis delivery was not persisted");
-            executions.register(id,userId,message.getMediaId(),digest);
+            if (message.isTranscription()) executions.registerTranscription(id,userId,message.getMediaId(),digest,scope);
+            else executions.register(id,userId,message.getMediaId(),digest);
         });
         // A post-commit broker failure does not revoke acceptance.
         tryDeliver(id);
