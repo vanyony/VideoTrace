@@ -1,5 +1,6 @@
 import json
 import time
+from urllib.parse import urlsplit
 from typing import TypedDict
 
 import httpx
@@ -56,11 +57,15 @@ class CreatorAgent:
     def complete(self, messages, tools, timeout):
         if not self.settings.llm_key:
             raise RuntimeError("Creator LLM API key is not configured")
+        payload = {"model": self.settings.llm_model, "messages": messages, "tools": tools,
+                   "tool_choice": "required", "temperature": 0.3, "max_tokens": 5000}
+        # DeepSeek thinking mode does not support forced tool calls.
+        if urlsplit(self.settings.llm_url).hostname == "api.deepseek.com":
+            payload["thinking"] = {"type": "disabled"}
         with httpx.Client(timeout=timeout, trust_env=False) as client:
             response = client.post(self.settings.llm_url + "/chat/completions",
                                    headers={"Authorization": "Bearer " + self.settings.llm_key},
-                                   json={"model": self.settings.llm_model, "messages": messages, "tools": tools,
-                                         "tool_choice": "required", "temperature": 0.3, "max_tokens": 5000})
+                                   json=payload)
             response.raise_for_status()
             if len(response.content) > 256000:
                 raise ValueError("model response too large")
