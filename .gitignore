@@ -28,3 +28,6 @@ minio/data/
 # Python local runner artifacts
 __pycache__/
 *.pyc
+creator/.venv/
+creator/data/
+creator/.pytest_cache/

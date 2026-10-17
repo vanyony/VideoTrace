@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
     plugins: [vue()],
     server: {
       proxy: Object.fromEntries(
-        ['/user', '/media', '/analysis', '/admin', '/health'].map(path => [
+        ['/user', '/media', '/analysis', '/creation', '/admin', '/health'].map(path => [
           path,
           { target: backend, changeOrigin: true }
         ])

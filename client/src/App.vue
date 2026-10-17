@@ -254,6 +254,7 @@
                 </div>
                 <div class="shimmer"></div>
               </button>
+              <button class="dock-item" title="使用已解析素材创作短视频" @click="openCreation(item)"><span class="item-icon" aria-hidden="true">▶</span><span class="item-label">短视频创作</span></button>
             </div>
           </div>
         </div>
@@ -271,6 +272,7 @@
           <button v-else-if="listError" type="button" :disabled="listLoading" @click="fetchList({ notify: true })">重新加载</button>
         </div>
       </section>
+      <CreationWorkspace v-if="creationMedia && currentUser" :media="creationMedia" @close="creationMedia = null" @analyze="openAgent" />
       <footer class="workspace-footer"><span>VideoTrace</span><span>理解内容 · 回溯证据</span></footer>
 
       <div class="sidebar-backdrop" v-if="sidebar.visible" @click="closeSidebar"></div>
@@ -552,11 +554,18 @@ import {
 import { DEMO_ITEM } from './demoData'
 import { createTaskStreams } from './taskEvents'
 import { useAnalysisWorkspace } from './useAnalysisWorkspace'
+import CreationWorkspace from './CreationWorkspace.vue'
 
 // --- 变量定义 ---
 const DEMO_MODE = new URLSearchParams(window.location.search).has('demo')
 const MESSAGE_TIMEOUT_MS = 4000
 const file = ref(null)
+const creationMedia = ref(null)
+async function openCreation(item) {
+  creationMedia.value = item
+  await nextTick()
+  document.getElementById('creation-workspace')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 const videoUrl = ref('')
 const message = ref('')
 const messageIsError = ref(false)
@@ -1316,6 +1325,7 @@ const resetSessionState = () => {
   uploadAbort.value = null
   taskStreams.stopAll()
   resetWorkspace()
+  creationMedia.value = null
   currentUser.value = null
   list.value = []
   searchQuery.value = ''

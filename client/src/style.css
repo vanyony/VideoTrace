@@ -135,6 +135,7 @@ svg { flex-shrink: 0; }
 .dock-item:hover:not(:disabled) { border-color: #bcd0f7; color: var(--blue); }
 .dock-item.ai-core { background: var(--blue); color: white; border-color: var(--blue); }
 .dock-item.ai-core:hover:not(:disabled) { background: var(--blue-hover); color: white; }
+.action-dock > .dock-item:last-child:nth-child(4) { grid-column: 1 / -1; color: var(--blue); }
 .delete-btn { position: absolute; right: 9px; top: 9px; width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: #9aa6b8; display: grid; place-items: center; }
 .delete-btn svg { width: 15px; height: 15px; }
 .delete-btn:hover { background: #fff0f0; color: #b42336; }
