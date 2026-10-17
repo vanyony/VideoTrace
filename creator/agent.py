@@ -1,12 +1,11 @@
 import json
 import time
-from urllib.parse import urlsplit
 from typing import TypedDict
 
-import httpx
 from langgraph.graph import END, START, StateGraph
 
 from .models import Operation, Storyboard, patch_storyboard, validate_candidate
+from .model_client import ChatModelClient
 
 
 class AgentState(TypedDict, total=False):
@@ -45,7 +44,7 @@ PATCH = function("patch_scenes", "Commit constrained revision operations, preser
 class CreatorAgent:
     def __init__(self, settings, store, java, checkpointer, model=None):
         self.settings, self.store, self.java = settings, store, java
-        self.model = model or self.complete
+        self.model = model or ChatModelClient(settings)
         builder = StateGraph(AgentState)
         builder.add_node("model", self.model_node)
         builder.add_node("tools", self.tools_node)
@@ -53,23 +52,6 @@ class CreatorAgent:
         builder.add_edge("model", "tools")
         builder.add_conditional_edges("tools", lambda state: END if state.get("candidate") else "model")
         self.graph = builder.compile(checkpointer=checkpointer)
-
-    def complete(self, messages, tools, timeout):
-        if not self.settings.llm_key:
-            raise RuntimeError("Creator LLM API key is not configured")
-        payload = {"model": self.settings.llm_model, "messages": messages, "tools": tools,
-                   "tool_choice": "required", "temperature": 0.3, "max_tokens": 5000}
-        # DeepSeek thinking mode does not support forced tool calls.
-        if urlsplit(self.settings.llm_url).hostname == "api.deepseek.com":
-            payload["thinking"] = {"type": "disabled"}
-        with httpx.Client(timeout=timeout, trust_env=False) as client:
-            response = client.post(self.settings.llm_url + "/chat/completions",
-                                   headers={"Authorization": "Bearer " + self.settings.llm_key},
-                                   json=payload)
-            response.raise_for_status()
-            if len(response.content) > 256000:
-                raise ValueError("model response too large")
-            return response.json()
 
     def model_node(self, state):
         if state["decisions"] >= 8 or state["tool_count"] >= 12 or time.time() >= state["deadline"]:
