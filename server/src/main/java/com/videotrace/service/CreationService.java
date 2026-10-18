@@ -62,14 +62,21 @@ public class CreationService {
                 && (!s.transcript().isBlank() || s.ocrTexts().stream().anyMatch(t -> t!=null && !t.isBlank())));
     }
 
-    public JsonNode create(long owner, JsonNode request) {
+    public JsonNode create(long owner, JsonNode request) { return create(owner,request,"CREATE"); }
+
+    public JsonNode createConversation(long owner, JsonNode request) { return create(owner,request,"CONVERSE"); }
+
+    public JsonNode message(long owner,String taskId,JsonNode request) { return change(owner,taskId,"CONVERSE",request); }
+
+    private JsonNode create(long owner, JsonNode request,String type) {
         requireEnabled();
         long mediaId=positive(request,"mediaId");
         text(request,"requirement",2000); requestId(request);
         int duration=request.path("durationSeconds").asInt(45);
         if (duration<30 || duration>60) throw error(ErrorCode.INVALID_ARGUMENT,"时长必须为 30～60 秒");
         ObjectNode payload=request.deepCopy(); payload.put("durationSeconds",duration);
-        payload.put("type","CREATE");
+        payload.put("type",type);
+        if(type.equals("CONVERSE")) payload.put("instruction",text(request,"requirement",2000));
         return tx.execute(s -> {
             // ponytail: serialize submissions per owner; reserve request rows separately if submission throughput grows.
             db.queryForList("SELECT id FROM users WHERE id=? FOR UPDATE",owner);
@@ -83,7 +90,7 @@ public class CreationService {
                     .put("summary","等待创作服务处理").put("error","").put("retryable",false);
             task.putNull("storyboard");
             db.update("INSERT INTO creation_tasks(task_id,owner_id,media_id,snapshot) VALUES(?,?,?,?)",taskId,owner,mediaId,write(task));
-            operation(task,"CREATE",payload,1);
+            operation(task,type,payload,1);
             return publicTask(task);
         });
     }
@@ -91,14 +98,14 @@ public class CreationService {
     public JsonNode change(long owner,String taskId,String type,JsonNode request) {
         requireEnabled(); requestId(request);
         ObjectNode payload=request.deepCopy(); payload.put("type",type); payload.put("taskId",taskId);
-        if(type.equals("REVISE")) text(request,"instruction",2000);
+        if(Set.of("REVISE","CONVERSE").contains(type)) text(request,"instruction",2000);
         return tx.execute(s -> {
             db.queryForList("SELECT id FROM users WHERE id=? FOR UPDATE",owner);
             ObjectNode task=owned(taskId,owner,true);
             JsonNode previous=duplicate(owner,payload);
             if(previous!=null) return publicTask(previous);
             source(task);
-            if(!Set.of("FAILED","AWAITING_CONFIRMATION","COMPLETED").contains(task.path("status").asText())) throw error(ErrorCode.CONFLICT,"已有创作操作正在执行");
+            if(!Set.of("FAILED","AWAITING_CONFIRMATION","COMPLETED","DISCUSSED").contains(task.path("status").asText())) throw error(ErrorCode.CONFLICT,"已有创作操作正在执行");
             String actualType=type;
             int attempt=1;
             if(type.equals("RETRY")) {
@@ -109,7 +116,7 @@ public class CreationService {
                 attempt=old.path("attempt").asInt()+1;
             } else {
                 if(!request.path("baseRevision").isIntegralNumber() || request.path("baseRevision").asInt(-1)!=task.path("revision").asInt()) throw error(ErrorCode.CONFLICT,"分镜版本已变化，请刷新");
-                if(task.path("storyboard").isNull() || task.path("storyboard").isMissingNode()) throw error(ErrorCode.CONFLICT,"尚无可确认的分镜");
+                if(!type.equals("CONVERSE") && (task.path("storyboard").isNull() || task.path("storyboard").isMissingNode())) throw error(ErrorCode.CONFLICT,"尚无可确认的分镜");
                 if(request.has("targetSceneIds")) {
                     JsonNode targets=request.path("targetSceneIds"); Set<String> ids=new HashSet<>();
                     task.path("storyboard").path("scenes").forEach(scene -> ids.add(scene.path("sceneId").asText()));
@@ -123,6 +130,8 @@ public class CreationService {
     }
 
     private void operation(ObjectNode task,String type,ObjectNode payload,int attempt) {
+        if(task.path("status").asText().equals("COMPLETED") && !task.has("artifactRevision"))
+            task.put("artifactRevision",task.path("revision").asInt());
         String id=UUID.randomUUID().toString();
         ObjectNode params=json.createObjectNode().put("requirement",task.path("requirement").asText())
                 .put("durationSeconds",task.path("durationSeconds").asInt()).put("baseRevision",task.path("revision").asInt())
@@ -130,6 +139,11 @@ public class CreationService {
         params.set("storyboard",task.path("storyboard"));
         if(payload.has("instruction")) params.set("instruction",payload.get("instruction"));
         if(payload.has("targetSceneIds")) params.set("targetSceneIds",payload.get("targetSceneIds"));
+        if(type.equals("CONVERSE") && !payload.has("retryParameters")) {
+            if(task.path("messages").size()>=199) throw error(ErrorCode.CONFLICT,"此对话已达到 200 条消息上限，请新建对话");
+            appendMessage(task,id+":user","user",payload.path("instruction").asText());
+        }
+        if(type.equals("CONVERSE")) params.set("messages",boundedMessages(task.path("messages")));
         if(payload.has("retryParameters")) params=(ObjectNode)payload.get("retryParameters");
         ObjectNode op=json.createObjectNode().put("taskId",task.path("taskId").asText()).put("operationId",id)
                 .put("ownerId",task.path("ownerId").asLong()).put("mediaId",task.path("mediaId").asLong())
@@ -191,7 +205,7 @@ public class CreationService {
         ObjectNode task=owned(taskId,op.path("ownerId").asLong(),false);
         if(!taskId.equals(op.path("taskId").asText()) || !task.path("currentOperationId").asText().equals(op.path("operationId").asText())
                 || request.path("attempt").asInt()!=op.path("attempt").asInt()
-                || Set.of("FAILED","COMPLETED","AWAITING_CONFIRMATION").contains(task.path("status").asText())) throw error(ErrorCode.CONFLICT,"创作操作已失效");
+                || Set.of("FAILED","COMPLETED","AWAITING_CONFIRMATION","DISCUSSED").contains(task.path("status").asText())) throw error(ErrorCode.CONFLICT,"创作操作已失效");
         source(task); return task;
     }
 
@@ -228,20 +242,32 @@ public class CreationService {
             long seq=event.path("sequence").asLong(-1);
             if(!event.path("sequence").isIntegralNumber() || seq<1) throw new IllegalArgumentException("事件序号必须为正整数");
             if(seq<=operation.path("sequence").asLong()) return;
-            if(Set.of("AWAITING_CONFIRMATION","COMPLETED","FAILED").contains(task.path("status").asText())) return;
+            if(Set.of("AWAITING_CONFIRMATION","COMPLETED","FAILED","DISCUSSED").contains(task.path("status").asText())) return;
             String status=text(event,"status",32), type=operation.path("type").asText();
             if(!status.equals("FAILED")) source(task);
             Set<String> allowed=switch(type) {
+                case "CONVERSE" -> Set.of("DRAFTING","REVISING","DISCUSSED","AWAITING_CONFIRMATION","FAILED");
                 case "CREATE" -> Set.of("DRAFTING","AWAITING_CONFIRMATION","FAILED");
                 case "REVISE" -> Set.of("REVISING","AWAITING_CONFIRMATION","FAILED");
                 case "RENDER" -> Set.of("RENDERING","COMPLETED","FAILED");
                 default -> Set.of();
             };
             if(!allowed.contains(status)) throw error(ErrorCode.INVALID_ARGUMENT,"无效创作状态迁移");
+            String reply=null;
+            if(type.equals("CONVERSE") && Set.of("DISCUSSED","AWAITING_CONFIRMATION").contains(status)) {
+                reply=validateReply(event,status);
+                if(status.equals("AWAITING_CONFIRMATION")) {
+                    boolean hasBoard=operation.path("parameters").path("storyboard").isObject();
+                    if(hasBoard!=event.path("action").asText().equals("REVISE")) throw new IllegalArgumentException("对话动作与已有分镜不匹配");
+                }
+            }
             if(status.equals("AWAITING_CONFIRMATION")) {
                 JsonNode board=event.path("storyboard");
                 int revision=operation.path("parameters").path("baseRevision").asInt()+1;
                 validateStoryboard(board,revision,checkpoints.loadContext(task.path("mediaId").asLong()));
+                long total=0;
+                for(JsonNode scene:board.path("scenes")) total+=scene.path("durationMs").asLong();
+                if(total!=task.path("durationSeconds").asLong()*1000) throw new IllegalArgumentException("分镜总时长必须符合所选时长");
                 validateTargets(operation.path("parameters"),board);
                 task.set("storyboard",board); task.put("revision",revision);
             }
@@ -252,16 +278,47 @@ public class CreationService {
                         || artifact.path("sizeBytes").asLong()<=0 || artifact.path("durationMs").asLong()<30000 || artifact.path("durationMs").asLong()>61000
                         || !artifact.path("sha256").asText().matches("[a-fA-F0-9]{64}")
                         || operation.path("parameters").path("confirmedRevision").asInt()!=rev) throw error(ErrorCode.INVALID_ARGUMENT,"无效成片元数据");
+                task.put("artifactRevision",rev);
                 db.update("INSERT INTO creation_artifacts(task_id,revision,snapshot) VALUES(?,?,?) ON DUPLICATE KEY UPDATE snapshot=VALUES(snapshot)",taskId,rev,write(artifact));
             }
+            if(reply!=null) appendMessage(task,operation.path("operationId").asText()+":assistant","assistant",reply);
             task.put("status",status).put("summary",clip(event.path("summary").asText(),500))
                     .put("error",status.equals("FAILED")?clip(event.path("error").asText(),1000):"")
                     .put("retryable",status.equals("FAILED") && event.path("retryable").asBoolean());
             operation.put("sequence",seq);
-            boolean active=!Set.of("AWAITING_CONFIRMATION","COMPLETED","FAILED").contains(status);
+            boolean active=!Set.of("AWAITING_CONFIRMATION","COMPLETED","FAILED","DISCUSSED").contains(status);
             db.update("UPDATE creation_operations SET snapshot=?,active=?,updated_at=CURRENT_TIMESTAMP(3) WHERE operation_id=?",write(operation),active,operation.path("operationId").asText());
             save(task);
         });
+    }
+
+    static String validateReply(JsonNode event,String status) {
+        String action=text(event,"action",16);
+        if(status.equals("DISCUSSED") ? !action.equals("DISCUSS") : !Set.of("CREATE","REVISE").contains(action))
+            throw new IllegalArgumentException("对话动作与状态不匹配");
+        return text(event,"reply",4000);
+    }
+
+    private void appendMessage(ObjectNode task,String id,String role,String content) {
+        var messages=json.createArrayNode();
+        if(task.path("messages").isArray()) task.path("messages").forEach(messages::add);
+        for(JsonNode message:messages) if(id.equals(message.path("messageId").asText())) return;
+        messages.add(json.createObjectNode().put("messageId",id).put("role",role).put("content",clip(content,4000)));
+        task.set("messages",messages);
+    }
+
+    static JsonNode boundedMessages(JsonNode source) {
+        var result=com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.arrayNode();
+        int size=0;
+        for(int i=source.size()-1;i>=0 && result.size()<20;i--) {
+            JsonNode item=source.get(i);
+            String content=clip(item.path("content").asText(),4000);
+            if(size+content.length()>24000) break;
+            ObjectNode copy=com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.objectNode()
+                    .put("role",item.path("role").asText()).put("content",content);
+            result.insert(0,copy); size+=content.length();
+        }
+        return result;
     }
 
     static void validateStoryboard(JsonNode board,int revision,VideoContext context) {

@@ -241,7 +241,7 @@
               </button>
 
               <button
-                  class="dock-item ai-core"
+                  class="dock-item"
                   :disabled="item.status !== 'COMPLETED'"
                   :title="actionTitle(item, '打开智能分析')"
                   @click="openAgent(item)"
@@ -254,7 +254,7 @@
                 </div>
                 <div class="shimmer"></div>
               </button>
-              <button class="dock-item" title="使用已解析素材创作短视频" @click="openCreation(item)"><span class="item-icon" aria-hidden="true">▶</span><span class="item-label">短视频创作</span></button>
+              <button class="dock-item ai-core" title="使用已解析素材创作短视频" @click="openCreation(item)"><span class="item-icon" aria-hidden="true">▶</span><span class="item-label">短视频创作</span></button>
             </div>
           </div>
         </div>

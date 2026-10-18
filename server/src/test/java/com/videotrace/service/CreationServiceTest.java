@@ -52,6 +52,25 @@ class CreationServiceTest {
         assertThrows(BusinessException.class,()->configured.authenticate("wrong"));
         assertDoesNotThrow(()->configured.authenticate("secret"));
     }
+    @Test void conversationHistoryKeepsLatestMessagesWithinBudget() {
+        var messages=json.createArrayNode();
+        for(int i=0;i<30;i++) messages.addObject().put("role","user").put("content",String.valueOf(i).repeat(3000));
+        var bounded=CreationService.boundedMessages(messages);
+        assertTrue(bounded.size()<=20);
+        int total=0;
+        for(var message:bounded) { assertTrue(message.path("content").asText().length()<=4000); total+=message.path("content").asText().length(); }
+        assertTrue(total<=24000);
+        assertEquals("29".repeat(2000),bounded.get(bounded.size()-1).path("content").asText());
+    }
+    @Test void conversationReplyRequiresMatchingActionAndBoundedText() {
+        var event=json.createObjectNode().put("action","DISCUSS").put("reply","先讨论方向");
+        assertEquals("先讨论方向",CreationService.validateReply(event,"DISCUSSED"));
+        assertThrows(IllegalArgumentException.class,()->CreationService.validateReply(event,"AWAITING_CONFIRMATION"));
+        event.put("action","CREATE");
+        assertDoesNotThrow(()->CreationService.validateReply(event,"AWAITING_CONFIRMATION"));
+        event.put("reply","x".repeat(4001));
+        assertThrows(IllegalArgumentException.class,()->CreationService.validateReply(event,"AWAITING_CONFIRMATION"));
+    }
     CreationService service(String token) {
         return new CreationService(null,org.mockito.Mockito.mock(org.springframework.transaction.PlatformTransactionManager.class),json,null,null,null,null,"v1",token,"http://127.0.0.1:8091",true);
     }

@@ -100,11 +100,18 @@ class ModelStub(BaseHTTPRequestHandler):
         elif body.get("tools"):
             messages = body["messages"]
             names = {tool["function"]["name"] for tool in body["tools"]}
-            observed = [m for m in messages if m["role"] == "tool"]
-            if not observed:
+            observed = [m for m in messages if m["role"] == "tool" and '"action"' not in m["content"]]
+            if "choose_action" in names:
+                params = json.loads(next(m["content"] for m in messages if m["role"] == "user"))
+                instruction = params["instruction"]
+                action = "CREATE" if instruction == "按三个变化直接生成分镜" else "REVISE" if instruction == "第二点改成价格变化，其他不变" else "DISCUSS"
+                name, args = "choose_action", {"action": action}
+            elif not observed:
                 name, args = "search_video", {"query": "价格 续航 使用", "limit": 3}
             elif len(observed) == 1:
                 name, args = "read_context", {"evidenceId": "e_0_10000", "windowMs": 10000}
+            elif "finish_discussion" in names:
+                name, args = "finish_discussion", {"reply": "视频介绍了价格、续航与使用方式的变化，可以选择其中一个角度。当前只讨论，不修改分镜。"}
             elif "patch_scenes" in names:
                 params = json.loads(next(m["content"] for m in messages if m["role"] == "user"))
                 name, args = "patch_scenes", {"baseRevision": params["baseRevision"], "updates": [{"sceneId": "s_2", "headline": "价格变化值得关注"}]}
@@ -193,6 +200,36 @@ def main():
         assert ok(f"/creation/eligibility?mediaId={media_id}", token=token)["eligible"]
         assert not ok(f"/creation/eligibility?mediaId={media_ids[1]}", token=token)["eligible"]
         report["checks"].append("timestamp context readiness; transcript-only denied")
+        # Conversation routes use real services/storage and a deterministic tool model.
+        conversation = {"mediaId": media_id, "requirement": "先别生成，这个视频有什么值得做的？",
+                        "durationSeconds": 30, "requestId": "conversation_" + run}
+        chat = ok("/creation/conversations", conversation, token)
+        cid = chat["taskId"]
+        assert ok("/creation/conversations", conversation, token)["taskId"] == cid
+        assert request("/creation/conversations", {**conversation, "requirement": "different"}, token)[0] == 409
+        discussed = await_task(cid, token, "DISCUSSED")
+        assert discussed["revision"] == 0 and not discussed.get("storyboard")
+        message = {"instruction": "按三个变化直接生成分镜", "baseRevision": 0, "requestId": "chat_create_" + run}
+        assert request(f"/creation/tasks/{cid}/messages", message, tokens[1])[0] == 403
+        ok(f"/creation/tasks/{cid}/messages", message, token)
+        draft_chat = await_task(cid, token, "AWAITING_CONFIRMATION")
+        assert draft_chat["revision"] == 1
+        assert ok(f"/creation/tasks/{cid}/messages", message, token)["revision"] == 1
+        explain = {"instruction": "为什么第二段这么写？先不要修改或生成视频", "baseRevision": 1, "requestId": "chat_explain_" + run}
+        ok(f"/creation/tasks/{cid}/messages", explain, token)
+        explained = await_task(cid, token, "DISCUSSED")
+        assert explained["revision"] == 1 and explained["storyboard"] == draft_chat["storyboard"]
+        assert int(sql(f"SELECT COUNT(*) FROM creation_artifacts WHERE task_id={literal(cid)}")) == 0
+        assert request(f"/creation/tasks/{cid}/messages", {**explain, "requestId": "chat_stale_" + run, "baseRevision": 0}, token)[0] == 409
+        ok(f"/creation/tasks/{cid}/messages", {"instruction": "第二点改成价格变化，其他不变", "baseRevision": 1,
+            "targetSceneIds": ["s_2"], "requestId": "chat_revise_" + run}, token)
+        chat_revised = await_task(cid, token, "AWAITING_CONFIRMATION")
+        assert chat_revised["revision"] == 2
+        assert chat_revised["storyboard"]["scenes"][0] == draft_chat["storyboard"]["scenes"][0]
+        assert chat_revised["storyboard"]["scenes"][2] == draft_chat["storyboard"]["scenes"][2]
+        direct = ok("/creation/conversations", {**conversation, "requirement": "按三个变化直接生成分镜", "requestId": "chat_direct_" + run}, token)
+        assert await_task(direct["taskId"], token, "AWAITING_CONFIRMATION")["revision"] == 1
+        report["checks"].append("conversation discussion -> creation; direct creation; explanation preserves draft; scoped revision; message idempotency/ownership/stale version; no automatic render")
         body = {"mediaId": media_id, "requirement": "发布会的三个变化", "durationSeconds": 30, "requestId": "smoke_" + run}
         task = ok("/creation/tasks", body, token)
         tid = task["taskId"]
@@ -221,6 +258,10 @@ def main():
         report["checks"].append("internal authentication; duplicate callback; Python restart preserves draft")
         assert request(f"/creation/tasks/{tid}/render", {"baseRevision": 0, "requestId": "stale_" + run}, token)[0] == 409
         report["checks"].append("idempotent create; changed duplicate rejected; ownership; stale revision")
+        ok(f"/creation/tasks/{tid}/messages", {"instruction": "先解释选题，不要生成视频", "baseRevision": 1,
+            "requestId": "before_render_" + run}, token)
+        before_render = await_task(tid, token, "DISCUSSED")
+        assert before_render["storyboard"] == draft["storyboard"]
         ok(f"/creation/tasks/{tid}/render", {"baseRevision": 1, "requestId": "render_" + run}, token)
         await_task(tid, token, "COMPLETED")
         artifact = ok(f"/creation/tasks/{tid}/artifact?revision=1", token=token)
@@ -228,6 +269,14 @@ def main():
             video = response.read()
         assert len(video) == artifact["sizeBytes"] and b"ftyp" in video[:32]
         report["checks"].append("actual 720p render; MinIO upload; authorized signed download")
+        # Simulate a completed task created before artifactRevision was introduced.
+        sql(f"UPDATE creation_tasks SET snapshot=JSON_REMOVE(snapshot,'$.artifactRevision') WHERE task_id={literal(tid)}")
+        ok(f"/creation/tasks/{tid}/messages", {"instruction": "解释第二个观点，不要修改", "baseRevision": 1,
+            "requestId": "after_render_" + run}, token)
+        after_render = await_task(tid, token, "DISCUSSED")
+        assert after_render["artifactRevision"] == 1 and after_render["storyboard"] == draft["storyboard"]
+        assert ok(f"/creation/tasks/{tid}/artifact?revision=1", token=token)["url"]
+        report["checks"].append("render after discussion; legacy completed artifact remains accessible after conversation")
         ok(f"/creation/tasks/{tid}/revisions", {"baseRevision": 1, "requestId": "revise_" + run,
             "instruction": "第二点改成价格变化，其他不变", "targetSceneIds": ["s_2"]}, token)
         revised = await_task(tid, token, "AWAITING_CONFIRMATION")

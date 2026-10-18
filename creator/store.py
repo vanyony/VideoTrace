@@ -87,7 +87,7 @@ class Store:
                      "status": status, "summary": summary, **fields}
             db.execute("INSERT INTO events(operation_id,attempt,sequence,task_id,payload) VALUES(?,?,?,?,?)",
                        (operation.operationId, operation.attempt, seq, operation.taskId, encoded(event)))
-            if status in ("AWAITING_CONFIRMATION", "COMPLETED", "FAILED"):
+            if status in ("AWAITING_CONFIRMATION", "COMPLETED", "FAILED", "DISCUSSED"):
                 db.execute("UPDATE operations SET status=? WHERE operation_id=? AND attempt=?",
                            ("FAILED" if status == "FAILED" else "DONE", operation.operationId, operation.attempt))
             return event

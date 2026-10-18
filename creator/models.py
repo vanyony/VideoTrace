@@ -49,7 +49,7 @@ class Operation(StrictModel):
     ownerId: int = Field(gt=0)
     mediaId: int = Field(gt=0)
     sourceVersion: str = Field(pattern=r"^[A-Za-z0-9_-]{1,32}$")
-    type: Literal["CREATE", "REVISE", "RENDER"]
+    type: Literal["CREATE", "REVISE", "RENDER", "CONVERSE"]
     parameters: dict
 
     @model_validator(mode="after")
@@ -58,11 +58,26 @@ class Operation(StrictModel):
         if len(json.dumps(self.parameters, ensure_ascii=False)) > 64000:
             raise ValueError("operation parameters too large")
         p = self.parameters
-        if self.type == "CREATE":
+        if self.type in ("CREATE", "CONVERSE"):
             if not isinstance(p.get("requirement"), str) or not 1 <= len(p["requirement"].strip()) <= 2000:
                 raise ValueError("requirement must contain 1..2000 characters")
             if p.get("durationSeconds", 45) not in range(30, 61):
                 raise ValueError("durationSeconds must be 30..60")
+            if self.type == "CONVERSE":
+                if not isinstance(p.get("instruction"), str) or not 1 <= len(p["instruction"].strip()) <= 2000:
+                    raise ValueError("instruction must contain 1..2000 characters")
+                messages = p.get("messages", [])
+                if not isinstance(messages, list) or len(messages) > 20:
+                    raise ValueError("conversation history must contain at most 20 messages")
+                for message in messages:
+                    if not isinstance(message, dict) or message.get("role") not in ("user", "assistant") or not isinstance(message.get("content"), str) or len(message["content"]) > 4000:
+                        raise ValueError("invalid conversation message")
+                if sum(len(m["content"]) for m in messages) > 24000:
+                    raise ValueError("conversation history too large")
+                if p.get("storyboard") is not None:
+                    board = Storyboard.model_validate(p["storyboard"])
+                    if p.get("baseRevision") != board.revision:
+                        raise ValueError("baseRevision differs from storyboard")
         else:
             board = Storyboard.model_validate(p.get("storyboard"))
             if p.get("baseRevision") != board.revision:

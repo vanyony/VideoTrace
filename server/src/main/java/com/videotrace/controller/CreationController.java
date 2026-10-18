@@ -19,6 +19,10 @@ public class CreationController {
     public Result<List<JsonNode>> list(@RequestParam long mediaId,@RequestAttribute(AuthService.REQUEST_USER_ID) long owner) { return Result.ok(service.list(owner,mediaId)); }
     @PostMapping("/tasks")
     public ResponseEntity<Result<JsonNode>> create(@RequestBody JsonNode body,@RequestAttribute(AuthService.REQUEST_USER_ID) long owner) { return ResponseEntity.accepted().body(Result.ok(service.create(owner,body))); }
+    @PostMapping("/conversations")
+    public ResponseEntity<Result<JsonNode>> conversation(@RequestBody JsonNode body,@RequestAttribute(AuthService.REQUEST_USER_ID) long owner) { return ResponseEntity.accepted().body(Result.ok(service.createConversation(owner,body))); }
+    @PostMapping("/tasks/{id}/messages")
+    public ResponseEntity<Result<JsonNode>> message(@PathVariable String id,@RequestBody JsonNode body,@RequestAttribute(AuthService.REQUEST_USER_ID) long owner) { return ResponseEntity.accepted().body(Result.ok(service.message(owner,id,body))); }
     @GetMapping("/tasks/{id}")
     public Result<JsonNode> get(@PathVariable String id,@RequestAttribute(AuthService.REQUEST_USER_ID) long owner) { return Result.ok(service.get(owner,id)); }
     @PostMapping("/tasks/{id}/revisions")

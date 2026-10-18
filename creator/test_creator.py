@@ -53,6 +53,57 @@ class Java:
 
 
 class CreatorTests(unittest.TestCase):
+    def run_conversation(self, responses, *, board=None, instruction="先讨论一下"):
+        with tempfile.TemporaryDirectory() as directory, closing(sqlite3.connect(":memory:", check_same_thread=False)) as connection:
+            store, java = Store(Path(directory) / "ops.sqlite"), Java()
+            turns = iter(responses)
+            offered = []
+            def model(messages, tools, timeout):
+                offered.append([t["function"]["name"] for t in tools])
+                return next(turns)
+            params = {"requirement": "视频创作", "instruction": instruction, "durationSeconds": 30,
+                      "baseRevision": board["revision"] if board else 0, "storyboard": board,
+                      "messages": [{"role": "user", "content": instruction}]}
+            op = operation(type="CONVERSE", parameters=params)
+            agent = CreatorAgent(settings(directory), store, java, SqliteSaver(connection), model=model)
+            result = agent.run(op)
+            self.assertEqual(result, agent.run(op))  # Completed checkpoint never repeats model or tools.
+            self.assertEqual(["choose_action"], offered[0])
+            self.assertTrue(all("render" not in tool for names in offered for tool in names))
+            return result, offered, java.calls
+
+    def test_conversation_discussion_questions_and_no_generation(self):
+        for instruction, board in [("先别生成，讨论一下方向", None), ("为什么第二段这样写", storyboard())]:
+            result, offered, calls = self.run_conversation([
+                completion("choose_action", {"action": "DISCUSS"}),
+                completion("search_video", {"query": "素材主题"}),
+                completion("finish_discussion", {"reply": "素材可以面向初学者，请确认受众。"})], board=board, instruction=instruction)
+            self.assertEqual("DISCUSS", result["action"])
+            self.assertIsNone(result["storyboard"])
+            self.assertNotIn("save_storyboard", offered[1])
+            self.assertNotIn("patch_scenes", offered[1])
+            self.assertEqual(1, len(calls))
+
+    def test_conversation_explicit_generation_and_revision(self):
+        result, _, _ = self.run_conversation([
+            completion("choose_action", {"action": "CREATE"}),
+            completion("search_video", {"query": "变化"}),
+            completion("save_storyboard", storyboard())], instruction="自行决定受众，直接生成30秒分镜")
+        self.assertEqual(1, result["storyboard"]["revision"])
+        result, _, _ = self.run_conversation([
+            completion("choose_action", {"action": "REVISE"}),
+            completion("patch_scenes", {"baseRevision": 1, "updates": [{"sceneId": "s_2", "headline": "新的标题"}]})],
+            board=storyboard(), instruction="请把第二段标题改为新的标题")
+        self.assertEqual(2, result["storyboard"]["revision"])
+        self.assertEqual("新的标题", result["storyboard"]["scenes"][1]["headline"])
+
+    def test_conversation_discussion_cannot_mutate_even_with_unoffered_tool(self):
+        result, _, _ = self.run_conversation([
+            completion("choose_action", {"action": "DISCUSS"}),
+            completion("save_storyboard", storyboard()),
+            completion("finish_discussion", {"reply": "先讨论受众。"})])
+        self.assertIsNone(result["storyboard"])
+
     def test_validation_rejects_unknown_evidence_and_layout_overflow(self):
         with self.assertRaisesRegex(ValueError, "sourceRefs"):
             validate_candidate(storyboard(), operation(), set())

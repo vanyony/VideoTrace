@@ -39,14 +39,18 @@ class Worker:
                 self.stop.wait(.5)
                 continue
             try:
-                stage = {"CREATE": "DRAFTING", "REVISE": "REVISING", "RENDER": "RENDERING"}[operation.type]
+                stage = {"CREATE": "DRAFTING", "REVISE": "REVISING", "RENDER": "RENDERING", "CONVERSE": "DRAFTING"}[operation.type]
                 self.store.emit(operation, stage, "正在执行创作任务")
                 if operation.type == "RENDER":
                     artifact = self.renderer.run(operation)
                     self.store.emit(operation, "COMPLETED", "视频已生成", artifact=artifact)
                 else:
                     storyboard = self.agent.run(operation)
-                    self.store.emit(operation, "AWAITING_CONFIRMATION", "分镜已准备好，请确认后生成视频", storyboard=storyboard)
+                    if operation.type == "CONVERSE":
+                        self.store.emit(operation, "DISCUSSED" if storyboard["action"] == "DISCUSS" else "AWAITING_CONFIRMATION",
+                                        "创作助手已回复" if storyboard["action"] == "DISCUSS" else "分镜已准备好，请确认后生成视频", **storyboard)
+                    else:
+                        self.store.emit(operation, "AWAITING_CONFIRMATION", "分镜已准备好，请确认后生成视频", storyboard=storyboard)
             except Exception as error:
                 if self.stop.is_set():
                     return  # Leave RUNNING durable; checkpoint and render cache resume on restart.

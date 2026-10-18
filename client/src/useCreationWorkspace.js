@@ -1,8 +1,9 @@
 import { ref } from 'vue'
 import { apiRequest, captureAuthSession } from './api.js'
 
-export const creationLabels = { QUEUED: '等待执行', DRAFTING: '正在生成分镜', AWAITING_CONFIRMATION: '待确认分镜', REVISING: '正在修改分镜', RENDERING: '正在渲染视频', COMPLETED: '成片已完成', FAILED: '执行失败' }
+export const creationLabels = { QUEUED: '等待执行', DRAFTING: '正在处理创作需求', AWAITING_CONFIRMATION: '待确认分镜', REVISING: '正在处理消息', DISCUSSED: '等待继续交流', RENDERING: '正在渲染视频', COMPLETED: '成片已完成', FAILED: '执行失败' }
 export const isCreationActive = task => ['QUEUED', 'DRAFTING', 'REVISING', 'RENDERING'].includes(task?.status)
+export const artifactRevision = task => task?.artifactRevision ?? (task?.status === 'COMPLETED' ? task.revision : null)
 export function sourceTimestamp(reference) {
   const match = /^e_(\d+)_(\d+)$/.exec(reference)
   if (!match) return reference
@@ -36,6 +37,7 @@ export function useCreationWorkspace({ hidden = () => document.hidden, schedule 
     try {
       const latest = await request(`/creation/tasks/${encodeURIComponent(id)}`, undefined, controller?.signal)
       if (version !== generation || !session() || task.value?.taskId !== id) return
+      if (artifactRevision(latest) !== artifactRevision(task.value)) artifact.value = null
       task.value = latest
       tasks.value = tasks.value.map(item => item.taskId === id ? latest : item)
       error.value = eligibilityError
@@ -68,15 +70,15 @@ export function useCreationWorkspace({ hidden = () => document.hidden, schedule 
     loading.value = true; error.value = ''
     const version = generation, session = captureAuthSession()
     try {
-      const path = action === 'create' ? '/creation/tasks' : `/creation/tasks/${encodeURIComponent(task.value.taskId)}/${action}`
+      const path = action === 'create' ? '/creation/conversations' : `/creation/tasks/${encodeURIComponent(task.value.taskId)}/${action}`
       const identity = JSON.stringify([path, body])
       if (pendingSubmission?.identity !== identity || !pendingSubmission.session()) pendingSubmission = { identity, session, requestId: crypto.randomUUID() }
       const pending = pendingSubmission
       const result = await request(path, { ...body, requestId: pending.requestId }, controller?.signal)
       if (version !== generation || !session()) return
       if (pendingSubmission === pending) pendingSubmission = null
+      if (result.taskId !== task.value?.taskId || artifactRevision(result) !== artifactRevision(task.value)) artifact.value = null
       task.value = result
-      artifact.value = null
       if (!tasks.value.some(item => item.taskId === result.taskId)) tasks.value.unshift(result)
       await refresh()
     } catch (cause) {
@@ -88,8 +90,10 @@ export function useCreationWorkspace({ hidden = () => document.hidden, schedule 
     const version = generation, session = captureAuthSession(), current = task.value
     if (!current) return
     try {
-      const result = await request(`/creation/tasks/${encodeURIComponent(current.taskId)}/artifact?revision=${current.revision}`, undefined, controller?.signal)
-      if (version === generation && session() && task.value?.taskId === current.taskId && task.value?.revision === current.revision) { artifact.value = result; error.value = eligibilityError }
+      const revision = artifactRevision(current)
+      if (revision == null) return
+      const result = await request(`/creation/tasks/${encodeURIComponent(current.taskId)}/artifact?revision=${revision}`, undefined, controller?.signal)
+      if (version === generation && session() && task.value?.taskId === current.taskId && artifactRevision(task.value) === revision) { artifact.value = result; error.value = eligibilityError }
     } catch (cause) { if (version === generation && session() && cause.name !== 'AbortError') error.value = cause.message }
   }
   return { media, eligibility, tasks, task, loading, error, artifact, open, close, select, refresh, submit, loadArtifact, reschedule: poll }

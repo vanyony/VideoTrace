@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test, { beforeEach } from 'node:test'
-import { useCreationWorkspace, sourceTimestamp } from './useCreationWorkspace.js'
+import { useCreationWorkspace, sourceTimestamp, isCreationActive, artifactRevision } from './useCreationWorkspace.js'
 import { setAuthToken, clearAuthToken } from './api.js'
 
 const json = data => Response.json({ code: 0, message: 'success', data })
@@ -48,7 +48,7 @@ test('revision submission carries version, stable targets and idempotency key', 
     if (options.method === 'POST') { submitted = JSON.parse(options.body); return json({ ...draft, status: 'REVISING' }) }
     return json({ ...draft, revision: 2, status: 'AWAITING_CONFIRMATION' })
   }
-  await workspace.submit('revisions', { instruction: '只修改第一场', baseRevision: 1, targetSceneIds: ['s_01'] })
+  await workspace.submit('messages', { instruction: '只修改第一场', baseRevision: 1, targetSceneIds: ['s_01'] })
   assert.equal(submitted.baseRevision, 1)
   assert.deepEqual(submitted.targetSceneIds, ['s_01'])
   assert.match(submitted.requestId, /^[0-9a-f-]{36}$/)
@@ -74,7 +74,7 @@ test('old polling result cannot overwrite a revision operation', async () => {
   globalThis.fetch = () => new Promise(done => { resolve = done })
   const pending = workspace.refresh()
   globalThis.fetch = async () => json({ ...draft, revision: 2, status: 'AWAITING_CONFIRMATION' })
-  await workspace.submit('revisions', { instruction: 'change', baseRevision: 1 })
+  await workspace.submit('messages', { instruction: 'change', baseRevision: 1 })
   resolve(json(draft)); await pending
   assert.equal(workspace.task.value.revision, 2)
 })
@@ -128,4 +128,49 @@ test('eligibility failures remain visible after selecting and polling history', 
   assert.equal(workspace.error.value, '素材检查不可用')
   await workspace.refresh()
   assert.equal(workspace.error.value, '素材检查不可用')
+})
+
+
+test('conversation creation and continuation use distinct routes and preserve discussion history', async () => {
+  const { workspace, scheduled } = setup()
+  const calls = []
+  const snapshot = { ...draft, revision: 0, status: 'DISCUSSED', messages: [{ role: 'user', content: '先讨论方向' }, { role: 'assistant', content: '可以从受众开始' }] }
+  globalThis.fetch = async (url, options) => { if (options.method === 'POST') calls.push({ url, body: JSON.parse(options.body) }); return json(snapshot) }
+  await workspace.submit('create', { mediaId: 7, requirement: '先讨论方向', durationSeconds: 45 })
+  assert.equal(calls[0].url, '/creation/conversations')
+  assert.equal(calls[0].body.durationSeconds, 45)
+  assert.equal(isCreationActive(workspace.task.value), false)
+  assert.equal(scheduled.length, 0)
+  await workspace.submit('messages', { instruction: '面向学生', baseRevision: 0 })
+  assert.equal(calls[1].url, '/creation/tasks/t1/messages')
+  assert.equal(calls[1].body.baseRevision, 0)
+  assert.deepEqual(workspace.task.value.messages, snapshot.messages)
+})
+
+test('discussion can retrieve the previous artifact and legacy completed tasks still work', async () => {
+  const { workspace } = setup()
+  workspace.task.value = { ...draft, revision: 3, status: 'DISCUSSED', artifactRevision: 2 }
+  let requested
+  globalThis.fetch = async url => { requested = url; return json({ url: 'https://example.test/video.mp4' }) }
+  await workspace.loadArtifact()
+  assert.equal(requested, '/creation/tasks/t1/artifact?revision=2')
+  assert.equal(workspace.artifact.value.url, 'https://example.test/video.mp4')
+  assert.equal(artifactRevision({ status: 'COMPLETED', revision: 1 }), 1)
+  assert.equal(artifactRevision({ status: 'DISCUSSED', revision: 0 }), null)
+})
+
+
+test('polling clears a previous preview only when the rendered artifact version changes', async () => {
+  const { workspace } = setup()
+  workspace.task.value = { ...draft, revision: 2, status: 'RENDERING', artifactRevision: 1 }
+  const previous = { url: 'https://example.test/old.mp4' }
+  workspace.artifact.value = previous
+  let snapshot = { ...workspace.task.value }
+  globalThis.fetch = async () => json(snapshot)
+  await workspace.refresh()
+  assert.deepEqual(workspace.artifact.value, previous)
+  snapshot = { ...snapshot, status: 'COMPLETED', artifactRevision: 2 }
+  await workspace.refresh()
+  assert.equal(workspace.artifact.value, null)
+  assert.equal(artifactRevision(workspace.task.value), 2)
 })
