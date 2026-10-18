@@ -9,7 +9,7 @@ AI 视频理解与创作平台。通过语音转写、画面文字识别和大�
 - **视频导入**：本地文件上传及在线视频链接导入（需配置受控出口代理）；大文件支持分片上传、断点续传和分片校验。
 - **异步解析**：提取语音转写（ASR）与关键帧文字（OCR），持久化阶段结果，中断后复用已完成阶段。
 - **目标驱动分析**：围绕用户目标执行规划、分析与校验流程，生成结构化结果。
-- **视频证据检索**：对内容分块，结合 Embedding 语义检索与关键词评分选取相关片段，为创作讨论与分镜生成提供证据。
+- **视频证据检索**：对内容分块，结合 BGE 语义检索与本地 BM25，通过 RRF 排名融合选取相关片段，为创作讨论与分镜生成提供证据。
 - **创作对话**：模型判断讨论、生成或修改意图；模糊需求先讨论，明确需求或授权自行决定时直接生成分镜。讨论和解释不会增加分镜版本。
 - **分镜与成片**：生成关联时间戳证据的结构化分镜，支持指定场景修改；人工确认后输出含文字卡片、简单动画及可选背景音乐的竖屏 MP4。
 - **证据定位**：将分析结果和检索片段关联到原视频时间戳，点击查看对应内容。
@@ -64,6 +64,15 @@ Java / Spring Boot 负责鉴权、视频归属、解析与检索、对话消息�
 - **阶段复用**：保存 ASR、OCR 阶段结果与 AI 工作流检查点，减少恢复时的重复处理。
 - **资源控制**：隔离处理线程池，限制本地并发与跨实例调用频率，并设置 AI 执行预算。
 
+## 混合证据检索
+
+- DeepSeek 根据查询生成语义检索意图与关键词；BGE 生成查询向量。关键词提取调用模型，BM25 打分与 RRF 融合均在 Java 本地完成。
+- 以当前视频的内容块为语料，BM25 统计词频、文档频率与长度，参数为 `k1=1.2`、`b=0.75`；文本覆盖片段摘要、关键词、ASR 和 OCR。实现依据 [Lucene BM25 公式说明](https://lucene.apache.org/core/9_12_3/core/org/apache/lucene/search/similarities/BM25Similarity.html)，没有引入 Lucene 或 Elasticsearch 服务。
+- 词项采用 NFKC 规范化、大小写归一、中文相邻双字切分，英文和带连接符的产品型号保留完整词项。当前不使用词典分词，单字查询和复杂专名仍有改进空间。
+- 语义排名与 BM25 排名通过 RRF（`k=60`）融合，取前三个内容块；块内时间片段再结合块排名、ASR/OCR 的 BM25 排名融合，去重后返回时间戳证据。非正分数不参与排名，没有有效匹配时返回空结果。
+- 向量库不可用时可使用已有片段向量计算余弦相似度；查询向量接口不可用时使用 BM25。统计范围仅限当前视频，尚未引入跨视频语料或持久化词项索引。
+- 回归样例覆盖中文、精确型号（如 X100 与 X1000）、语义改写、词频/稀有度/长度差异和服务降级；尚无大规模标注数据集上的召回率提升结论。
+
 ## 快速开始
 
 以下命令在项目根目录执行，示例使用 PowerShell。
@@ -89,8 +98,8 @@ Copy-Item .env.example .env
 
 | 配置 | 说明 |
 | --- | --- |
-| `SILICONFLOW_API_KEY` | 默认模型网关凭据，用于 LLM、Embedding 和 ASR |
-| `SILICONFLOW_BASE_URL`、`LLM_MODEL` | LLM 服务地址及模型 |
+| `SILICONFLOW_API_KEY`、`SILICONFLOW_BASE_URL` | 硅基流动凭据和地址，仅供 BGE Embedding 与 ASR 使用 |
+| `LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL` | Java 分析、摘要、检索意图与问答的 LLM；示例使用官方 DeepSeek |
 | `EMBEDDING_MODEL`、`ASR_MODEL` | 向量模型及语音识别模型 |
 | `DB_USERNAME`、`DB_PASSWORD` | 应用数据库账号；`MYSQL_APP_USER` 应与 `DB_USERNAME` 一致 |
 | `MYSQL_ROOT_PASSWORD` | Compose 初始化 MySQL 使用的 root 密码 |
@@ -152,7 +161,7 @@ creator/.venv/Scripts/python.exe -m pip install -r creator/requirements-lock.txt
 | `CREATOR_DATA_DIR` | SQLite 状态和渲染缓存目录，默认 `creator/data`，需持久保存 |
 | `CREATOR_FONT_PATH` | 中文字体路径；Windows 自动检测微软雅黑，Linux 可指定 Noto Sans CJK |
 
-模型配置未设置时沿用 `SILICONFLOW_*` 与 `LLM_MODEL`。更换创作模型不改变 Java 的 ASR、Embedding 服务配置。DeepSeek 官方接口默认禁用 thinking，以兼容强制工具调用；其他服务不附带 DeepSeek 专用字段。当前工作流不保留多轮 `reasoning_content`，请使用非思考模式。修改配置后重启创作服务生效。
+创作模型覆盖项未设置时沿用 `LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL`；旧配置未设置独立 LLM 地址或密钥时仍兼容回退到 `SILICONFLOW_*`。更换创作模型不改变 Java 的 ASR、Embedding 服务配置。DeepSeek 官方接口默认禁用 thinking，以兼容强制工具调用；其他服务不附带 DeepSeek 专用字段。当前工作流不保留多轮 `reasoning_content`，请使用非思考模式。修改配置后重启创作服务生效。
 
 ```powershell
 creator/.venv/Scripts/python.exe -m uvicorn creator.app:app --host 127.0.0.1 --port 8091 --env-file .env
@@ -180,7 +189,7 @@ npm run dev
 
 ## 配置说明
 
-- **模型服务**：默认接入 SiliconFlow；切换服务时需核对 LLM、Embedding 和 ASR 各自的接口兼容性。ASR 地址可通过 `ASR_URL` 配置。
+- **模型服务**：示例配置将全部 LLM 调用指向官方 DeepSeek，BGE 和 ASR 留在硅基流动。Java 与 Python 可共享 LLM 配置，创作也可单独覆盖；切换后重启对应服务。ASR 地址可通过 `ASR_URL` 配置。
 - **解析版本**：调整提取规则或 ASR／OCR 模型后，更新 `VIDEO_PARSE_VERSION`，区分解析结果与相关缓存。
 - **资源限制**：通过 `MEDIA_PROCESS_CONCURRENT`、`*_CALL_CONCURRENT` 和 `*_CALLS_PER_MINUTE` 调整并发与频率；各 Worker 应使用一致的共享频率配置。
 - **AI 预算**：通过 `AGENT_MAX_ROUNDS`、`AGENT_MAX_DURATION_MS` 和 `AGENT_MAX_ESTIMATED_TOKENS` 限制执行消耗。启用成本预算时需同时配置输入、输出 Token 单价。

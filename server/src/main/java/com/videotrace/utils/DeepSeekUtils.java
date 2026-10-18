@@ -87,6 +87,8 @@ public class DeepSeekUtils {
                 .baseUrl(baseUrl)
                 .apiKey(apiKey)
                 .modelName(modelName)
+                .customParameters("api.deepseek.com".equals(java.net.URI.create(baseUrl).getHost())
+                        ? java.util.Map.of("thinking", java.util.Map.of("type", "disabled")) : java.util.Map.of())
                 // Long-video evidence prompts can take longer than the SDK default timeout.
                 // Retry policy is handled by chat() below to avoid nested retries.
                 .timeout(Duration.ofSeconds(timeoutSeconds))

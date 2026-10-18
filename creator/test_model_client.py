@@ -12,6 +12,13 @@ from .test_creator import settings
 
 
 class ModelClientTests(unittest.TestCase):
+    def test_creator_inherits_shared_llm_not_embedding_provider(self):
+        with patch.dict(os.environ, {"LLM_API_KEY": "official", "LLM_BASE_URL": "https://api.deepseek.com",
+                                    "LLM_MODEL": "configured-model", "SILICONFLOW_API_KEY": "embedding-key"}, clear=True):
+            cfg = Settings.from_env()
+            self.assertEqual((cfg.llm_key, cfg.llm_url, cfg.llm_model),
+                             ("official", "https://api.deepseek.com", "configured-model"))
+
     def test_switch_endpoint_model_and_options_without_changing_agent(self):
         messages = [{"role": "user", "content": "test"}]
         tools = [{"type": "function", "function": {"name": "search_video"}}]

@@ -33,6 +33,7 @@ def settings():
     env.update(SERVER_PORT="19090", CREATOR_URL=PYTHON, CREATOR_JAVA_URL=JAVA,
                CREATOR_INTERNAL_TOKEN=secrets.token_hex(24), CREATOR_ENABLED="true",
                SILICONFLOW_API_KEY="local-smoke-only", SILICONFLOW_BASE_URL=f"http://127.0.0.1:{MODEL_PORT}/v1",
+               LLM_API_KEY="local-smoke-only", LLM_BASE_URL=f"http://127.0.0.1:{MODEL_PORT}/v1",
                CREATOR_LLM_API_KEY="local-smoke-only", CREATOR_LLM_BASE_URL=f"http://127.0.0.1:{MODEL_PORT}/v1",
                CREATOR_DATA_DIR=str(ROOT / "creator" / "data" / ("smoke-" + secrets.token_hex(4))),
                CREATOR_DISPATCH_DELAY_MS="1000", VIDEO_PARSE_VERSION="creator_smoke_v1",

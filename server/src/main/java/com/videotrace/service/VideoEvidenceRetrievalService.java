@@ -60,20 +60,41 @@ public class VideoEvidenceRetrievalService {
         List<Double> queryEmbedding = embed(intent.semanticQuery());
         Map<String, Double> vectorScores = vectorScores(mediaId, queryEmbedding);
 
-        List<ScoredChunk> rankedChunks = chunks.stream()
-                .map(chunk -> new ScoredChunk(
-                        chunk, score(intent, queryEmbedding, vectorScores, chunk)))
-                .sorted(Comparator.comparingDouble(ScoredChunk::score).reversed())
-                .limit(TOP_K)
-                .toList();
+        String lexicalQuery = String.join(" ", intent.semanticQuery(),
+                String.join(" ", intent.keywords()), String.join(" ", intent.visualKeywords()));
+        double[] semantic = chunks.stream().mapToDouble(chunk -> vectorScores.getOrDefault(
+                chunkKey(chunk), cosine(queryEmbedding, chunk.embedding()))).toArray();
+        double[] lexical = Bm25Ranking.scores(lexicalQuery, chunks.stream()
+                .map(chunk -> searchableText(chunk) + " " + visualText(chunk)).toList());
+        double[] fused = Bm25Ranking.fuse(semantic, lexical);
+        List<ScoredChunk> rankedChunks = java.util.stream.IntStream.range(0, chunks.size())
+                .filter(i -> fused[i] > 0)
+                .mapToObj(i -> new ScoredChunk(chunks.get(i), fused[i]))
+                .sorted(Comparator.comparingDouble(ScoredChunk::score).reversed()
+                        .thenComparingLong(c -> c.chunk().startTime()))
+                .limit(TOP_K).toList();
         if (!rankedChunks.isEmpty()) {
             telemetry.valueCurrent("retrievalTopScore",
                     rankedChunks.get(0).score());
             telemetry.incrementCurrent("retrievalChunks", rankedChunks.size());
         }
-        return rankedChunks.stream()
-                .flatMap(chunk -> chunk.chunk().rawSegments().stream()
-                        .map(segment -> scoreSegment(intent, chunk.score(), segment)))
+        var candidates = new LinkedHashMap<String, ScoredSegment>();
+        for (ScoredChunk chunk : rankedChunks) {
+            for (var segment : chunk.chunk().rawSegments()) {
+                String key = segment.startMs() + ":" + segment.endMs();
+                candidates.putIfAbsent(key, new ScoredSegment(segment, chunk.score(), 0, 0));
+            }
+        }
+        var segments = List.copyOf(candidates.values());
+        double[] transcript = Bm25Ranking.scores(lexicalQuery, segments.stream()
+                .map(s -> s.segment().transcript()).toList());
+        double[] visual = Bm25Ranking.scores(lexicalQuery, segments.stream()
+                .map(s -> String.join(" ", normalizedOcrTexts(s.segment()))).toList());
+        double[] transcriptRanks = Bm25Ranking.fuse(transcript);
+        double[] visualRanks = Bm25Ranking.fuse(visual);
+        double[] segmentScores = Bm25Ranking.fuse(segments.stream().mapToDouble(ScoredSegment::score).toArray(), transcript, visual);
+        return java.util.stream.IntStream.range(0, segments.size())
+                .mapToObj(i -> new ScoredSegment(segments.get(i).segment(), segmentScores[i], transcriptRanks[i], visualRanks[i]))
                 .sorted(Comparator.comparingDouble(ScoredSegment::score).reversed()
                         .thenComparingLong(result -> result.segment().startMs()))
                 .toList();
@@ -89,19 +110,6 @@ public class VideoEvidenceRetrievalService {
         }
     }
 
-    private double score(VideoRetrievalIntent intent,
-                         List<Double> queryEmbedding,
-                         Map<String, Double> vectorScores,
-                         VideoChunk chunk) {
-        Double remoteScore = vectorScores.get(chunkKey(chunk));
-        double semanticScore = remoteScore == null
-                ? cosine(queryEmbedding, chunk.embedding())
-                : remoteScore;
-        return semanticScore * 0.6
-                + termScore(intent.keywords(), searchableText(chunk)) * 0.25
-                + termScore(intent.visualKeywords(), visualText(chunk)) * 0.15;
-    }
-
     private Map<String, Double> vectorScores(Long mediaId, List<Double> queryEmbedding) {
         Map<String, Double> scores = new LinkedHashMap<>();
         if (mediaId == null || queryEmbedding.isEmpty()) return scores;
@@ -112,19 +120,6 @@ public class VideoEvidenceRetrievalService {
             telemetry.incrementCurrent("vectorStoreFallbacks", 1);
         }
         return scores;
-    }
-
-    private ScoredSegment scoreSegment(VideoRetrievalIntent intent,
-                                       double chunkScore,
-                                       VideoContext.VideoSegment segment) {
-        double transcriptScore = termScore(intent.keywords(), segment.transcript());
-        double visualScore = termScore(
-                intent.visualKeywords(), String.join(" ", normalizedOcrTexts(segment)));
-        return new ScoredSegment(
-                segment,
-                chunkScore * 0.55 + transcriptScore * 0.25 + visualScore * 0.20,
-                transcriptScore,
-                visualScore);
     }
 
     private VideoEvidenceHit toHit(ScoredSegment result) {
@@ -170,17 +165,6 @@ public class VideoEvidenceRetrievalService {
                 .filter(text -> !text.isBlank())
                 .distinct()
                 .toList();
-    }
-
-    private double termScore(List<String> terms, String content) {
-        String normalizedContent = normalize(content);
-        List<String> normalizedTerms = terms.stream()
-                .map(this::normalize)
-                .filter(term -> !term.isBlank())
-                .distinct()
-                .toList();
-        long matched = normalizedTerms.stream().filter(normalizedContent::contains).count();
-        return normalizedTerms.isEmpty() ? 0 : (double) matched / normalizedTerms.size();
     }
 
     private double cosine(List<Double> left, List<Double> right) {
@@ -229,10 +213,6 @@ public class VideoEvidenceRetrievalService {
                 .limit(8)
                 .toList();
         return terms.isEmpty() ? List.of(query.trim()) : terms;
-    }
-
-    private String normalize(String value) {
-        return value == null ? "" : value.toLowerCase().replaceAll("\\s+", "");
     }
 
     private String abbreviate(String value) {

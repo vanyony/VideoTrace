@@ -22,6 +22,8 @@ for raw in (root / ".env").read_text(encoding="utf-8").splitlines():
 if args.without_model:
     env["SILICONFLOW_API_KEY"] = "local-infrastructure-check-only"
     env["SILICONFLOW_BASE_URL"] = "http://127.0.0.1:1/v1"
+    env["LLM_API_KEY"] = "local-infrastructure-check-only"
+    env["LLM_BASE_URL"] = "http://127.0.0.1:1/v1"
     env["ASR_URL"] = "http://127.0.0.1:1/v1/audio/transcriptions"
     print("Infrastructure mode: remote model endpoints disabled.", flush=True)
 elif not env.get("SILICONFLOW_API_KEY"):
