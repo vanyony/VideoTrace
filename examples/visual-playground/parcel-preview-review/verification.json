@@ -1,0 +1,40 @@
+{
+  "sizeBytes": 1094833,
+  "durationMs": 15000,
+  "sha256": "1e06137e2ffb668011a78f1d58b52c99e8ebd56e9525a0dad3f07457a23bdc09",
+  "revision": 1,
+  "cacheHits": 0,
+  "sceneCount": 3,
+  "experimental": true,
+  "date": "2026-10-20",
+  "model": "deepseek-flash",
+  "sourceType": "synthetic parcel evidence; no real-video parsing",
+  "agentGeneratedStoryboard": true,
+  "agentGeneratedCode": false,
+  "width": 720,
+  "height": 1280,
+  "fps": 24,
+  "audioPresent": true,
+  "generationSeconds": null,
+  "resumedFromCheckpoint": true,
+  "toolCalls": [
+    "search_video",
+    "read_context",
+    "read_context",
+    "read_context",
+    "review_storyboard_preview",
+    "review_storyboard_preview",
+    "review_storyboard_preview",
+    "save_storyboard"
+  ],
+  "successfulReviewCount": 2,
+  "parameterValidationErrorCount": 1,
+  "lastReviewSuggestionCount": 2,
+  "finalDraftMatchesLastReview": true,
+  "lastReviewedDraftSha256": "bd9b844f1fe67cd40818d9c439ab6ffece888356d473d26d13ce6d629813b76a",
+  "limitations": [
+    "Sampled frames only; remaining parcel label overlap and recipient scale suggestions.",
+    "Synthetic evidence fixture, not Java/MinIO end-to-end verification.",
+    "Original generation wall-clock timing unavailable after checkpoint resume."
+  ]
+}

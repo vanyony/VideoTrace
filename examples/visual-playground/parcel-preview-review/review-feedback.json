@@ -1,0 +1,163 @@
+[
+  {
+    "advisoryOnly": true,
+    "cached": false,
+    "coverage": "Four sampled frames per selected scene, including a one-shot endpoint when present; not full-video, audio or factual verification",
+    "draftSha256": "3595d915da4b7cc8f6fcc55f67459e3b3174e675cc95cf7ccbf8dd38bf625c94",
+    "issues": [
+      {
+        "category": "layout",
+        "confidence": 0.55,
+        "elementIds": [
+          "s2_ptext",
+          "s2_parcel"
+        ],
+        "problem": "包裹文字位于橙色包裹左侧边缘附近，与包裹边界和卡车车头方向较近，视觉上略显拥挤，但文字本身未被裁切。",
+        "sceneId": "s2_move",
+        "severity": "suggestion",
+        "suggestion": "将 s2_ptext 向包裹中心内移约 4–8px，或缩小字号 1–2px，保持文字与包裹边缘的安全间距。",
+        "timestampMs": 750
+      },
+      {
+        "category": "layout",
+        "confidence": 0.5,
+        "elementIds": [
+          "s2_ptext",
+          "s2_truck",
+          "s2_parcel"
+        ],
+        "problem": "包裹文字与卡车驾驶室区域在视觉上贴近，包裹盒与车头重叠使文字所在区域显得拥挤，但文字仍可辨认。",
+        "sceneId": "s2_move",
+        "severity": "suggestion",
+        "suggestion": "在 2500ms 前后将包裹整体略向车斗后方移动 4–8px，或把 s2_ptext 居中于包裹盒内，避免文字靠近车头轮廓。",
+        "timestampMs": 2500
+      },
+      {
+        "category": "scale",
+        "confidence": 0.5,
+        "elementIds": [
+          "s3_person",
+          "s3_parcel",
+          "s3_plabel"
+        ],
+        "problem": "收件人图标相对包裹明显偏小，交接动作中人物主体不够突出，包裹与人物间距偏紧。",
+        "sceneId": "s3_deliver",
+        "severity": "suggestion",
+        "suggestion": "将 s3_person 放大约 10–15%，并把包裹与人物间距增加约 6–10px，使交接关系更清楚。",
+        "timestampMs": 4750
+      }
+    ],
+    "model": "deepseek-flash",
+    "previewId": "fbad33f6f50147a0c8da6d7e4840e5672e81508c8eb1518664ca49a374e23cce",
+    "sampledFrames": [
+      {
+        "sceneId": "s1_sort",
+        "sha256": "a9bf05d1648e23aa277f6c31be5934eb9e788095c46e3806f7e7230a60b77876",
+        "timestampsMs": [
+          750,
+          2500,
+          3600,
+          4250
+        ]
+      },
+      {
+        "sceneId": "s2_move",
+        "sha256": "eba9ecdb1b4aab674fd9775206b5bbe4a6c047511a21a7c7a25ce020ebd04367",
+        "timestampsMs": [
+          750,
+          2500,
+          4250,
+          4750
+        ]
+      },
+      {
+        "sceneId": "s3_deliver",
+        "sha256": "c500b7dbbf5a632dc9f9791375d19b98a136fd685c3612b9ec9fa9ad2fb46497",
+        "timestampsMs": [
+          750,
+          2500,
+          4250,
+          4750
+        ]
+      }
+    ],
+    "saveReviewedDraft": {
+      "reviewedPreviewId": "fbad33f6f50147a0c8da6d7e4840e5672e81508c8eb1518664ca49a374e23cce"
+    },
+    "summary": "三幕抽样帧中标题、字幕与主体整体清晰，未见文字被裁切或与主体严重遮挡。s1 包裹在 3600ms 后进入卡车并持续到 4250ms，未见提前消失；s2 卡车在 4250/4750ms 仍完整在画面内，未过早离开；s3 包裹与收件人全程可辨。主要可改进点是 s2 包裹文字在 750ms 时贴近包裹左边缘、2500ms 时与卡车驾驶室区域视觉拥挤，以及 s3 收件人图标相对包裹偏小、包裹与人物间距偏紧，影响交接动作的清晰度。"
+  },
+  {
+    "advisoryOnly": true,
+    "cached": false,
+    "coverage": "Four sampled frames per selected scene, including a one-shot endpoint when present; not full-video, audio or factual verification",
+    "draftSha256": "bd9b844f1fe67cd40818d9c439ab6ffece888356d473d26d13ce6d629813b76a",
+    "issues": [
+      {
+        "category": "layout",
+        "confidence": 0.8,
+        "elementIds": [
+          "s1_parcel",
+          "s1_ptext",
+          "s1_truck"
+        ],
+        "problem": "包裹移动到卡车位置后与车体重叠，包裹文字压在卡车车身上，文字与车体颜色对比不足，可读性下降。",
+        "sceneId": "s1_sort",
+        "severity": "warning",
+        "suggestion": "让包裹停在卡车车厢上方或前方留出间距，或调整包裹文字位置使其完全落在包裹色块内，避免与车体重叠。",
+        "timestampMs": 4250
+      },
+      {
+        "category": "scale",
+        "confidence": 0.55,
+        "elementIds": [
+          "s3_person",
+          "s3_parcel",
+          "s3_plabel"
+        ],
+        "problem": "收件人图标相对包裹明显偏小，交接关系不够突出，主体视觉权重偏弱。",
+        "sceneId": "s3_deliver",
+        "severity": "suggestion",
+        "suggestion": "适当放大收件人图标或缩短其与包裹的水平间距，使交接关系更清晰。",
+        "timestampMs": 4750
+      }
+    ],
+    "model": "deepseek-flash",
+    "previewId": "52cb0943e06083bfc040bb89a7a65d1e1e7a67853aaf0fa5bcbae467a155abd2",
+    "sampledFrames": [
+      {
+        "sceneId": "s1_sort",
+        "sha256": "a9bf05d1648e23aa277f6c31be5934eb9e788095c46e3806f7e7230a60b77876",
+        "timestampsMs": [
+          750,
+          2500,
+          3600,
+          4250
+        ]
+      },
+      {
+        "sceneId": "s2_move",
+        "sha256": "e5c6c5ebccf10b7243d8a27c445f79abab99fa8cd29969ce2723bee9541c226f",
+        "timestampsMs": [
+          750,
+          2500,
+          4250,
+          4750
+        ]
+      },
+      {
+        "sceneId": "s3_deliver",
+        "sha256": "e3e8dbaf4e62102730c283203cf81091b704e3333ccb49b945b3771f911eb951",
+        "timestampsMs": [
+          750,
+          2500,
+          4250,
+          4750
+        ]
+      }
+    ],
+    "saveReviewedDraft": {
+      "reviewedPreviewId": "52cb0943e06083bfc040bb89a7a65d1e1e7a67853aaf0fa5bcbae467a155abd2"
+    },
+    "summary": "抽样帧显示三幕标题与字幕均未被遮挡，s2包裹文字在盒内居中且与车头有间距，s3收件人与包裹间距清晰。s1中包裹在4250ms与卡车重叠，包裹文字被压在车体上，可读性下降；s3收件人图标相对包裹偏小，交接关系不够突出。其余未见明确裁切或对比度问题。"
+  }
+]

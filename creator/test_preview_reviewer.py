@@ -1,6 +1,7 @@
 from contextlib import closing
 import copy
 import json
+from hashlib import sha256
 from pathlib import Path
 import sqlite3
 import tempfile
@@ -11,8 +12,8 @@ import unittest
 from langgraph.checkpoint.sqlite import SqliteSaver
 
 from .agent import CreatorAgent, REVIEW
-from .models import Storyboard
-from .preview_reviewer import PreviewReviewer
+from .models import Storyboard, patch_storyboard
+from .preview_reviewer import PreviewReviewer, sample_times, overlap_hints
 from .store import Store
 from .test_creator import Java, completion, operation, settings, storyboard
 
@@ -39,7 +40,7 @@ class PreviewReviewerTests(unittest.TestCase):
             cached = reviewer.review(operation(), board, ["s_1"], "排版", 30)
             self.assertEqual(len(calls), 1)
             self.assertTrue(cached["cached"])
-            self.assertEqual(result["sampledFrames"][0]["timestampsMs"], [2000, 5000, 8000])
+            self.assertEqual(result["sampledFrames"][0]["timestampsMs"], [1500, 5000, 8500, 9500])
             self.assertTrue(result["advisoryOnly"])
             self.assertNotIn("base64", json.dumps(result))
             self.assertTrue((Path(directory)/"preview-reviews"/result["previewId"]/"s_1.jpg").is_file())
@@ -58,6 +59,9 @@ class PreviewReviewerTests(unittest.TestCase):
                     reviewer.review(operation(), board, ids, "", 30)
             with self.assertRaisesRegex(ValueError, "unsampled"):
                 reviewer.review(operation(), board, ["s_1"], "", 30)
+            issue.update(sceneId="s_1", elementIds=["missing-node"])
+            with self.assertRaisesRegex(ValueError, "unknown element"):
+                reviewer.review(operation(), board, ["s_1"], "", 30)
             self.assertFalse(list(Path(directory).rglob("result.json")))
 
     def test_agent_feedback_repair_then_save_and_checkpoint_reuse(self):
@@ -72,7 +76,8 @@ class PreviewReviewerTests(unittest.TestCase):
             reviewed = []
             def review(op, board, scene_ids, focus, timeout):
                 reviewed.append(board.title)
-                return {"summary": "建议缩短标题" if len(reviewed)==1 else "未发现明确问题", "issues": []}
+                return {"summary": "建议缩短标题" if len(reviewed)==1 else "未发现明确问题", "issues": [],
+                        "previewId": f"preview-{len(reviewed)}", "draftSha256": sha256(board.model_dump_json().encode()).hexdigest()}
             def model(messages, tools, timeout):
                 self.assertIn("review_storyboard_preview", [t["function"]["name"] for t in tools])
                 return next(responses)
@@ -111,20 +116,75 @@ class PreviewReviewerTests(unittest.TestCase):
         self.assertEqual(len(calls), 2)
         self.assertIn("not available", traces[-1]["error"])
 
-    def test_preview_failure_does_not_prevent_human_review_draft(self):
-        with tempfile.TemporaryDirectory() as directory, closing(sqlite3.connect(":memory:", check_same_thread=False)) as connection:
-            store = Store(Path(directory)/"ops.sqlite")
-            responses = iter([completion("search_video", {"query": "重点"}),
-                completion("review_storyboard_preview", {"storyboard": storyboard()}),
-                completion("save_storyboard", {"storyboard": storyboard()})])
-            def unavailable(*args):
-                raise ValueError("preview vision unavailable")
-            agent = CreatorAgent(settings(directory), store, Java(), SqliteSaver(connection), model=lambda *_: next(responses),
-                                 reviewer=SimpleNamespace(review=unavailable))
-            self.assertEqual(agent.run(operation()), storyboard())
-            with store.connect() as db:
-                trace = json.loads(db.execute("SELECT result FROM tool_traces WHERE name='review_storyboard_preview'").fetchone()[0])
-            self.assertIn("unavailable", trace["error"])
+    def tool_agent(self):
+        traces = []
+        def review(op, board, *args):
+            return {"previewId": "checked", "draftSha256": sha256(board.model_dump_json().encode()).hexdigest(), "issues": []}
+        agent = CreatorAgent(settings("."), SimpleNamespace(trace=lambda *a: traces.append(a[-1]), emit=lambda *a: None),
+            None, None, model=lambda *_: None, reviewer=SimpleNamespace(review=review))
+        state = {"operation": operation().model_dump(), "evidence_ids": ["e_0_10000"], "messages": [],
+                 "tool_count": 0, "repairs": 0, "deadline": time.time()+30}
+        return agent, state, traces
+
+    @staticmethod
+    def call(name, args):
+        return {"id": "tool", "function": {"name": name, "arguments": json.dumps(args)}}
+
+    def test_changed_draft_cannot_finish_graph_and_reference_saves_frozen_copy(self):
+        agent, state, traces = self.tool_agent()
+        state["calls"] = [self.call("review_storyboard_preview", {"storyboard": storyboard()})]
+        state.update(agent.tools_node(state))
+        changed = copy.deepcopy(storyboard())
+        changed["scenes"][0]["headline"] = "检查后的新改动"
+        state["calls"] = [self.call("save_storyboard", {"storyboard": changed})]
+        result = agent.tools_node(state)
+        self.assertIsNone(result["candidate"])
+        self.assertEqual(result["repairs"], 0)
+        self.assertIn("changed after preview", traces[-1]["error"])
+        state.update(result)
+        state["calls"] = [self.call("save_storyboard", {"reviewedPreviewId": "unknown"})]
+        self.assertIsNone(agent.tools_node(state)["candidate"])
+        state["preview_calls"] = 2  # Review budget used; the checked snapshot is still saveable.
+        state["calls"] = [self.call("save_storyboard", {"reviewedPreviewId": "checked"})]
+        self.assertEqual(agent.tools_node(state)["candidate"], storyboard())
+        self.assertTrue(traces[-1]["previewReview"]["matchesSavedDraft"])
+
+    def test_full_draft_requires_successful_preview_and_failed_review_cannot_bypass(self):
+        agent, state, traces = self.tool_agent()
+        full = storyboard()
+        full["scenes"][0]["canvas"] = {"layout": "full", "elements": [{"id": "a", "kind": "circle"}]}
+        state["calls"] = [self.call("save_storyboard", {"storyboard": full})]
+        self.assertIsNone(agent.tools_node(state)["candidate"])
+        self.assertIn("successful preview", traces[-1]["error"])
+        state["preview_calls"] = 1
+        state["calls"] = [self.call("save_storyboard", {"storyboard": storyboard()})]
+        self.assertIsNone(agent.tools_node(state)["candidate"])
+
+    def test_revision_cannot_bypass_preview_scope_or_checked_version(self):
+        agent, state, traces = self.tool_agent()
+        old = storyboard()
+        parameters = {"instruction": "只修改第一幕", "storyboard": old, "baseRevision": 1, "targetSceneIds": ["s_1"]}
+        state["operation"] = operation(type="REVISE", parameters=parameters).model_dump()
+        patch = {"baseRevision": 1, "updates": [{"sceneId": "s_1", "headline": "新标题"}]}
+        checked = patch_storyboard(old, patch)
+        state["calls"] = [self.call("review_storyboard_preview", {"storyboard": checked})]
+        state.update(agent.tools_node(state))
+        patch["updates"][0]["headline"] = "未经检查的新标题"
+        state["calls"] = [self.call("patch_scenes", patch)]
+        self.assertIsNone(agent.tools_node(state)["candidate"])
+        state["calls"] = [self.call("patch_scenes", {"baseRevision": 1, "reviewedPreviewId": "checked"})]
+        self.assertEqual(agent.tools_node(state)["candidate"]["scenes"][0]["headline"], "新标题")
+
+    def test_sampling_action_endpoint_and_concrete_overlap_hints(self):
+        data = storyboard()
+        data["scenes"][0]["canvas"] = {"layout": "full", "elements": [
+            {"id": "caption", "kind": "text", "space": "screen", "text": "说明", "x": 360, "y": 1100, "width": 500, "height": 100},
+            {"id": "drop", "kind": "sprite", "sprite": "droplet", "width": 90, "height": 90,
+             "curve": {"points": [{"x": 360, "y": 600}, {"x": 360, "y": 800}, {"x": 360, "y": 1000}, {"x": 360, "y": 1100}], "endMs": 6000}}]}
+        scene = Storyboard.model_validate(data).scenes[0]
+        self.assertIn(6000, sample_times(scene))
+        hint = overlap_hints(scene, sample_times(scene))[0]
+        self.assertEqual((hint["textId"], hint["objectId"]), ("caption", "drop"))
 
 
 if __name__ == "__main__":
