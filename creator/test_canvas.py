@@ -4,7 +4,7 @@ import unittest
 import numpy as np
 from pydantic import ValidationError
 
-from .canvas import state_at
+from .canvas import state_at, continued_scene, resolved_scenes, camera_at
 from .canvas_models import CanvasElement
 from .models import Scene, validate_candidate, patch_storyboard
 from .renderer import frame
@@ -113,6 +113,91 @@ class CanvasTests(unittest.TestCase):
         self.assertIn("source", message)
         self.assertIn("other_label", message)
         self.assertIn("need height", message)
+
+    def test_components_curves_rotation_and_continuation(self):
+        data = self.board()
+        curve = {"points": [{"x": 180, "y": 800}, {"x": 200, "y": 640},
+                             {"x": 400, "y": 500}, {"x": 500, "y": 550}], "endMs": 2000}
+        data["scenes"][0]["canvas"] = {"elements": [
+            {"id": "water", "kind": "sprite", "sprite": "droplet", "width": 50, "height": 60, "curve": curve},
+            {"id": "sun", "kind": "sprite", "sprite": "sun", "x": 360, "y": 550,
+             "width": 90, "height": 90, "pulse": True, "keyframes": [{"timeMs": 2000, "rotation": 90}]},
+            {"id": "flow", "kind": "path", "curve": {**curve, "loop": True}},
+        ]}
+        data["scenes"][1]["canvas"] = {"continuePrevious": True, "elements": [
+            {"id": "water", "kind": "sprite", "sprite": "droplet", "width": 50, "height": 60}]}
+        board = validate_candidate(data, operation(), {"e_0_10000"})
+        from .models import Storyboard
+        scenes = resolved_scenes(Storyboard.model_validate(board))
+        self.assertEqual(state_at(scenes[0].canvas.elements[0], 2000)["x"], 500)
+        self.assertEqual(scenes[1].canvas.elements[0].x, 500)
+        self.assertEqual(scenes[1].canvas.elements[0].y, 550)
+        self.assertAlmostEqual(state_at(scenes[0].canvas.elements[1], 1000)["rotation"], 45)
+        self.assertFalse(np.array_equal(frame(scenes[0], .3), frame(scenes[0], 1.3)))
+        for sprite in ("sun", "earth", "cloud", "droplet", "factory", "truck"):
+            from .sprites import sprite_image
+            self.assertIsNotNone(sprite_image(sprite, "#ffe080", "#3e98bd").getbbox())
+
+    def test_animation_rejects_unsafe_paths_and_inherited_bounds(self):
+        for bad in (
+            {"kind": "path"},
+            {"kind": "sprite", "sprite": "python-code"},
+            {"kind": "sprite", "curve": {"points": [{"x": 50, "y": 400}]*4, "endMs": 2000}},
+            {"kind": "path", "curve": {"points": [{"x": 200, "y": 600}]*4, "endMs": 11000}},
+            {"kind": "path", "curve": {"points": [{"x": 200, "y": 600}]*4, "endMs": 2000}, "pulse": True},
+        ):
+            data = self.board()
+            data["scenes"][0]["canvas"] = {"elements": [{"id": "bad", **bad}]}
+            with self.assertRaises(ValueError):
+                validate_candidate(data, operation(), {"e_0_10000"})
+        data = self.board()
+        data["scenes"][0]["canvas"] = {"elements": [{"id": "same", "kind": "circle", "x": 130, "y": 500, "width": 80}]}
+        data["scenes"][1]["canvas"] = {"continuePrevious": True, "elements": [
+            {"id": "same", "kind": "circle", "width": 300}]}
+        with self.assertRaisesRegex(ValueError, "animated bounds"):
+            validate_candidate(data, operation(), {"e_0_10000"})
+
+    def test_scoped_revision_preserves_legacy_canvas_json(self):
+        old = self.board()
+        old["scenes"][1]["canvas"] = example_canvas()
+        # This old document intentionally lacks all newly introduced defaults.
+        revised = patch_storyboard(old, {"baseRevision": 1, "updates": [
+            {"sceneId": "s_1", "headline": "只修改这一幕"}]})
+        op = operation(type="REVISE", parameters={"instruction": "只改第一幕", "storyboard": old,
+            "baseRevision": 1, "targetSceneIds": ["s_1"]})
+        accepted = validate_candidate(revised, op, set())
+        self.assertEqual(accepted["scenes"][1], old["scenes"][1])
+
+    def test_full_canvas_camera_and_offscreen_entrance(self):
+        data = self.board()
+        data["scenes"][0]["canvas"] = {"layout": "full", "background": "#eef6ed", "camera": [
+            {"timeMs": 0, "x": 360, "y": 640, "zoom": 1},
+            {"timeMs": 2000, "x": 480, "y": 600, "zoom": 1.4}], "elements": [
+            {"id": "sun", "kind": "sprite", "sprite": "sun", "x": -160, "y": 500, "width": 220, "height": 220,
+             "keyframes": [{"timeMs": 1000, "x": 300}]},
+            {"id": "title", "kind": "text", "text": "出发", "space": "screen", "x": 360, "y": 170, "width": 500, "height": 180, "fontSize": 110},
+            {"id": "sea", "kind": "sprite", "sprite": "water", "x": 360, "y": 1150, "width": 900, "height": 450}]}
+        board = validate_candidate(data, operation(), {"e_0_10000"})
+        scene = Scene.model_validate(board["scenes"][0])
+        self.assertEqual(camera_at(scene.canvas, 2000)["zoom"], 1.4)
+        self.assertAlmostEqual(camera_at(scene.canvas, 1000)["x"], 420)
+        self.assertTrue(np.any(frame(scene, 0) != frame(scene, 2)))
+        self.assertTrue(np.array_equal(frame(scene, 0)[90:250], frame(scene, 2)[90:250]))
+        next_scene = scene.model_copy(update={"canvas": scene.canvas.model_copy(update={"camera": [], "continuePrevious": True})})
+        resolved = continued_scene(next_scene, scene)
+        self.assertEqual(camera_at(resolved.canvas, 0)["x"], 480)
+        self.assertEqual(camera_at(resolved.canvas, 0)["zoom"], 1.4)
+
+    def test_full_canvas_rejects_resource_and_timeline_overflow(self):
+        for extra in (
+            {"camera": [{"timeMs": 11000, "zoom": 1}]},
+            {"camera": [{"timeMs": 2000}, {"timeMs": 1000}]},
+            {"elements": [{"id": "huge", "kind": "circle", "width": 1280, "height": 1280, "scale": 4}]},
+        ):
+            data = self.board()
+            data["scenes"][0]["canvas"] = {"layout": "full", "elements": [{"id": "a", "kind": "circle"}], **extra}
+            with self.assertRaises(ValueError):
+                validate_candidate(data, operation(), {"e_0_10000"})
 
 
 if __name__ == "__main__":

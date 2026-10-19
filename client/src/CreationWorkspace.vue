@@ -24,7 +24,7 @@
           <p class="page-eyebrow">场景 {{ index + 1 }} · {{ scene.durationMs / 1000 }} 秒 · {{ templates[scene.template] || scene.template }}</p>
           <h4>{{ scene.headline }}</h4><ul><li v-for="(point, pointIndex) in scene.points" :key="pointIndex">{{ point }}</li></ul>
           <p v-if="scene.visual" class="creation-source">二维图解：{{ visualLayouts[scene.visual.layout] }} · {{ scene.visual.theme }} · {{ scene.visual.motion }}<br>{{ scene.visual.items.map(item => item.label).join(' / ') }}</p>
-          <p v-if="scene.canvas" class="creation-source">自由画布：{{ scene.canvas.elements.length }} 个元素 · {{ scene.canvas.elements.reduce((sum, item) => sum + (item.keyframes?.length || 0), 0) }} 个关键帧<br>{{ scene.canvas.elements.filter(item => item.text).map(item => item.text).join(' / ') }}</p>
+          <p v-if="scene.canvas" class="creation-source">二维画布：{{ scene.canvas.elements.length }} 个元素 · {{ scene.canvas.elements.reduce((sum, item) => sum + (item.keyframes?.length || 0), 0) }} 个关键帧<span v-if="scene.canvas.continuePrevious"> · 延续上一幕</span><br>{{ scene.canvas.elements.filter(item => item.kind === 'sprite').map(item => ({ sun: '太阳', earth: '地球', cloud: '云', droplet: '水滴', factory: '工厂', truck: '卡车' }[item.sprite] || item.sprite)).join(' / ') }}<br>{{ scene.canvas.elements.filter(item => item.text).map(item => item.text).join(' / ') }}</p>
           <p v-if="scene.motion" class="creation-source">{{ scene.motion.style === 'launch' ? '发布会拼版' : '动态文字' }} · {{ scene.motion.words.join(' / ') }} · {{ scene.motion.transition }}</p>
           <p class="creation-source">原视频证据：<span v-for="reference in scene.sourceRefs" :key="reference">{{ sourceTimestamp(reference) }} </span></p>
         </article></div>

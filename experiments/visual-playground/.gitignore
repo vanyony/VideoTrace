@@ -1,0 +1,8 @@
+node_modules/
+public/
+bundle/
+journey/
+*.mp4
+frame-*.png
+timing.json
+verification.json

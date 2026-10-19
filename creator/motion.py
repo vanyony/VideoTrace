@@ -2,6 +2,7 @@
 from functools import lru_cache
 from pathlib import Path
 import math
+import hashlib
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
@@ -28,16 +29,23 @@ def rgb(value):
     return tuple(int(value[i:i + 2], 16) for i in (1, 3, 5))
 
 
-@lru_cache(maxsize=3)
-def backdrop(accent):
+@lru_cache(maxsize=12)
+def backdrop(accent, variant=0):
     y, x = np.mgrid[0:HEIGHT, 0:WIDTH]
     a, b = ACCENTS[accent]
-    glow = np.exp(-((x - 600) ** 2 / 210000 + (y - 200) ** 2 / 400000))
+    glow = np.exp(-((x - (600 if variant % 2 == 0 else 100)) ** 2 / 210000 + (y - (200 if variant < 2 else 850)) ** 2 / 400000))
     glow2 = np.exp(-((x - 30) ** 2 / 130000 + (y - 950) ** 2 / 170000))
     pixels = np.zeros((HEIGHT, WIDTH, 3), dtype=np.float32) + (8, 9, 18)
     pixels += glow[:, :, None] * np.array(rgb(a)) * .19
     pixels += glow2[:, :, None] * np.array(rgb(b)) * .075
-    return Image.fromarray(np.uint8(np.clip(pixels, 0, 255))).convert("RGBA")
+    image = Image.fromarray(np.uint8(np.clip(pixels, 0, 255))).convert("RGBA")
+    if variant == 2:
+        pen = ImageDraw.Draw(image)
+        for xx in range(0, WIDTH, 80):
+            pen.line((xx, 0, xx, HEIGHT), fill=(25, 27, 41, 255))
+        for yy in range(0, HEIGHT, 80):
+            pen.line((0, yy, WIDTH, yy), fill=(25, 27, 41, 255))
+    return image
 
 
 def ease(value):
@@ -99,22 +107,26 @@ def card(image, box, title, subtitle, accent, progress, feature=False):
     image.alpha_composite(layer)
 
 
-def motion_frame(scene, t):
+def motion_frame(scene, t, previous=None):
     design = scene.motion
     accent, secondary = ACCENTS[design.accent]
-    image = backdrop(design.accent).copy()
+    variant = hashlib.sha256(scene.headline.encode()).digest()[0] % 4
+    image = backdrop(design.accent, variant).copy()
+    # Gentle camera drift keeps the background moving after the entrance animation.
+    drift = round(5 * math.sin(t * .7))
+    image = image.crop((12 + drift, 12, WIDTH - 12 + drift, HEIGHT - 12)).resize((WIDTH, HEIGHT), Image.Resampling.BILINEAR)
     duration = scene.durationMs / 1000
     draw = ImageDraw.Draw(image)
     draw.text((48, 58), design.eyebrow.upper(), font=fitted(design.eyebrow.upper(), 20, 550), fill="#a39ac3")
-    draw.text((622, 54), "↗", font=display_font(28), fill="#eeeaff")
+
     # Slow ambient shapes keep the frame alive without distracting from the message.
     x = 580 + math.sin(t * .7) * 18
     draw.line((x - 35, 110, x + 20, 165), fill="#625995", width=2)
     if design.style == "launch":
-        top = 190
+        top = 190 if variant % 2 == 0 else 240
         for i, word in enumerate(design.words):
-            text_reveal(image, word, 48, top + i * 128, 108, "#f7f5ff" if i == 0 else accent,
-                        (t - i * .19) / .55, 624)
+            word_frame(image, scene, previous, word, i, t, 48, top + i * 128, 108,
+                       "#f7f5ff" if i == 0 else accent)
         n = len(design.words)
         caption_y = top + n * 128 + 18
         pen = ImageDraw.Draw(image)
@@ -122,10 +134,20 @@ def motion_frame(scene, t):
             pen.text((50, caption_y + i * 39), line, font=display_font(28), fill="#c3bed6")
         captions = scene.points or [scene.headline]
         card_y = max(650, caption_y + 112)
-        card(image, (48, card_y, 672, card_y + 200), "01 / " + design.words[0], captions[0], accent, (t - .55) / .6, True)
-        for i, caption in enumerate(captions[1:3]):
-            card(image, (48 + i * 320, card_y + 216, 352 + i * 320, card_y + 392),
-                 f"0{i+2}", caption, secondary, (t - .9 - i * .15) / .6)
+        if variant % 2 and len(captions) > 1:
+            # Split cards balance the large title; a third item becomes a wide closing card.
+            for i, caption in enumerate(captions[:2]):
+                card(image, (48 + i * 320, card_y, 352 + i * 320, card_y + 220),
+                     design.words[min(i, n - 1)], caption, accent if i == 0 else secondary,
+                     (t - .55 - i * .28) / .6)
+            if len(captions) == 3:
+                card(image, (48, card_y + 236, 672, card_y + 392), design.words[-1],
+                     captions[2], secondary, (t - 1.15) / .6)
+        else:
+            card(image, (48, card_y, 672, card_y + 200), design.words[0], captions[0], accent, (t - .55) / .6, True)
+            for i, caption in enumerate(captions[1:3]):
+                card(image, (48 + i * 320, card_y + 216, 352 + i * 320, card_y + 392),
+                     design.words[min(i + 1, n - 1)], caption, secondary, (t - .9 - i * .32) / .6)
     else:
         words = design.words
         y0 = 280 if len(words) < 3 else 230
@@ -133,13 +155,8 @@ def motion_frame(scene, t):
         text_reveal(image, words[0], 48, y0 - 125, 112, "#514b6e", t / .6, 624, True)
         for i, word in enumerate(words):
             y = y0 + i * 165
-            text_reveal(image, word, 48 + (i % 2) * 18, y, 136, accent if i % 2 else "#f5f3ff",
-                        (t - i * .28) / .55, 610)
-        pen = ImageDraw.Draw(image)
-        highlight = min(len(words) - 1, int(max(0, t - .8) / max(.55, (duration - 1) / len(words))))
-        yy = y0 + highlight * 165 + 140
-        p = ease((t - .6) / .6)
-        pen.rounded_rectangle((48, yy, 48 + max(4, 570 * p), yy + 7), 3, fill=secondary)
+            word_frame(image, scene, previous, word, i, t, 48 + (i % 2) * 18, y, 136,
+                       accent if i % 2 else "#f5f3ff")
         # Masked stripe crosses the lettering, echoing the split-type reference.
         if 1.0 < t < 1.55:
             stripe_y = y0 + (t - 1.0) / .55 * (len(words) * 165)
@@ -151,8 +168,36 @@ def motion_frame(scene, t):
         if scene.points:
             line = scene.points[0]
             ImageDraw.Draw(image).text((50, 1090), line, font=fitted(line, 23, 600), fill="#8f8aa5")
-    draw = ImageDraw.Draw(image)
-    draw.text((48, 1200), "VIDEOTRACE  /  CREATE IN MOTION", font=display_font(15), fill="#77718e")
-    draw.line((48, 1174, 672, 1174), fill="#28243b", width=2)
-    draw.line((48, 1174, 48 + 624 * min(1, max(0, t / duration)), 1174), fill=accent, width=2)
     return np.asarray(image.convert("RGB"))
+
+
+def word_position(scene, index):
+    variant = hashlib.sha256(scene.headline.encode()).digest()[0] % 4
+    if scene.motion.style == "launch":
+        return 48, (190 if variant % 2 == 0 else 240) + index * 128, 108
+    return 48 + (index % 2) * 18, (280 if len(scene.motion.words) < 3 else 230) + index * 165, 136
+
+
+def word_frame(image, scene, previous, word, index, t, x, y, size, color):
+    shared = previous and previous.motion and word in previous.motion.words
+    if shared and t < .65:
+        px, py, ps = word_position(previous, previous.motion.words.index(word))
+        p = ease(t / .65)
+        text_reveal(image, word, round(px + (x - px) * p), py + (y - py) * p,
+                    round(ps + (size - ps) * p), color, 1, 610)
+    else:
+        # A subtle late lift supplies a second beat without perpetual bouncing.
+        beat = ease((t - scene.durationMs / 2000) / .5)
+        text_reveal(image, word, x, y - 6 * beat, size, color,
+                    1 if shared else (t - index * .25) / .55, 610)
+
+
+def scene_transition(previous_scene, scene, previous_frame, t, layout=None):
+    from .renderer import frame
+    shared = (previous_scene and previous_scene.motion and scene.motion
+              and set(previous_scene.motion.words) & set(scene.motion.words))
+    if not shared:
+        return transition_frame(previous_frame, frame(scene, t, layout), t,
+                                scene.motion.transition if scene.motion else "fade")
+    # Avoid duplicating the moving word in a frozen predecessor screenshot.
+    return motion_frame(scene, t, previous_scene)

@@ -162,7 +162,15 @@ def validate_candidate(data: dict, operation: Operation, evidence_ids: set[str])
             raise ValueError("non-target scenes, order and global fields must remain unchanged")
     from .renderer import validate_layout
     validate_layout(board)
-    return board.model_dump()
+    result = board.model_dump()
+    if old and targets:
+        # Keep historical JSON byte-for-field equivalent outside the edit scope:
+        # adding optional canvas defaults must not trip Java's exact scope check.
+        import copy
+        original = {scene["sceneId"]: scene for scene in old["scenes"]}
+        result["scenes"] = [scene if scene["sceneId"] in targets else copy.deepcopy(original[scene["sceneId"]])
+                            for scene in result["scenes"]]
+    return result
 
 
 def patch_storyboard(old: dict, patch: dict) -> dict:

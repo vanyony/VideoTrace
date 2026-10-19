@@ -4,7 +4,7 @@ import numpy as np
 
 from .models import Scene, validate_candidate
 from .renderer import frame
-from .motion import transition_frame
+from .motion import transition_frame, scene_transition, word_position
 from .test_creator import storyboard, operation
 
 
@@ -21,6 +21,22 @@ class MotionTests(unittest.TestCase):
             self.assertEqual(b.shape, (1280, 720, 3))
             self.assertTrue(np.any(a != b))
         self.assertNotIn("motion", Scene.model_validate(storyboard()["scenes"][0]).model_dump())
+
+    def test_shared_word_moves_and_background_has_no_footer_bar(self):
+        from copy import deepcopy
+        original = deepcopy(storyboard()["scenes"][0])
+        original["motion"] = {"style": "launch", "words": ["内容", "证据"]}
+        previous = Scene.model_validate(original)
+        updated = deepcopy(original)
+        updated["motion"] = {"style": "kinetic", "words": ["证据", "作品"]}
+        current = Scene.model_validate(updated)
+        self.assertNotEqual(word_position(previous, 1), word_position(current, 0))
+        a = scene_transition(previous, current, frame(previous, 2), 0)
+        b = scene_transition(previous, current, frame(previous, 2), .65)
+        self.assertTrue(np.any(a != b))
+        # Footer contains background only, with no former horizontal progress track.
+        late = frame(current, 1.8)
+        self.assertLess(np.abs(late[1174].astype(int) - late[1173].astype(int)).max(), 5)
 
     def test_rejects_long_words_and_multiple_modes(self):
         scene = storyboard()["scenes"][0]

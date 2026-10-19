@@ -104,7 +104,7 @@ def diagram_frame(scene, t):
         draw.ellipse((px - 5, py - 5, px + 5, py + 5), fill=accent)
     for i, (item, (x, y)) in enumerate(zip(visual.items, coords)):
         appear = min(1, max(0, (t - i * .25) / .5))
-        if visual.motion == "reveal" and appear <= 0:
+        if visual.motion in ("reveal", "draw") and appear <= 0:
             continue
         if visual.motion == "slide":
             x -= (1 - appear) * 65
@@ -129,8 +129,6 @@ def diagram_frame(scene, t):
             draw.text((76, y), line, font=font(30), fill=muted)
             y += 40
         y += 12
-    draw.rounded_rectangle((64, 1140, 656, 1146), 3, fill=bg)
-    draw.rounded_rectangle((64, 1140, 64 + max(3, 592 * min(t / (scene.durationMs / 1000), 1)), 1146), 3, fill=accent)
     if scene.animation == "fade" and t < .5:
         image = Image.blend(Image.new("RGB", image.size, bg), image, max(0, t / .5))
     return np.asarray(image)

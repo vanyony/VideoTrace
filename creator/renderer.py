@@ -12,7 +12,7 @@ from PIL import Image, ImageDraw, ImageFont
 from .models import Storyboard
 
 WIDTH, HEIGHT, FPS = 720, 1280, 24
-TEMPLATE_VERSION = "motion-v4.2"
+TEMPLATE_VERSION = "playground-v7.1"
 
 
 def font_path() -> str:
@@ -78,8 +78,9 @@ def scene_layout(scene):
 
 
 def validate_layout(board: Storyboard):
+    from .canvas import resolved_scenes
     errors = []
-    for scene in board.scenes:
+    for scene in resolved_scenes(board):
         try:
             scene_layout(scene)
         except ValueError as error:
@@ -152,10 +153,12 @@ def render(board: Storyboard, directory: Path) -> dict:
     hits = 0
     paths = []
     font_digest = sha256(Path(font_path()))
-    styled = any(scene.motion for scene in board.scenes)
-    for index, scene in enumerate(board.scenes):
+    from .canvas import resolved_scenes
+    scenes = resolved_scenes(board)
+    styled = any(scene.motion for scene in scenes)
+    for index, scene in enumerate(scenes):
         visual = scene.model_dump(exclude={"sceneId", "sourceRefs"})
-        predecessor = board.scenes[index - 1] if styled and index else None
+        predecessor = scenes[index - 1] if styled and index else None
         predecessor_visual = predecessor.model_dump(exclude={"sceneId", "sourceRefs"}) if predecessor else None
         key = hashlib.sha256(json.dumps([visual, predecessor_visual, TEMPLATE_VERSION, font_digest, WIDTH, HEIGHT, FPS], sort_keys=True).encode()).hexdigest()
         path = cache / f"{key}.mp4"
@@ -169,9 +172,9 @@ def render(board: Storyboard, directory: Path) -> dict:
             temporary = cache / f"{key}.tmp.mp4"
             layout = scene_layout(scene)
             previous_frame = frame(predecessor, predecessor.durationMs / 1000 - 1 / FPS) if predecessor else None
-            from .motion import transition_frame
-            clip = VideoClip(lambda t, s=scene, layout=layout, previous=previous_frame:
-                             transition_frame(previous, frame(s, t, layout), t, s.motion.transition if s.motion else "fade"),
+            from .motion import scene_transition
+            clip = VideoClip(lambda t, s=scene, layout=layout, previous=previous_frame, pred=predecessor:
+                             scene_transition(pred, s, previous, t, layout),
                              duration=scene.durationMs / 1000)
             try:
                 clip.write_videofile(str(temporary), fps=FPS, codec="libx264", audio=False,

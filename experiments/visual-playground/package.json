@@ -1,0 +1,17 @@
+{
+  "name": "videotrace-remotion-probe",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@remotion/bundler": "^4.0.537",
+    "@remotion/renderer": "^4.0.537",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "remotion": "^4.0.537"
+  },
+  "scripts": {
+    "preview:journey": "node render-journey.mjs --stills-only",
+    "render:journey": "node render-journey.mjs",
+    "render:comparison": "node render.mjs"
+  }
+}
