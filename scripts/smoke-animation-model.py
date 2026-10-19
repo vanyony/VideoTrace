@@ -1,6 +1,7 @@
 """Real model/tool loop on labelled water-cycle fixture evidence; not uploaded-video E2E."""
 from contextlib import closing
 import argparse
+from hashlib import sha256
 from dataclasses import replace
 import json
 from pathlib import Path
@@ -39,6 +40,7 @@ class WaterCycleEvidence:
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--full", action="store_true", help="Exercise full-screen composition and camera motion")
+    parser.add_argument("--review", action="store_true", help="Exercise real multimodal preview feedback before saving")
     args = parser.parse_args()
     load_dotenv(ROOT / '.env')
     output = ROOT / 'creator/data/animation-model-smoke' / uuid.uuid4().hex[:8]
@@ -71,6 +73,8 @@ def main():
             "所有标题/字幕必须space=screen：大标题建议(360,160)宽620高180，正文说明(360,1160)宽620高100，不要混在主体中间。"
             "water建议宽1100高500、中心(360,1150)，让水面铺到画面底部，不要画成悬空矩形条。太阳和云避开顶部350像素标题区。"
         )
+    if args.review:
+        instruction += "保存分镜前必须至少调用一次review_storyboard_preview查看实际渲染画面，按反馈判断是否修改；最多检查两次，不要为纯审美偏好无限返工。"
     operation = Operation.model_validate({"taskId": "water-cycle-demo", "operationId": 'op-' + output.name,
         "attempt": 1, "ownerId": 1, "mediaId": 1, "sourceVersion": "fixture", "type": "CREATE",
         "parameters": {"requirement": instruction, "durationSeconds": 15}})
@@ -97,6 +101,11 @@ def main():
         "curveCount": sum(e.curve is not None for e in nodes)}
     report["layouts"] = [s.canvas.layout for s in board.scenes]
     report["cameraKeyframes"] = sum(len(s.canvas.camera) for s in board.scenes)
+    report["previewReviews"] = [json.loads(r['result']) for r in traces if r['name']=='review_storyboard_preview']
+    successful_reviews = [r for r in report["previewReviews"] if 'previewId' in r]
+    report["finalDraftMatchesLastReview"] = bool(successful_reviews and successful_reviews[-1]['draftSha256'] == sha256(board.model_dump_json().encode()).hexdigest())
+    if args.review:
+        assert any('previewId' in r for r in report["previewReviews"]), 'no successful multimodal preview review'
     if args.full:
         assert all(s.canvas.layout == "full" for s in board.scenes)
         assert report["cameraKeyframes"] >= 2

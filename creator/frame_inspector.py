@@ -17,12 +17,16 @@ class Observation(BaseModel):
     inferences: str = Field(max_length=2000)
 
 
+def vision_settings(settings):
+    return replace(settings,
+                   llm_url=os.getenv("CREATOR_VISION_BASE_URL", "https://api.deepseek.com"),
+                   llm_key=os.getenv("CREATOR_VISION_API_KEY", os.getenv("LLM_API_KEY", settings.llm_key)),
+                   llm_model=os.getenv("CREATOR_VISION_MODEL", "deepseek-flash"), llm_options={})
+
+
 class FrameInspector:
     def __init__(self, settings, java, model=None):
-        config = replace(settings,
-                         llm_url=os.getenv("CREATOR_VISION_BASE_URL", "https://api.deepseek.com"),
-                         llm_key=os.getenv("CREATOR_VISION_API_KEY", os.getenv("LLM_API_KEY", settings.llm_key)),
-                         llm_model=os.getenv("CREATOR_VISION_MODEL", "deepseek-flash"), llm_options={})
+        config = vision_settings(settings)
         self.model = model or ChatModelClient(config).chat
         self.java = java
 
