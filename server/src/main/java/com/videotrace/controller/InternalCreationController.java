@@ -18,4 +18,6 @@ public class InternalCreationController {
     public Result<List<JsonNode>> context(@PathVariable String taskId,@RequestHeader(value="X-Creator-Token",required=false) String token,@RequestBody JsonNode body) { service.authenticate(token); return Result.ok(service.context(taskId,body)); }
     @PostMapping("/events")
     public Result<Void> event(@PathVariable String taskId,@RequestHeader(value="X-Creator-Token",required=false) String token,@RequestBody JsonNode body) { service.authenticate(token); service.event(taskId,body); return Result.ok(); }
+    @PostMapping("/frame")
+    public Result<JsonNode> frame(@PathVariable String taskId,@RequestHeader(value="X-Creator-Token",required=false) String token,@RequestBody JsonNode body) { service.authenticate(token); return Result.ok(service.frame(taskId,body)); }
 }

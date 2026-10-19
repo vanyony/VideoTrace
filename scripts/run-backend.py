@@ -19,6 +19,8 @@ for raw in (root / ".env").read_text(encoding="utf-8").splitlines():
     if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", chr(34)):
         value = value[1:-1]
     env[key.strip()] = value
+if env.get("FFMPEG_DIR"):
+    env["PATH"] = env["FFMPEG_DIR"] + os.pathsep + env.get("PATH", "")
 if args.without_model:
     env["SILICONFLOW_API_KEY"] = "local-infrastructure-check-only"
     env["SILICONFLOW_BASE_URL"] = "http://127.0.0.1:1/v1"

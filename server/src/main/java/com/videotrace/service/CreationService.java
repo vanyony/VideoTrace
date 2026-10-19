@@ -29,6 +29,7 @@ public class CreationService {
     private final AgentCheckpointService checkpoints;
     private final LongVideoContextService retrieval;
     private final MinioUtils minio;
+    private final VideoFrameService frames;
     private final String version, token, python;
     private final boolean enabled;
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
@@ -36,13 +37,13 @@ public class CreationService {
 
     public CreationService(JdbcTemplate db, org.springframework.transaction.PlatformTransactionManager manager,
             ObjectMapper json, MediaService media, AgentCheckpointService checkpoints,
-            LongVideoContextService retrieval, MinioUtils minio,
+            LongVideoContextService retrieval, MinioUtils minio, VideoFrameService frames,
             @Value("${video.parse.version:v1}") String version,
             @Value("${creation.internal-token:}") String token,
             @Value("${creation.url:http://127.0.0.1:8091}") String python,
             @Value("${creation.enabled:true}") boolean enabled) {
         this.db=db; this.tx=new TransactionTemplate(manager); this.json=json; this.media=media;
-        this.checkpoints=checkpoints; this.retrieval=retrieval; this.minio=minio;
+        this.checkpoints=checkpoints; this.retrieval=retrieval; this.minio=minio; this.frames=frames;
         this.version=version; this.token=token; this.python=python.replaceAll("/+$", ""); this.enabled=enabled;
     }
 
@@ -225,6 +226,25 @@ public class CreationService {
         return context.segments().stream().filter(s -> s.endMs()>=center.startMs()-window && s.startMs()<=center.endMs()+window).limit(20)
                 .map(s -> evidence(s.startMs(),s.endMs(),s.transcript(),s.transcript(),s.ocrTexts())).toList();
     }
+    public JsonNode frame(String taskId,JsonNode request) {
+        ObjectNode task=scoped(taskId,request);
+        VideoContext context=checkpoints.loadContext(task.path("mediaId").asLong());
+        String id=text(request,"evidenceId",80);
+        if(!request.path("timestampMs").isIntegralNumber()) throw new IllegalArgumentException("timestampMs must be an integer");
+        long timestamp=request.path("timestampMs").asLong();
+        validateFrameTimestamp(context,id,timestamp);
+        var file=media.requireOwnedMedia(task.path("mediaId").asLong(),task.path("ownerId").asLong());
+        JsonNode result=json.valueToTree(frames.extract(media.readableSource(file.getFilePath()),timestamp));
+        // A long extraction must not return data for an operation superseded in the meantime.
+        scoped(taskId,request);
+        return result;
+    }
+
+    static void validateFrameTimestamp(VideoContext context,String evidenceId,long timestamp) {
+        if(timestamp<0 || context.segments().stream().noneMatch(s -> evidenceId(s.startMs(),s.endMs()).equals(evidenceId)
+                && timestamp>=s.startMs() && timestamp<s.endMs())) throw new IllegalArgumentException("frame timestamp is outside bound video evidence");
+    }
+
     private JsonNode evidence(long start,long end,String snippet,String transcript,List<String> ocr) {
         ObjectNode node=json.createObjectNode().put("evidenceId",evidenceId(start,end)).put("startMs",start).put("endMs",end)
                 .put("snippet",clip(snippet,500)).put("transcript",clip(transcript,2000));

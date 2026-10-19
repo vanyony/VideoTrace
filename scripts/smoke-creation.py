@@ -10,6 +10,7 @@ from pathlib import Path
 import secrets
 import subprocess
 import threading
+import shutil
 import time
 import urllib.error
 import urllib.request
@@ -35,6 +36,8 @@ def settings():
                SILICONFLOW_API_KEY="local-smoke-only", SILICONFLOW_BASE_URL=f"http://127.0.0.1:{MODEL_PORT}/v1",
                LLM_API_KEY="local-smoke-only", LLM_BASE_URL=f"http://127.0.0.1:{MODEL_PORT}/v1",
                CREATOR_LLM_API_KEY="local-smoke-only", CREATOR_LLM_BASE_URL=f"http://127.0.0.1:{MODEL_PORT}/v1",
+               CREATOR_VISION_API_KEY="local-smoke-only", CREATOR_VISION_BASE_URL=f"http://127.0.0.1:{MODEL_PORT}/v1",
+               CREATOR_VISION_MODEL="stub-vision",
                CREATOR_DATA_DIR=str(ROOT / "creator" / "data" / ("smoke-" + secrets.token_hex(4))),
                CREATOR_DISPATCH_DELAY_MS="1000", VIDEO_PARSE_VERSION="creator_smoke_v1",
                CREATOR_RENDER_TIMEOUT_SECONDS="600", LLM_TIMEOUT_SECONDS="10",
@@ -111,6 +114,8 @@ class ModelStub(BaseHTTPRequestHandler):
                 name, args = "search_video", {"query": "价格 续航 使用", "limit": 3}
             elif len(observed) == 1:
                 name, args = "read_context", {"evidenceId": "e_0_10000", "windowMs": 10000}
+            elif len(observed) == 2 and "inspect_video_frame" in names and "检查画面内容" in messages[1]["content"]:
+                name, args = "inspect_video_frame", {"evidenceId": "e_0_10000", "timestampMs": 5000, "question": "检查画面内容"}
             elif "finish_discussion" in names:
                 name, args = "finish_discussion", {"reply": "视频介绍了价格、续航与使用方式的变化，可以选择其中一个角度。当前只讨论，不修改分镜。"}
             elif "patch_scenes" in names:
@@ -123,6 +128,10 @@ class ModelStub(BaseHTTPRequestHandler):
                       "choices": [{"index": 0, "finish_reason": "tool_calls", "message": {"role": "assistant", "content": None,
                       "tool_calls": [{"id": "call_" + secrets.token_hex(4), "type": "function", "function": {"name": name, "arguments": json.dumps(args, ensure_ascii=False)}}]}}],
                       "usage": {"prompt_tokens": 10, "completion_tokens": 10, "total_tokens": 20}}
+        elif any(isinstance(m.get("content"), list) for m in body.get("messages", [])):
+            assert body["model"] == "stub-vision"
+            result = {"choices": [{"finish_reason": "stop", "message": {"content": json.dumps({
+                "visibleText": "", "observations": "深蓝色测试画面", "inferences": "没有可辨认图表"}, ensure_ascii=False)}}]}
         else:
             result = {"id": "local-smoke", "object": "chat.completion", "created": 1, "model": "stub",
                       "choices": [{"index": 0, "finish_reason": "stop", "message": {"role": "assistant", "content": json.dumps({"semanticQuery": "价格 续航", "keywords": ["价格", "续航"], "visualKeywords": []})}}],
@@ -165,6 +174,14 @@ def await_task(task_id, token, target, timeout=600):
 
 def main():
     env = settings()
+    import imageio_ffmpeg
+    runtime = Path(env["CREATOR_DATA_DIR"]) / "runtime"
+    runtime.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(imageio_ffmpeg.get_ffmpeg_exe(), runtime / "ffmpeg.exe")
+    env["PATH"] = str(runtime) + os.pathsep + env.get("PATH", "")
+    source = Path(env["CREATOR_DATA_DIR"]) / "source.mp4"
+    subprocess.run([imageio_ffmpeg.get_ffmpeg_exe(), "-y", "-f", "lavfi", "-i", "color=c=navy:s=320x180:d=12",
+                    "-c:v", "libx264", "-preset", "ultrafast", str(source)], check=True, capture_output=True, timeout=30)
     processes, logs, user_ids, media_ids = [], [], [], []
     server = ThreadingHTTPServer(("127.0.0.1", MODEL_PORT), ModelStub)
     threading.Thread(target=server.serve_forever, daemon=True).start()
@@ -194,7 +211,7 @@ def main():
         context = {"source": "creator-smoke.mp4", "userGoal": "", "segments": segments}
         chunk = {"startTime": 0, "endTime": 10000, "segmentSummary": "价格续航使用", "keywords": ["价格", "续航"], "rawSegments": segments, "embedding": [1.0, 0.0, 0.0]}
         for index in range(2):
-            media_ids.append(int(sql(f"INSERT INTO media_files(user_id,filename,status,file_path,transcript_text) VALUES({user_ids[0]},'creator-smoke-{run}-{index}.mp4','COMPLETED','creator-smoke.mp4','text only'); SELECT LAST_INSERT_ID();")))
+            media_ids.append(int(sql(f"INSERT INTO media_files(user_id,filename,status,file_path,transcript_text) VALUES({user_ids[0]},'creator-smoke-{run}-{index}.mp4','COMPLETED',{literal(source)},'text only'); SELECT LAST_INSERT_ID();")))
         media_id = media_ids[0]
         for field, data in [("context", context), ("chunks", [chunk])]:
             sql(f"INSERT INTO agent_checkpoints(media_id,checkpoint_key,stage,payload) VALUES({media_id},'parse:creator_smoke_v1:media:{field}','CONTEXT_COMPLETED',{literal(json.dumps(data, ensure_ascii=False))})")
@@ -220,6 +237,13 @@ def main():
         ok(f"/creation/tasks/{cid}/messages", explain, token)
         explained = await_task(cid, token, "DISCUSSED")
         assert explained["revision"] == 1 and explained["storyboard"] == draft_chat["storyboard"]
+        ok(f"/creation/tasks/{cid}/messages", {"instruction": "检查画面内容，先不要修改分镜", "baseRevision": 1,
+            "requestId": "chat_frame_" + run}, token)
+        visual = await_task(cid, token, "DISCUSSED")
+        assert visual["revision"] == 1 and visual["storyboard"] == draft_chat["storyboard"]
+        assert "inspect_video_frame" in CALLS
+        assert request(f"/internal/creation/tasks/{cid}/frame", {"evidenceId": "e_0_10000", "timestampMs": 5000}, internal_token="wrong")[0] == 401
+        report["checks"].append("on-demand frame inspection: real ffmpeg -> vision tool -> discussion; version preserved; service authentication")
         assert int(sql(f"SELECT COUNT(*) FROM creation_artifacts WHERE task_id={literal(cid)}")) == 0
         assert request(f"/creation/tasks/{cid}/messages", {**explain, "requestId": "chat_stale_" + run, "baseRevision": 0}, token)[0] == 409
         ok(f"/creation/tasks/{cid}/messages", {"instruction": "第二点改成价格变化，其他不变", "baseRevision": 1,
