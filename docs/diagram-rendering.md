@@ -4,6 +4,18 @@
 
 ## 实现边界
 
+### GitHub 样片与模式对应
+
+当前同时保留模板和自由画布实现。`motion` 中的 `launch`、`kinetic` 是预设视觉设计，Agent 决定内容、模板选择、场景时长和转场；`canvas` 则由 Agent 生成基础图形、坐标、层级和关键帧 JSON。两者均由程序绘制，不执行模型输出的绘图代码。同一场景的模式互斥，同一视频可按需求选择模式。
+
+| 公开样片 | 输入 | 模式 | 文件 |
+| --- | --- | --- | --- |
+| 温室效应：设计模板版 | 真实 NASA 视频前 55 秒及真实 ASR/OCR | `motion.launch` / `motion.kinetic` | [15 秒 MP4](../examples/greenhouse-template/demo-15s.mp4)、[分镜](../examples/greenhouse-template/storyboard.json)、[验证记录](../examples/greenhouse-template/verification.json) |
+| 温室效应：自由画布版 | 复用上行同一视频的持久化解析证据 | `canvas` | [15 秒 MP4](../examples/greenhouse-canvas/demo-15s.mp4)、[分镜](../examples/greenhouse-canvas/storyboard.json)、[验证记录](../examples/greenhouse-canvas/verification.json) |
+| 视频如何变成短视频：设计模板演示 | 固定合成演示文本 | `motion.launch` / `motion.kinetic` | [15 秒 MP4](../examples/motion-demo/demo-15s.mp4) |
+
+模板演示此前已公开；真实视频的模板样片此次单独补充，未覆盖原合成演示或自由画布视频。模板版适合视觉一致的大字信息表达，自由画布版适合用基础图形解释关系，两者都仍然可用。
+
 Agent 生成结构化分镜，用户确认后，Pillow 绘制每一帧，MoviePy/FFmpeg 编码并拼接为 MP4。渲染阶段没有单独的模型 Prompt，不执行模型生成的绘图代码，也不调用外部视频生成 API。动画来自预设图形、布局和动作的组合。
 
 | 项目 | 可选值 |

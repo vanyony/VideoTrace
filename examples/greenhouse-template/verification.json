@@ -1,0 +1,50 @@
+{
+  "source": {
+    "page": "https://science.nasa.gov/kids/videos/video-what-is-the-greenhouse-effect/",
+    "download": "https://assets.science.nasa.gov/content/dam/science/cds/kids/nasa-kids-science/earth/what-is-the-greenhouse-effect-video/what-is-the-greenhouse-effect_1920x1080.mp4",
+    "original": {
+      "durationSeconds": 149.95,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "bytes": 104686543
+    },
+    "sample": {
+      "durationSeconds": 55.02,
+      "resolution": [
+        854,
+        480
+      ],
+      "bytes": 5035838
+    }
+  },
+  "model": "deepseek-flash",
+  "mode": "motion",
+  "styles": [
+    "launch",
+    "kinetic"
+  ],
+  "scope": "Real public video -> HTTP upload -> MQ ASR/OCR/analysis -> creator retrieval/model -> explicit render -> MinIO download",
+  "uploadSeconds": 0.39,
+  "analysisSeconds": 46.09,
+  "storyboardSeconds": 21.23,
+  "renderSeconds": 29.77,
+  "output": {
+    "bytes": 1187826,
+    "sha256": "902cb93c5cf79280ff0d8995aa7ff12303618cb661ac9992041dd47cdab9a9ee",
+    "durationSeconds": 15.0,
+    "resolution": [
+      720,
+      1280
+    ],
+    "fps": 24.0
+  },
+  "artifactHashMatches": true,
+  "passed": true,
+  "notes": [
+    "Real NASA video excerpt with original narration; no synthetic transcript.",
+    "Analysis includes a warning that some claims need human verification; a single functional test is not a general quality benchmark.",
+    "Layout, typography and animation are preset; the model plans content, scene durations and template choices."
+  ]
+}

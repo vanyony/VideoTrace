@@ -24,6 +24,17 @@ AI 视频理解与创作平台。通过语音转写、画面文字识别和大�
 
 ## 动画演示
 
+### 同一真实视频：模板版与自由画布版
+
+两版都已保留在仓库中，使用同一段 NASA《温室效应》视频的解析结果、同一 DeepSeek 模型，输出均为 15 秒。它们是两种可选渲染模式，自由画布没有替换模板能力。
+
+| 版本 | 画面由谁决定 | 样片与分镜 |
+| --- | --- | --- |
+| 设计模板版 `motion` | 程序预设发布会拼版和动态文字的布局、字体及动作；Agent 组织内容并选择模板、时长和转场 | [视频](examples/greenhouse-template/demo-15s.mp4) · [预览](examples/greenhouse-template/preview.png) · [分镜](examples/greenhouse-template/storyboard.json) · [验证记录](examples/greenhouse-template/verification.json) |
+| 自由画布版 `canvas` | Agent 输出图形、坐标、层级和关键帧 JSON；程序校验并绘制，页眉页脚固定 | [视频](examples/greenhouse-canvas/demo-15s.mp4) · [预览](examples/greenhouse-canvas/preview.png) · [分镜](examples/greenhouse-canvas/storyboard.json) · [验证记录](examples/greenhouse-canvas/verification.json) |
+
+两种模式都不执行模型生成的绘图代码。下方发布会演示是另一支合成文本样片，与此处的真实视频模板版分别保留。
+
 ### 真实视频 → 自由画布
 
 [观看或下载 15 秒《温室效应》样片](examples/greenhouse-canvas/demo-15s.mp4)

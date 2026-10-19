@@ -1,0 +1,123 @@
+{
+  "musicId": "light_01",
+  "revision": 1,
+  "scenes": [
+    {
+      "animation": "fade",
+      "durationMs": 3000,
+      "headline": "地球为何刚好宜居",
+      "motion": {
+        "accent": "violet",
+        "eyebrow": "温室效应",
+        "style": "launch",
+        "transition": "fade",
+        "words": [
+          "刚好宜居"
+        ]
+      },
+      "points": [
+        "温度适合动植物与人类生长"
+      ],
+      "sceneId": "s1",
+      "sourceRefs": [
+        "e_0_60000"
+      ],
+      "template": "title"
+    },
+    {
+      "animation": "reveal",
+      "durationMs": 3000,
+      "headline": "答案之一是温室效应",
+      "motion": {
+        "accent": "violet",
+        "eyebrow": "原因",
+        "style": "kinetic",
+        "transition": "push",
+        "words": [
+          "温室效应"
+        ]
+      },
+      "points": [
+        "地球温度适合生命繁衍",
+        "温室效应是原因之一"
+      ],
+      "sceneId": "s2",
+      "sourceRefs": [
+        "e_0_60000"
+      ],
+      "template": "points"
+    },
+    {
+      "animation": "reveal",
+      "durationMs": 3000,
+      "headline": "先看真实的温室",
+      "motion": {
+        "accent": "violet",
+        "eyebrow": "类比",
+        "style": "launch",
+        "transition": "wipe",
+        "words": [
+          "玻璃温室"
+        ]
+      },
+      "points": [
+        "玻璃墙与玻璃顶",
+        "阳光照入，热量被留在里面"
+      ],
+      "sceneId": "s3",
+      "sourceRefs": [
+        "e_0_60000"
+      ],
+      "template": "points"
+    },
+    {
+      "animation": "highlight",
+      "durationMs": 3000,
+      "headline": "地球没有玻璃，却有大气",
+      "motion": {
+        "accent": "violet",
+        "eyebrow": "地球版",
+        "style": "kinetic",
+        "transition": "fade",
+        "words": [
+          "大气外套"
+        ]
+      },
+      "points": [
+        "大气像一层气体外套",
+        "白天阳光穿过大气暖地表"
+      ],
+      "sceneId": "s4",
+      "sourceRefs": [
+        "e_0_60000"
+      ],
+      "template": "points"
+    },
+    {
+      "animation": "fade",
+      "durationMs": 3000,
+      "headline": "热量被留住，地球才暖",
+      "motion": {
+        "accent": "violet",
+        "eyebrow": "结论",
+        "style": "launch",
+        "transition": "push",
+        "words": [
+          "留住热量"
+        ]
+      },
+      "points": [
+        "原理与温室大体相同",
+        "温室效应让地球保持温暖"
+      ],
+      "sceneId": "s5",
+      "sourceRefs": [
+        "e_0_60000"
+      ],
+      "template": "points"
+    }
+  ],
+  "schemaVersion": 1,
+  "targetAudience": "对气候与地球科学感兴趣的普通观众",
+  "title": "温室效应：地球的保温外套"
+}
