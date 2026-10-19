@@ -315,6 +315,7 @@ public class VideoContextService {
                 telemetry.increment(traceId, "ocrCalls", 1);
                 ocrText = ocrUtils.recognize(frameFiles.get(i).toFile());
             } catch (RuntimeException e) {
+                if (com.videotrace.exception.ResourceBusyException.causedBy(e)) throw e;
                 failedFrames++;
                 telemetry.increment(traceId, "ocrFrameFailures", 1);
                 log.warn("ocr_frame_failed frame={} timestampMs={}",
