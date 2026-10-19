@@ -12,12 +12,67 @@ Agent 生成结构化分镜，用户确认后，Pillow 绘制每一帧，MoviePy
 | 布局 `layout` | `pipeline` 串联、`split` 分发、`merge` 汇聚、`compare` 对比、`bars` 比例柱图、`orbit` 中心关系 |
 | 主题 `theme` | `dark` 深色、`light` 浅色、`warm` 暖色 |
 | 动作 `motion` | `slide` 滑入、`pulse` 脉冲、`draw` 连线绘制、`reveal` 逐项出现 |
-| 输出 | 720×1280 竖屏、24 FPS、30～60 秒；页面选择 30/45/60 秒 |
+| 输出 | 720×1280 竖屏、24 FPS；页面选择 15/30/45/60 秒 |
 | 音乐 | 内置 `light_01` 或 `none` |
 
 流程连线包含移动圆点；画面底部显示场景进度。对象是图标式示意图，不是任意物体绘画、写实产品图或复杂人物动作。原有 `title/points/flow` 文字卡片保持兼容；三套新主题作用于带 `visual` 的图解场景。
 
 ## 分镜结构
+
+### 发布会与动态文字风格
+
+场景还可使用 `motion`，与 `visual`、`canvas` 互斥：
+
+```json
+{
+  "style": "launch",
+  "eyebrow": "STEP 01 / 提取内容",
+  "words": ["长视频", "变成", "短视频"],
+  "accent": "violet",
+  "transition": "push"
+}
+```
+
+`style` 为 `launch`（大标题、拼版卡片、渐变背景）或 `kinetic`（描边重复字、错峰文字揭示、强调线和扫过条带）；`words` 为 1～3 个大标题短语，每个最多 12 字。`accent` 为 `violet/cyan/lime`，`transition` 为 `fade/push/wipe`，`eyebrow` 是最多 28 字的栏目标签。场景的 `headline` 用作承接说明，`points` 最多 3 条、每条最多 28 字，用作卡片说明。
+
+模型负责提炼短词、选择样式、安排场景时长与转场，程序提供经过设计的字体、颜色和动作。15 秒样片采用 5 幕、每幕 3 秒，交替两种样式，保持内容推进；目前不是任意品牌素材生成，也没有产品摄影或三维材质。
+
+跨幕转场由 Python 在下一幕开始的 0.3 秒内，将上一幕末帧与当前帧合成，不缩短总时长。它实现视觉衔接，不等于物体身份跨幕追踪或连续变形。FFmpeg 仍只负责编码、场景拼接和配乐。带转场的场景缓存键包含上一幕内容，因此修改一幕还可能使紧邻下一幕的转场缓存失效。缓存版本为 `motion-v4.2`。
+
+公开演示：[15 秒 MP4](../examples/motion-demo/demo-15s.mp4) · [五幕预览](../examples/motion-demo/preview.png) · [分镜 JSON](../examples/motion-demo/storyboard.json)。真实 DeepSeek 生成分镜，使用固定合成证据，不经过真实视频解析链路。成片 1,259,356 字节，SHA-256 为 `d55b86fe6359fb1ad142a2dcfd1c92bd80156e15f5b224cbc23d1afdeb0c97ae`。
+
+复现命令：`creator/.venv/Scripts/python.exe scripts/smoke-canvas-model.py --duration 15 --style motion --render`。会调用当前配置的外部模型并产生费用；脚本保留生成阶段报告，渲染失败后可复用已有分镜。
+
+### 自由画布扩展
+
+除原有 `visual` 模板之外，场景现在可使用 `canvas` 自由组合画面；两者互斥。标题和页脚仍由系统绘制，中间安全绘图区为 `x=40..680, y=360..980`（像素）。节点的 `x/y` 表示中心位置，`width/height` 表示尺寸，`z` 为层级，`color/fill` 为十六进制颜色。
+
+`canvas.elements` 每幕最多 20 项，支持 `circle`、`rectangle`、`text`、`icon`、`line`、`arrow`。连线使用 `fromId/toId` 引用两个非连线元素，端点随节点运动。图标复用原有 10 种图形，额外物体可由基础图形组合；不是任意绘图代码执行。图标标签使用单独文字元素，矩形和圆形可包含文字。
+
+每元素最多 4 个 `keyframes`，包含 `timeMs` 与可选的 `x/y/scale/opacity`，时间严格递增且不超过当前场景时长；省略的属性沿用前值。`easing` 支持 `linear/easeInOut/easeOut`，决定到达该关键帧的插值方式。首个关键帧不是 0 时，从初始属性插值；最后一个关键帧之后保持状态。连线位置由引用决定，仅支持透明度关键帧。背景和文字颜色需保持可读对比度。
+
+Python 检查元素 ID、引用、有限数值、尺寸、关键帧和全文字实际排版，检查初始状态及所有动画端点边界；所用缓动单调，插值期间也保持在端点范围内。Java 回调独立检查数量、类型、引用、参数和动画边界。不能自动保证元素之间不遮挡或内容事实完全准确，仍需预览和人工确认。
+
+示例节点（放在 `canvas.elements` 中）：
+
+```json
+{
+  "id": "agent",
+  "kind": "rectangle",
+  "x": 360, "y": 650,
+  "width": 200, "height": 120,
+  "text": "创作 Agent",
+  "fontSize": 28,
+  "keyframes": [
+    {"timeMs": 0, "x": 240, "opacity": 0},
+    {"timeMs": 1500, "x": 360, "opacity": 1, "easing": "easeOut"}
+  ]
+}
+```
+
+Agent 通过现有 `save_storyboard` 提交画布，`patch_scenes` 可整体替换某一场景的 `canvas`；由 `visual` 切换时需同时将 `visual` 设为 `null`，反之亦然。旧分镜序列化保持原字段，局部修改仍校验版本并保护非目标场景。渲染缓存版本已更新为 `canvas-v3`。
+
+### 固定图解结构
 
 每个场景可增加 `visual`；旧分镜无需补字段。示例：
 
@@ -65,7 +120,7 @@ creator/.venv/Scripts/python.exe scripts/render-diagram-demo.py
 
 样片使用人工构造的演示分镜，证据 ID 是合成占位符，不代表真实视频检索结果；该脚本直接调用渲染器，用于展示渲染能力，不走线上分镜证据审核。音轨复用项目内置音乐，没有使用上传视频或用户私有素材。不能将本样片描述为真实模型端到端生成验收。
 
-## 验证结果
+## 固定图解验证结果
 
 - Python 全量 23 项通过，包含布局/主题/动作组合、帧差异、旧分镜兼容、非法物体拒绝、Agent 模拟工具生成及局部修改。
 - Java 93 项中 92 项通过、1 项数据库集成测试跳过；增加图解回调白名单和比例边界检查。
@@ -73,3 +128,20 @@ creator/.venv/Scripts/python.exe scripts/render-diagram-demo.py
 - 实际渲染 30 秒 MP4，校验分辨率、帧率、时长和可解码性，并人工检查五幕预览。
 
 这些是功能回归与演示结果，没有大规模用户质量评测。运行中的服务需重新构建/重启才会加载对应代码。
+
+## 自由画布验证结果
+
+- 手工演示分镜：`scripts/render-canvas-demo.py`，5 幕 30 秒，720×1280、24 FPS，成片 1,360,207 字节；检查了五幕排版和编码元信息。结果在本地 `creator/data/canvas-demo/`。
+- 真实模型：`scripts/smoke-canvas-model.py --render`，本轮使用配置中的 `deepseek-flash`，约 11.88 秒生成 3 幕自由画布分镜。真实模型调用了两次 `search_video`、一次 `read_context`、一次 `save_storyboard`，无结构修复错误；分镜由模型生成，未使用手工布局替代。
+- 真实模型生成的分镜成功渲染为 30 秒视频，964,635 字节。该次记录在本地 `creator/data/canvas-model-smoke/a26bd18c/`。检索结果来自合成演示文本，未经过真实 Java 解析或真实视频检索，不能宣称完整端到端验收。
+- Java 完整回归 95 项，无失败，1 项数据库集成测试跳过；前端 36 项通过且生产构建通过。Python 新增插值、全部基础元素、非法引用/时间/越界/文本拒绝、Agent 修复、局部修改和旧分镜兼容测试。
+
+新代码上线时需重新构建 Java 并重启两侧，开发前端会按现有开发模式加载更新。当前本地长期运行的服务尚未因本轮变化重启；演示通过独立测试进程生成。
+
+## 15 秒档位与模型对照
+
+发布会与动态文字本轮验证：Python 全量 31 项通过，前端 37 项通过且构建成功；Java 创作协议与画布校验相关 12 项通过。15 秒成片已检查分辨率、帧率、总时长和转场时刻的实际解码帧。没有据此宣称视觉质量达到参考图的所有细节。
+
+前端新增 15 秒，保留 30/45/60 秒。Java 任务创建、分镜与成片回调，以及 Python 总时长校验均已支持 15 秒；每幕仍至少 2 秒，3～8 幕，分镜总时长必须等于选择器时长。已有接口的 30～60 秒整数时长兼容保留，新增支持 15 秒，不开放 16～29 秒任务。
+
+曾使用本机订阅登录的 Codex CLI 默认 `gpt-6-astra` 生成 30 秒自由画布样片，验证了 CLI → JSON → 本地渲染流程，未接入生产 Agent 的 API Tool Calling 链路。按后续用户偏好，未来 GPT 测试固定为 `gpt-6.1-sol`、`low`，不能将此前样片标为 6.1 sol。最新版公开风格样片使用 DeepSeek。

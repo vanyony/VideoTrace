@@ -74,7 +74,7 @@ public class CreationService {
         long mediaId=positive(request,"mediaId");
         text(request,"requirement",2000); requestId(request);
         int duration=request.path("durationSeconds").asInt(45);
-        if (duration<30 || duration>60) throw error(ErrorCode.INVALID_ARGUMENT,"时长必须为 30～60 秒");
+        if (duration!=15 && (duration<30 || duration>60)) throw error(ErrorCode.INVALID_ARGUMENT,"时长必须为 15 秒或 30～60 秒");
         ObjectNode payload=request.deepCopy(); payload.put("durationSeconds",duration);
         payload.put("type",type);
         if(type.equals("CONVERSE")) payload.put("instruction",text(request,"requirement",2000));
@@ -295,7 +295,7 @@ public class CreationService {
                 JsonNode artifact=event.path("artifact"); int rev=task.path("revision").asInt();
                 String expected="creations/"+taskId+"/"+rev+"/"+operation.path("operationId").asText()+"/output.mp4";
                 if(!expected.equals(artifact.path("objectKey").asText()) || artifact.path("revision").asInt()!=rev
-                        || artifact.path("sizeBytes").asLong()<=0 || artifact.path("durationMs").asLong()<30000 || artifact.path("durationMs").asLong()>61000
+                        || artifact.path("sizeBytes").asLong()<=0 || artifact.path("durationMs").asLong()<15000 || artifact.path("durationMs").asLong()>61000
                         || !artifact.path("sha256").asText().matches("[a-fA-F0-9]{64}")
                         || operation.path("parameters").path("confirmedRevision").asInt()!=rev) throw error(ErrorCode.INVALID_ARGUMENT,"无效成片元数据");
                 task.put("artifactRevision",rev);
@@ -355,6 +355,19 @@ public class CreationService {
             if(!id.matches("[A-Za-z0-9_-]+") || !ids.add(id)) throw new IllegalArgumentException("场景 ID 必须唯一");
             if(!Set.of("title","points","flow").contains(scene.path("template").asText()) || !Set.of("fade","reveal","highlight").contains(scene.path("animation").asText())) throw new IllegalArgumentException("场景模板或动画无效");
             text(scene,"headline",50);
+            if(scene.hasNonNull("motion")) {
+                if(scene.hasNonNull("visual") || scene.hasNonNull("canvas")) throw new IllegalArgumentException("动画模式互斥");
+                JsonNode motion=scene.path("motion");
+                if(!motion.isObject() || !Set.of("launch","kinetic").contains(motion.path("style").asText())
+                    || !Set.of("violet","cyan","lime").contains(motion.path("accent").asText())
+                    || !Set.of("fade","push","wipe").contains(motion.path("transition").asText())
+                    || !motion.path("eyebrow").isTextual() || motion.path("eyebrow").asText().length()>28) throw new IllegalArgumentException("视觉风格无效");
+                JsonNode words=motion.path("words");
+                if(!words.isArray() || words.isEmpty() || words.size()>3) throw new IllegalArgumentException("大标题数量无效");
+                for(JsonNode word:words) if(!word.isTextual() || word.asText().isBlank() || word.asText().length()>12) throw new IllegalArgumentException("大标题过长");
+                if(scene.path("points").size()>3) throw new IllegalArgumentException("视觉卡片过多");
+                for(JsonNode point:scene.path("points")) if(point.asText().length()>28) throw new IllegalArgumentException("视觉卡片文字过长");
+            }
             JsonNode visual=scene.path("visual");
             if(!visual.isMissingNode() && !visual.isNull()) {
                 if(!visual.isObject() || !Set.of("pipeline","split","merge","compare","bars","orbit").contains(visual.path("layout").asText())
@@ -369,12 +382,16 @@ public class CreationService {
                 }
             }
             long ms=scene.path("durationMs").asLong(); if(!scene.path("durationMs").isIntegralNumber() || ms<2000 || ms>30000) throw new IllegalArgumentException("场景时长无效"); duration+=ms;
+            if(scene.hasNonNull("canvas")) {
+                if(scene.hasNonNull("visual")) throw new IllegalArgumentException("不能同时使用图解模板和自由画布");
+                CanvasValidator.validate(scene.path("canvas"),ms);
+            }
             if(!scene.path("points").isArray() || scene.path("points").size()>4) throw new IllegalArgumentException("场景要点过多");
             for(JsonNode point:scene.path("points")) if(!point.isTextual() || point.asText().isBlank() || point.asText().length()>72) throw new IllegalArgumentException("场景要点过长");
             if(!scene.path("sourceRefs").isArray() || scene.path("sourceRefs").isEmpty() || scene.path("sourceRefs").size()>8) throw new IllegalArgumentException("缺少素材证据");
             for(JsonNode ref:scene.path("sourceRefs")) if(!refs.contains(ref.asText())) throw new IllegalArgumentException("证据不属于素材版本");
         }
-        if(duration<30000 || duration>60000) throw new IllegalArgumentException("总时长必须为 30～60 秒");
+        if(duration<15000 || duration>60000) throw new IllegalArgumentException("总时长必须为 15～60 秒");
     }
 
     static void validateTargets(JsonNode params,JsonNode board) {

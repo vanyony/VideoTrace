@@ -13,6 +13,8 @@ AI 视频理解与创作平台。通过语音转写、画面文字识别和大�
 - **创作对话**：模型判断讨论、生成或修改意图；模糊需求先讨论，明确需求或授权自行决定时直接生成分镜。讨论和解释不会增加分镜版本。
 - **分镜与成片**：生成关联时间戳证据的结构化分镜，支持指定场景修改；人工确认后输出含文字卡片、二维物体图解及可选背景音乐的竖屏 MP4。
 - **二维图解动画**：10 种常用物体、6 种布局、3 套主题，支持滑入、脉冲、连线绘制与逐项出现；Agent 选择预设元素和关系，渲染器确定性执行。
+- **自由画布动画**：Agent 可组合圆形、矩形、文字、图标和连线，自行安排坐标、尺寸与层级；每幕最多 20 个元素，每元素最多 4 个关键帧，支持位移、缩放、透明度和缓动。程序校验引用、动画边界与文字排版，错误交回 Agent 修正。
+- **发布会与动态文字风格**：大字号标题、渐变背景、错峰拼版卡片、描边文字与遮罩揭示；支持淡化、推移及擦除衔接，适合短节奏信息视频。
 - **证据定位**：将分析结果和检索片段关联到原视频时间戳，点击查看对应内容。
 - **任务进度**：视频分析通过 SSE 推送状态，创作工作台轮询任务进度；支持失败重试和已生成作品预览。
 
@@ -24,11 +26,13 @@ AI 视频理解与创作平台。通过语音转写、画面文字识别和大�
 
 **视频如何变成短视频**：原始视频 → 语音与画面文字 → Agent 汇集证据 → 分镜 → 手机成片。
 
-[观看或下载 30 秒 MP4 样片](examples/diagram-demo/demo.mp4)
+[观看或下载 15 秒发布会 / 动态文字样片](examples/motion-demo/demo-15s.mp4)
 
-![五个场景预览](examples/diagram-demo/preview.png)
+![15 秒样片的五幕预览](examples/motion-demo/preview.png)
 
-样片为 720×1280、24 FPS，使用手工构造的演示分镜验证本地渲染，无外部模型调用，不代表真实视频到真实模型的完整端到端质量验收。Agent 的图解生成与局部修改另有模拟模型回归测试。详见 [二维图解渲染说明](docs/diagram-rendering.md)，分镜数据见 [storyboard.json](examples/diagram-demo/storyboard.json)。
+这支样片为 720×1280、24 FPS，由真实 DeepSeek 根据合成演示文本生成五幕分镜，再由本地渲染器生成文字、卡片、动画和配乐。检索使用固定演示数据，不代表真实上传视频的完整端到端质量验收。[查看分镜 JSON](examples/motion-demo/storyboard.json) · [渲染协议与验证说明](docs/diagram-rendering.md)。
+
+也保留了 [30 秒基础二维图解样片](examples/diagram-demo/demo.mp4)及其[分镜](examples/diagram-demo/storyboard.json)，该旧样片由手工分镜生成。
 
 ## 技术栈
 
@@ -194,7 +198,7 @@ npm run dev
 
 选择成片时长，输入“这个视频有哪些值得做的选题？”开始讨论，或明确要求提炼内容并生成分镜。已有分镜时可询问依据或勾选场景提出修改；检查结果后点击确认按钮生成视频。
 
-当前界面支持 30、45、60 秒，时长以选择器为准；文字要求冲突时先澄清，更改时长需新建对话。单会话最多 200 条消息，模型读取最近最多 20 条、总计不超过 24000 字符的历史，旧消息仍保留在界面。意图判断由模型完成，不保证所有表达都能正确识别。
+当前界面支持 15、30、45、60 秒，时长以选择器为准；文字要求冲突时先澄清，更改时长需新建对话。单会话最多 200 条消息，模型读取最近最多 20 条、总计不超过 24000 字符的历史，旧消息仍保留在界面。意图判断由模型完成，不保证所有表达都能正确识别。
 
 前端开发服务器通过代理访问后端，目标地址由根目录 `.env` 的 `VITE_DEV_PROXY_TARGET` 配置。
 
@@ -248,7 +252,17 @@ creator/.venv/Scripts/python.exe scripts/smoke-creation.py
 creator/.venv/Scripts/python.exe scripts/render-diagram-demo.py
 ```
 
-结果位于 `creator/data/diagram-demo/`，公开样片位于 `examples/diagram-demo/`。本轮回归：Python 23 项通过，前端 36 项通过且构建成功；Java 93 项中 92 项通过、1 项因未配置测试数据库而跳过。
+结果位于 `creator/data/diagram-demo/`，公开样片位于 `examples/diagram-demo/`。
+
+自由画布的本地合成演示：
+
+```powershell
+creator/.venv/Scripts/python.exe scripts/render-canvas-demo.py
+```
+
+结果位于 `creator/data/canvas-demo/`，不调用外部 API。也可运行 `scripts/smoke-canvas-model.py --render`，使用已配置的真实创作模型生成自由画布并渲染；该命令会调用外部模型并产生费用，输入为合成演示文本，证据检索使用固定数据，不代表真实上传视频解析验收。详细结果与限制见 [二维图解渲染说明](docs/diagram-rendering.md)。
+
+15 秒发布会 / 动态文字演示使用 `scripts/smoke-canvas-model.py --duration 15 --style motion --render`，同样会调用配置中的真实模型。后续 GPT 对照约定使用 Codex CLI 的 `gpt-6.1-sol`、`low` 强度；当前公开的新版 15 秒样片使用 DeepSeek。
 
 ## 项目结构
 

@@ -12,7 +12,7 @@ from PIL import Image, ImageDraw, ImageFont
 from .models import Storyboard
 
 WIDTH, HEIGHT, FPS = 720, 1280, 24
-TEMPLATE_VERSION = "diagrams-v2.1"
+TEMPLATE_VERSION = "motion-v4.2"
 
 
 def font_path() -> str:
@@ -49,6 +49,14 @@ def wrapped(text: str, font, max_width: int) -> list[str]:
 
 
 def scene_layout(scene):
+    if scene.motion:
+        from .motion import validate_motion_layout
+        validate_motion_layout(scene)
+        return None
+    if scene.canvas:
+        from .canvas import validate_canvas_layout
+        validate_canvas_layout(scene)
+        return None
     if scene.visual:
         from .visuals import validate_visual_layout
         validate_visual_layout(scene)
@@ -75,6 +83,12 @@ def validate_layout(board: Storyboard):
 
 
 def frame(scene, t: float, layout=None):
+    if scene.motion:
+        from .motion import motion_frame
+        return motion_frame(scene, t)
+    if scene.canvas:
+        from .canvas import canvas_frame
+        return canvas_frame(scene, t)
     if scene.visual:
         from .visuals import diagram_frame
         return diagram_frame(scene, t)
@@ -132,9 +146,12 @@ def render(board: Storyboard, directory: Path) -> dict:
     hits = 0
     paths = []
     font_digest = sha256(Path(font_path()))
-    for scene in board.scenes:
+    styled = any(scene.motion for scene in board.scenes)
+    for index, scene in enumerate(board.scenes):
         visual = scene.model_dump(exclude={"sceneId", "sourceRefs"})
-        key = hashlib.sha256(json.dumps([visual, TEMPLATE_VERSION, font_digest, WIDTH, HEIGHT, FPS], sort_keys=True).encode()).hexdigest()
+        predecessor = board.scenes[index - 1] if styled and index else None
+        predecessor_visual = predecessor.model_dump(exclude={"sceneId", "sourceRefs"}) if predecessor else None
+        key = hashlib.sha256(json.dumps([visual, predecessor_visual, TEMPLATE_VERSION, font_digest, WIDTH, HEIGHT, FPS], sort_keys=True).encode()).hexdigest()
         path = cache / f"{key}.mp4"
         if path.is_file():
             try:
@@ -145,7 +162,11 @@ def render(board: Storyboard, directory: Path) -> dict:
         if not path.is_file():
             temporary = cache / f"{key}.tmp.mp4"
             layout = scene_layout(scene)
-            clip = VideoClip(lambda t, s=scene, layout=layout: frame(s, t, layout), duration=scene.durationMs / 1000)
+            previous_frame = frame(predecessor, predecessor.durationMs / 1000 - 1 / FPS) if predecessor else None
+            from .motion import transition_frame
+            clip = VideoClip(lambda t, s=scene, layout=layout, previous=previous_frame:
+                             transition_frame(previous, frame(s, t, layout), t, s.motion.transition if s.motion else "fade"),
+                             duration=scene.durationMs / 1000)
             try:
                 clip.write_videofile(str(temporary), fps=FPS, codec="libx264", audio=False,
                                      preset="ultrafast", threads=2, logger=None, ffmpeg_params=["-pix_fmt", "yuv420p"])

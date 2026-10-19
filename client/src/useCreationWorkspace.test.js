@@ -55,6 +55,20 @@ test('revision submission carries version, stable targets and idempotency key', 
   assert.equal(workspace.task.value.revision, 2)
 })
 
+test('creation submits the fifteen second selection unchanged', async () => {
+  mockFetch()
+  const { workspace } = setup()
+  await workspace.open(item)
+  let submitted
+  globalThis.fetch = async (url, options = {}) => {
+    if (options.method === 'POST') { submitted = JSON.parse(options.body); return json(draft) }
+    return json(draft)
+  }
+  await workspace.submit('create', { mediaId: item.id, requirement: '15秒总结', durationSeconds: 15 })
+  assert.equal(submitted.durationSeconds, 15)
+  workspace.close()
+})
+
 test('late response after logout or closing cannot restore private tasks', async () => {
   let resolve
   globalThis.fetch = () => new Promise(done => { resolve = done })

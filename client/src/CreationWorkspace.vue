@@ -6,7 +6,7 @@
     <p v-else-if="!eligibility.eligible" class="creation-notice">{{ eligibility.reason || '视频尚未完成内容解析，请先运行智能分析。' }} <button @click="emit('analyze', media)">打开智能分析</button></p>
     <form class="creation-form" @submit.prevent="create">
       <label>创作需求<textarea v-model="requirement" required maxlength="2000" rows="3" placeholder="面向普通消费者，总结发布会最值得关注的三个变化，避免宣传语气。" :disabled="!canCreate" /></label>
-      <label>成片时长<select v-model.number="duration" :disabled="!canCreate"><option :value="30">30 秒</option><option :value="45">45 秒</option><option :value="60">60 秒</option></select><span>分镜总时长以此处选择为准；如需改变请先调整时长，再开始新对话。</span></label>
+      <label>成片时长<select v-model.number="duration" :disabled="!canCreate"><option :value="15">15 秒</option><option :value="30">30 秒</option><option :value="45">45 秒</option><option :value="60">60 秒</option></select><span>分镜总时长以此处选择为准；如需改变请先调整时长，再开始新对话。</span></label>
       <button class="creation-primary" :disabled="!canCreate || !requirement.trim()">开始创作对话</button>
     </form>
     <label v-if="tasks.length" class="creation-history">创作任务<select :value="task?.taskId" :disabled="loading" @change="selectTask($event.target.value)"><option v-for="item in tasks" :key="item.taskId" :value="item.taskId">{{ item.storyboard?.title || item.taskId }} · {{ creationLabels[item.status] || item.status }}</option></select></label>
@@ -24,6 +24,8 @@
           <p class="page-eyebrow">场景 {{ index + 1 }} · {{ scene.durationMs / 1000 }} 秒 · {{ templates[scene.template] || scene.template }}</p>
           <h4>{{ scene.headline }}</h4><ul><li v-for="(point, pointIndex) in scene.points" :key="pointIndex">{{ point }}</li></ul>
           <p v-if="scene.visual" class="creation-source">二维图解：{{ visualLayouts[scene.visual.layout] }} · {{ scene.visual.theme }} · {{ scene.visual.motion }}<br>{{ scene.visual.items.map(item => item.label).join(' / ') }}</p>
+          <p v-if="scene.canvas" class="creation-source">自由画布：{{ scene.canvas.elements.length }} 个元素 · {{ scene.canvas.elements.reduce((sum, item) => sum + (item.keyframes?.length || 0), 0) }} 个关键帧<br>{{ scene.canvas.elements.filter(item => item.text).map(item => item.text).join(' / ') }}</p>
+          <p v-if="scene.motion" class="creation-source">{{ scene.motion.style === 'launch' ? '发布会拼版' : '动态文字' }} · {{ scene.motion.words.join(' / ') }} · {{ scene.motion.transition }}</p>
           <p class="creation-source">原视频证据：<span v-for="reference in scene.sourceRefs" :key="reference">{{ sourceTimestamp(reference) }} </span></p>
         </article></div>
         <button class="creation-primary" :disabled="!canEdit" @click="submit('render', { baseRevision: task.revision })">确认版本 {{ task.revision }}，生成视频</button>

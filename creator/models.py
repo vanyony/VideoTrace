@@ -1,6 +1,7 @@
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator, model_serializer
+from .canvas_models import Canvas
 
 
 class StrictModel(BaseModel):
@@ -20,6 +21,20 @@ class Visual(StrictModel):
     items: list[VisualItem] = Field(min_length=2, max_length=4)
 
 
+class MotionDesign(StrictModel):
+    style: Literal["launch", "kinetic"]
+    eyebrow: str = Field(default="VIDEO TRACE", max_length=28)
+    words: list[str] = Field(min_length=1, max_length=3)
+    accent: Literal["violet", "cyan", "lime"] = "violet"
+    transition: Literal["fade", "push", "wipe"] = "push"
+
+    @model_validator(mode="after")
+    def short_words(self):
+        if any(not word.strip() or len(word) > 12 for word in self.words):
+            raise ValueError("motion words must contain 1..12 characters")
+        return self
+
+
 class Scene(StrictModel):
     sceneId: str = Field(pattern=r"^[A-Za-z0-9_-]{1,48}$")
     template: Literal["title", "points", "flow"]
@@ -29,16 +44,26 @@ class Scene(StrictModel):
     animation: Literal["fade", "reveal", "highlight"]
     sourceRefs: list[str] = Field(min_length=1, max_length=8)
     visual: Visual | None = None
+    canvas: Canvas | None = None
+    motion: MotionDesign | None = None
 
     @model_serializer(mode="wrap")
     def serialize(self, handler):
         data = handler(self)
         if self.visual is None:
             data.pop("visual", None)
+        if self.canvas is None:
+            data.pop("canvas", None)
+        if self.motion is None:
+            data.pop("motion", None)
         return data
 
     @model_validator(mode="after")
     def text_limits(self):
+        if sum(value is not None for value in (self.visual, self.canvas, self.motion)) > 1:
+            raise ValueError("choose visual, canvas or motion, not multiple modes")
+        if self.canvas and any(k.timeMs > self.durationMs for e in self.canvas.elements for k in e.keyframes):
+            raise ValueError("canvas keyframes exceed scene duration")
         if not self.headline.strip() or any(not p.strip() or len(p) > 72 for p in self.points):
             raise ValueError("headline/points must be nonblank; each point is at most 72 characters")
         if any(not __import__("re").fullmatch(r"e_\d+_\d+", ref) for ref in self.sourceRefs):
@@ -58,8 +83,8 @@ class Storyboard(StrictModel):
     def valid_timeline(self):
         if len({s.sceneId for s in self.scenes}) != len(self.scenes):
             raise ValueError("sceneId must be unique")
-        if not 30000 <= sum(s.durationMs for s in self.scenes) <= 60000:
-            raise ValueError("total duration must be 30000..60000ms")
+        if not 15000 <= sum(s.durationMs for s in self.scenes) <= 60000:
+            raise ValueError("total duration must be 15000..60000ms")
         return self
 
 
@@ -82,8 +107,9 @@ class Operation(StrictModel):
         if self.type in ("CREATE", "CONVERSE"):
             if not isinstance(p.get("requirement"), str) or not 1 <= len(p["requirement"].strip()) <= 2000:
                 raise ValueError("requirement must contain 1..2000 characters")
-            if p.get("durationSeconds", 45) not in range(30, 61):
-                raise ValueError("durationSeconds must be 30..60")
+            duration = p.get("durationSeconds", 45)
+            if type(duration) is not int or (duration != 15 and duration not in range(30, 61)):
+                raise ValueError("durationSeconds must be 15 or 30..60")
             if self.type == "CONVERSE":
                 if not isinstance(p.get("instruction"), str) or not 1 <= len(p["instruction"].strip()) <= 2000:
                     raise ValueError("instruction must contain 1..2000 characters")
@@ -150,7 +176,7 @@ def patch_storyboard(old: dict, patch: dict) -> dict:
         raise ValueError("unsupported patch field")
     scenes = board["scenes"]
     for update in patch.get("updates", []):
-        if set(update) - {"sceneId", "template", "durationMs", "headline", "points", "animation", "sourceRefs", "visual"}:
+        if set(update) - {"sceneId", "template", "durationMs", "headline", "points", "animation", "sourceRefs", "visual", "canvas", "motion"}:
             raise ValueError("unsupported scene field")
         matches = [s for s in scenes if s["sceneId"] == update["sceneId"]]
         if not matches:

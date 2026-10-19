@@ -49,7 +49,7 @@ Windows 本地环境，Ryzen 7 8845H（8 核 16 线程），约 28 GiB 系统可
 | 基础 OCR | 本地 Tesseract，无外部 API | `OCR_PROVIDER=local`、`OCR_COMMAND`、`TESSDATA_PREFIX` | 可修改可执行程序与语言包路径；当前使用中文和英文语言包 |
 | 可选多模态 OCR | `OCR_PROVIDER=multimodal`；图片 Chat Completions | `OCR_URL`、`OCR_MODEL`、`OCR_API_KEY` | 切换后才调用外部服务；Key 未设置时复用 `SILICONFLOW_API_KEY`；与按需画面理解工具分别配置 |
 | BM25 关键词检索 | Java 本地计算，无外部 API | 不使用模型 Key | 与 Embedding 检索融合；不需要付费模型调用 |
-| MP4 渲染 | 本地 Pillow / MoviePy / FFmpeg，无视频生成 API | `FFMPEG_DIR`、`CREATOR_FONT_PATH`、`CREATOR_RENDER_TIMEOUT_SECONDS` | 当前生成文字及二维图解动画短视频；不是调用外部文生视频模型 |
+| MP4 渲染 | 本地 Pillow / MoviePy / FFmpeg，无视频生成 API | `FFMPEG_DIR`、`CREATOR_FONT_PATH`、`CREATOR_RENDER_TIMEOUT_SECONDS` | 支持文字、二维图解、自由画布及发布会/动态文字风格；页面可选 15/30/45/60 秒 |
 
 当前 `.env.example` 的文本和画面理解模型默认值均为 `deepseek-flash`，Embedding 为 `BAAI/bge-m3`，ASR 为 `TeleAI/TeleSpeechASR`。多模态 OCR 示例值为 `zai-org/GLM-5.3-Flash`，但 `OCR_PROVIDER=local` 时该模型配置不会生效。模型名称是否可用取决于提供商账户与接口支持。
 

@@ -31,8 +31,26 @@ class CreationServiceTest {
         assertThrows(IllegalArgumentException.class,()->CreationService.validateStoryboard(board,2,context));
         ((ObjectNode)board.path("scenes").get(0)).putArray("sourceRefs").add("e_10000_20000");
         assertThrows(IllegalArgumentException.class,()->CreationService.validateStoryboard(board,1,context));
-        ObjectNode shortBoard=board(); ((ObjectNode)shortBoard.path("scenes").get(0)).put("durationMs",2000);
+        ObjectNode shortBoard=board(); shortBoard.path("scenes").forEach(scene -> ((ObjectNode)scene).put("durationMs",4000));
         assertThrows(IllegalArgumentException.class,()->CreationService.validateStoryboard(shortBoard,1,context));
+    }
+    @Test void acceptsFifteenSecondStoryboardAndRejectsBelowMinimum() throws Exception {
+        var shortBoard=board();
+        shortBoard.path("scenes").forEach(scene -> ((ObjectNode)scene).put("durationMs",5000));
+        assertDoesNotThrow(()->CreationService.validateStoryboard(shortBoard,1,context));
+        ((ObjectNode)shortBoard.path("scenes").get(0)).put("durationMs",4999);
+        assertThrows(IllegalArgumentException.class,()->CreationService.validateStoryboard(shortBoard,1,context));
+    }
+    @Test void validatesLaunchAndKineticDesigns() throws Exception {
+        var board=board(); var scene=(ObjectNode)board.path("scenes").get(0);
+        var motion=scene.putObject("motion").put("style","launch").put("eyebrow","创作")
+            .put("accent","violet").put("transition","push");
+        motion.putArray("words").add("提取").add("证据");
+        assertDoesNotThrow(()->CreationService.validateStoryboard(board,1,context));
+        motion.put("style","kinetic");
+        assertDoesNotThrow(()->CreationService.validateStoryboard(board,1,context));
+        motion.putArray("words").add("字".repeat(13));
+        assertThrows(IllegalArgumentException.class,()->CreationService.validateStoryboard(board,1,context));
     }
     @Test void localRevisionMustKeepNonTargetScenesAndGlobalFields() throws Exception {
         ObjectNode previous=board(),next=board();

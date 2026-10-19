@@ -162,6 +162,19 @@ class CreatorTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "approved duration 30000"):
             validate_candidate(changed, op, set())
 
+    def test_fifteen_seconds_accepts_matching_board_and_rejects_other_duration(self):
+        board = storyboard()
+        for scene in board["scenes"]:
+            scene["durationMs"] = 5000
+        op = operation(parameters={"requirement": "15秒总结", "durationSeconds": 15})
+        accepted = validate_candidate(board, op, {"e_0_10000"})
+        self.assertEqual(sum(s["durationMs"] for s in accepted["scenes"]), 15000)
+        with self.assertRaisesRegex(ValueError, "approved duration 15000"):
+            validate_candidate(storyboard(), op, {"e_0_10000"})
+        for seconds in (14, 16, 61, True):
+            with self.assertRaises(ValueError):
+                operation(parameters={"requirement": "总结", "durationSeconds": seconds})
+
     def test_persistent_idempotency_recovery_and_monotonic_events(self):
         with tempfile.TemporaryDirectory() as directory:
             store = Store(Path(directory) / "ops.sqlite")

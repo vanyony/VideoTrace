@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 1,
+  "revision": 1,
+  "title": "从长视频到短视频：证据驱动五步流程",
+  "targetAudience": "关注视频内容再创作的创作者与团队",
+  "musicId": "light_01",
+  "scenes": [
+    {
+      "sceneId": "s1_long",
+      "template": "title",
+      "durationMs": 3000,
+      "headline": "起点是一段长视频",
+      "points": [
+        "原始视频先上传",
+        "内容多，需要提炼"
+      ],
+      "animation": "reveal",
+      "sourceRefs": [
+        "e_0_30000"
+      ],
+      "motion": {
+        "style": "launch",
+        "eyebrow": "STEP 01 / 长视频",
+        "words": [
+          "长视频",
+          "待提炼"
+        ],
+        "accent": "violet",
+        "transition": "push"
+      }
+    },
+    {
+      "sceneId": "s2_evidence",
+      "template": "points",
+      "durationMs": 3000,
+      "headline": "先解析成可查的证据",
+      "points": [
+        "语音转写",
+        "画面文字识别",
+        "形成内容证据"
+      ],
+      "animation": "highlight",
+      "sourceRefs": [
+        "e_0_30000"
+      ],
+      "motion": {
+        "style": "kinetic",
+        "eyebrow": "STEP 02 / 提取证据",
+        "words": [
+          "语音",
+          "画面文字",
+          "证据"
+        ],
+        "accent": "violet",
+        "transition": "wipe"
+      }
+    },
+    {
+      "sceneId": "s3_agent",
+      "template": "flow",
+      "durationMs": 3000,
+      "headline": "Agent 按需求检索并组织",
+      "points": [
+        "按需求检索证据",
+        "组织成文字与图解分镜"
+      ],
+      "animation": "reveal",
+      "sourceRefs": [
+        "e_0_30000"
+      ],
+      "motion": {
+        "style": "launch",
+        "eyebrow": "STEP 03 / Agent 组织",
+        "words": [
+          "检索",
+          "组织分镜"
+        ],
+        "accent": "violet",
+        "transition": "push"
+      }
+    },
+    {
+      "sceneId": "s4_confirm",
+      "template": "points",
+      "durationMs": 3000,
+      "headline": "分镜先交给你确认",
+      "points": [
+        "确认后才进入渲染",
+        "不确认不出片"
+      ],
+      "animation": "fade",
+      "sourceRefs": [
+        "e_0_30000"
+      ],
+      "motion": {
+        "style": "kinetic",
+        "eyebrow": "STEP 04 / 人工确认",
+        "words": [
+          "人工",
+          "确认"
+        ],
+        "accent": "violet",
+        "transition": "fade"
+      }
+    },
+    {
+      "sceneId": "s5_output",
+      "template": "title",
+      "durationMs": 3000,
+      "headline": "确认后本地渲染成片",
+      "points": [
+        "输出文字与二维图解动画",
+        "手机短视频成片"
+      ],
+      "animation": "reveal",
+      "sourceRefs": [
+        "e_0_30000"
+      ],
+      "motion": {
+        "style": "launch",
+        "eyebrow": "STEP 05 / 成片",
+        "words": [
+          "本地渲染",
+          "短视频"
+        ],
+        "accent": "violet",
+        "transition": "wipe"
+      }
+    }
+  ]
+}
