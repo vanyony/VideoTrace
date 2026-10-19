@@ -355,6 +355,19 @@ public class CreationService {
             if(!id.matches("[A-Za-z0-9_-]+") || !ids.add(id)) throw new IllegalArgumentException("场景 ID 必须唯一");
             if(!Set.of("title","points","flow").contains(scene.path("template").asText()) || !Set.of("fade","reveal","highlight").contains(scene.path("animation").asText())) throw new IllegalArgumentException("场景模板或动画无效");
             text(scene,"headline",50);
+            JsonNode visual=scene.path("visual");
+            if(!visual.isMissingNode() && !visual.isNull()) {
+                if(!visual.isObject() || !Set.of("pipeline","split","merge","compare","bars","orbit").contains(visual.path("layout").asText())
+                    || !Set.of("dark","light","warm").contains(visual.path("theme").asText())
+                    || !Set.of("slide","pulse","draw","reveal").contains(visual.path("motion").asText())) throw new IllegalArgumentException("图解配置无效");
+                JsonNode items=visual.path("items");
+                if(!items.isArray() || items.size()<2 || items.size()>4) throw new IllegalArgumentException("图解需要 2～4 个元素");
+                for(JsonNode item:items) {
+                    if(!Set.of("video","audio","text","agent","cards","phone","server","database","person","file").contains(item.path("icon").asText())) throw new IllegalArgumentException("图解物体无效");
+                    text(item,"label",12);
+                    if(!item.path("value").isIntegralNumber() || item.path("value").asInt()<0 || item.path("value").asInt()>100) throw new IllegalArgumentException("图解比例无效");
+                }
+            }
             long ms=scene.path("durationMs").asLong(); if(!scene.path("durationMs").isIntegralNumber() || ms<2000 || ms>30000) throw new IllegalArgumentException("场景时长无效"); duration+=ms;
             if(!scene.path("points").isArray() || scene.path("points").size()>4) throw new IllegalArgumentException("场景要点过多");
             for(JsonNode point:scene.path("points")) if(!point.isTextual() || point.asText().isBlank() || point.asText().length()>72) throw new IllegalArgumentException("场景要点过长");

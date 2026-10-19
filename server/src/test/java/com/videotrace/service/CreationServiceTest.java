@@ -52,6 +52,19 @@ class CreationServiceTest {
         assertThrows(BusinessException.class,()->configured.authenticate("wrong"));
         assertDoesNotThrow(()->configured.authenticate("secret"));
     }
+    @Test void diagramCallbackRejectsUnboundedOrUnknownObjects() throws Exception {
+        ObjectNode candidate=board();
+        ObjectNode scene=(ObjectNode)candidate.path("scenes").get(0);
+        ObjectNode visual=scene.putObject("visual").put("layout","merge").put("theme","dark").put("motion","draw");
+        var items=visual.putArray("items");
+        items.addObject().put("icon","audio").put("label","语音").put("value",50);
+        ObjectNode agent=items.addObject().put("icon","agent").put("label","助手").put("value",50);
+        assertDoesNotThrow(()->CreationService.validateStoryboard(candidate,1,context));
+        agent.put("icon","arbitrary-code");
+        assertThrows(IllegalArgumentException.class,()->CreationService.validateStoryboard(candidate,1,context));
+        agent.put("icon","agent").put("value",101);
+        assertThrows(IllegalArgumentException.class,()->CreationService.validateStoryboard(candidate,1,context));
+    }
     @Test void conversationHistoryKeepsLatestMessagesWithinBudget() {
         var messages=json.createArrayNode();
         for(int i=0;i<30;i++) messages.addObject().put("role","user").put("content",String.valueOf(i).repeat(3000));

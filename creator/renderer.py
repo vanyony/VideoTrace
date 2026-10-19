@@ -12,7 +12,7 @@ from PIL import Image, ImageDraw, ImageFont
 from .models import Storyboard
 
 WIDTH, HEIGHT, FPS = 720, 1280, 24
-TEMPLATE_VERSION = "cards-v1"
+TEMPLATE_VERSION = "diagrams-v2.1"
 
 
 def font_path() -> str:
@@ -49,6 +49,10 @@ def wrapped(text: str, font, max_width: int) -> list[str]:
 
 
 def scene_layout(scene):
+    if scene.visual:
+        from .visuals import validate_visual_layout
+        validate_visual_layout(scene)
+        return None
     heading_font = font(48)
     body_font = font(34)
     heading = wrapped(scene.headline, heading_font, 584)
@@ -71,6 +75,9 @@ def validate_layout(board: Storyboard):
 
 
 def frame(scene, t: float, layout=None):
+    if scene.visual:
+        from .visuals import diagram_frame
+        return diagram_frame(scene, t)
     import numpy as np
     heading_font, body_font, heading, blocks = layout or scene_layout(scene)
     image = Image.new("RGB", (WIDTH, HEIGHT), "#0b1428")

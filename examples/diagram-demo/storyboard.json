@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 1,
+  "revision": 1,
+  "title": "视频如何变成短视频",
+  "targetAudience": "项目体验者",
+  "musicId": "light_01",
+  "scenes": [
+    {
+      "sceneId": "demo_0",
+      "template": "flow",
+      "durationMs": 6000,
+      "headline": "从一个原始视频开始",
+      "points": [
+        "先理解内容，再规划表达"
+      ],
+      "animation": "fade",
+      "sourceRefs": [
+        "e_0_10000"
+      ],
+      "visual": {
+        "layout": "pipeline",
+        "theme": "dark",
+        "motion": "slide",
+        "items": [
+          {
+            "icon": "video",
+            "label": "原始视频",
+            "value": 50
+          },
+          {
+            "icon": "file",
+            "label": "上传解析",
+            "value": 50
+          }
+        ]
+      }
+    },
+    {
+      "sceneId": "demo_1",
+      "template": "flow",
+      "durationMs": 6000,
+      "headline": "同时理解声音与文字",
+      "points": [
+        "两类信息保留来源时间戳"
+      ],
+      "animation": "fade",
+      "sourceRefs": [
+        "e_0_10000"
+      ],
+      "visual": {
+        "layout": "split",
+        "theme": "dark",
+        "motion": "draw",
+        "items": [
+          {
+            "icon": "video",
+            "label": "原始视频",
+            "value": 50
+          },
+          {
+            "icon": "audio",
+            "label": "语音转写",
+            "value": 50
+          },
+          {
+            "icon": "text",
+            "label": "画面文字",
+            "value": 50
+          }
+        ]
+      }
+    },
+    {
+      "sceneId": "demo_2",
+      "template": "flow",
+      "durationMs": 6000,
+      "headline": "让 Agent 汇集内容证据",
+      "points": [
+        "根据需求检索与核实内容"
+      ],
+      "animation": "fade",
+      "sourceRefs": [
+        "e_0_10000"
+      ],
+      "visual": {
+        "layout": "merge",
+        "theme": "dark",
+        "motion": "pulse",
+        "items": [
+          {
+            "icon": "audio",
+            "label": "语音转写",
+            "value": 50
+          },
+          {
+            "icon": "text",
+            "label": "画面文字",
+            "value": 50
+          },
+          {
+            "icon": "agent",
+            "label": "创作 Agent",
+            "value": 50
+          }
+        ]
+      }
+    },
+    {
+      "sceneId": "demo_3",
+      "template": "flow",
+      "durationMs": 6000,
+      "headline": "将重点组织为分镜",
+      "points": [
+        "内容与节奏先交给用户确认"
+      ],
+      "animation": "fade",
+      "sourceRefs": [
+        "e_0_10000"
+      ],
+      "visual": {
+        "layout": "split",
+        "theme": "dark",
+        "motion": "reveal",
+        "items": [
+          {
+            "icon": "agent",
+            "label": "创作 Agent",
+            "value": 50
+          },
+          {
+            "icon": "cards",
+            "label": "开场分镜",
+            "value": 50
+          },
+          {
+            "icon": "cards",
+            "label": "核心要点",
+            "value": 50
+          },
+          {
+            "icon": "cards",
+            "label": "结尾总结",
+            "value": 50
+          }
+        ]
+      }
+    },
+    {
+      "sceneId": "demo_4",
+      "template": "flow",
+      "durationMs": 6000,
+      "headline": "确认后生成短视频",
+      "points": [
+        "文字、图形、动画与音乐组合"
+      ],
+      "animation": "fade",
+      "sourceRefs": [
+        "e_0_10000"
+      ],
+      "visual": {
+        "layout": "pipeline",
+        "theme": "dark",
+        "motion": "draw",
+        "items": [
+          {
+            "icon": "cards",
+            "label": "确认分镜",
+            "value": 50
+          },
+          {
+            "icon": "server",
+            "label": "本地渲染",
+            "value": 50
+          },
+          {
+            "icon": "phone",
+            "label": "短视频成片",
+            "value": 50
+          }
+        ]
+      }
+    }
+  ]
+}

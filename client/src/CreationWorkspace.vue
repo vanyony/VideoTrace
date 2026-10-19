@@ -23,6 +23,7 @@
           <label><input v-model="targetScenes" type="checkbox" :value="scene.sceneId" :disabled="!canEdit" /> 仅修改此场景</label>
           <p class="page-eyebrow">场景 {{ index + 1 }} · {{ scene.durationMs / 1000 }} 秒 · {{ templates[scene.template] || scene.template }}</p>
           <h4>{{ scene.headline }}</h4><ul><li v-for="(point, pointIndex) in scene.points" :key="pointIndex">{{ point }}</li></ul>
+          <p v-if="scene.visual" class="creation-source">二维图解：{{ visualLayouts[scene.visual.layout] }} · {{ scene.visual.theme }} · {{ scene.visual.motion }}<br>{{ scene.visual.items.map(item => item.label).join(' / ') }}</p>
           <p class="creation-source">原视频证据：<span v-for="reference in scene.sourceRefs" :key="reference">{{ sourceTimestamp(reference) }} </span></p>
         </article></div>
         <button class="creation-primary" :disabled="!canEdit" @click="submit('render', { baseRevision: task.revision })">确认版本 {{ task.revision }}，生成视频</button>
@@ -42,6 +43,7 @@ const workspace = useCreationWorkspace()
 const { eligibility, tasks, task, loading, error, artifact, open, close, select, submit, loadArtifact } = workspace
 const requirement = ref(''), duration = ref(45), instruction = ref(''), targetScenes = ref([])
 const templates = { title: '标题卡', points: '要点卡', flow: '流程卡' }
+const visualLayouts = { pipeline: '串联流程', split: '分发', merge: '汇聚', compare: '对比', bars: '比例柱图', orbit: '中心关系' }
 const canCreate = computed(() => eligibility.value?.eligible && !loading.value)
 const canEdit = computed(() => !loading.value && !task.value?.sourceDeleted && ['AWAITING_CONFIRMATION', 'COMPLETED', 'DISCUSSED'].includes(task.value?.status))
 function create() { if (canCreate.value && requirement.value.trim()) submit('create', { mediaId: props.media.id, requirement: requirement.value.trim(), durationSeconds: duration.value }) }

@@ -1,10 +1,23 @@
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator, model_serializer
 
 
 class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
+
+
+class VisualItem(StrictModel):
+    icon: Literal["video", "audio", "text", "agent", "cards", "phone", "server", "database", "person", "file"]
+    label: str = Field(min_length=1, max_length=12)
+    value: int = Field(default=50, ge=0, le=100)
+
+
+class Visual(StrictModel):
+    layout: Literal["pipeline", "split", "merge", "compare", "bars", "orbit"]
+    theme: Literal["dark", "light", "warm"] = "dark"
+    motion: Literal["slide", "pulse", "draw", "reveal"] = "draw"
+    items: list[VisualItem] = Field(min_length=2, max_length=4)
 
 
 class Scene(StrictModel):
@@ -15,6 +28,14 @@ class Scene(StrictModel):
     points: list[str] = Field(default_factory=list, max_length=4)
     animation: Literal["fade", "reveal", "highlight"]
     sourceRefs: list[str] = Field(min_length=1, max_length=8)
+    visual: Visual | None = None
+
+    @model_serializer(mode="wrap")
+    def serialize(self, handler):
+        data = handler(self)
+        if self.visual is None:
+            data.pop("visual", None)
+        return data
 
     @model_validator(mode="after")
     def text_limits(self):
@@ -109,7 +130,7 @@ def validate_candidate(data: dict, operation: Operation, evidence_ids: set[str])
         raise ValueError("sourceRefs must refer to evidence retrieved from this operation's bound video")
     targets = set(operation.parameters.get("targetSceneIds") or [])
     if old and targets:
-        before = [s for s in old["scenes"] if s["sceneId"] not in targets]
+        before = [Scene.model_validate(s).model_dump() for s in old["scenes"] if s["sceneId"] not in targets]
         after = [s.model_dump() for s in board.scenes if s.sceneId not in targets]
         if before != after or old["title"] != board.title or old["musicId"] != board.musicId or old["targetAudience"] != board.targetAudience:
             raise ValueError("non-target scenes, order and global fields must remain unchanged")
@@ -129,7 +150,7 @@ def patch_storyboard(old: dict, patch: dict) -> dict:
         raise ValueError("unsupported patch field")
     scenes = board["scenes"]
     for update in patch.get("updates", []):
-        if set(update) - {"sceneId", "template", "durationMs", "headline", "points", "animation", "sourceRefs"}:
+        if set(update) - {"sceneId", "template", "durationMs", "headline", "points", "animation", "sourceRefs", "visual"}:
             raise ValueError("unsupported scene field")
         matches = [s for s in scenes if s["sceneId"] == update["sceneId"]]
         if not matches:

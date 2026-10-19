@@ -104,6 +104,23 @@ class CreatorTests(unittest.TestCase):
             completion("finish_discussion", {"reply": "先讨论受众。"})])
         self.assertIsNone(result["storyboard"])
 
+    def test_agent_saves_and_locally_revises_diagrams(self):
+        board = storyboard()
+        board["scenes"][0]["visual"] = {"layout": "pipeline", "theme": "dark", "motion": "draw",
+            "items": [{"icon": "video", "label": "视频"}, {"icon": "agent", "label": "助手"}]}
+        result, _, _ = self.run_conversation([
+            completion("choose_action", {"action": "CREATE"}), completion("search_video", {"query": "视频处理"}),
+            completion("save_storyboard", board)], instruction="生成带二维流程图的30秒分镜")
+        saved = result["storyboard"]
+        self.assertEqual(saved["scenes"][0]["visual"]["layout"], "pipeline")
+        visual = saved["scenes"][0]["visual"] | {"theme": "light"}
+        result, _, _ = self.run_conversation([
+            completion("choose_action", {"action": "REVISE"}),
+            completion("patch_scenes", {"baseRevision": 1, "updates": [{"sceneId": "s_1", "visual": visual}]})],
+            board=saved, instruction="只把第一幕图解改成浅色")
+        self.assertEqual(result["storyboard"]["scenes"][0]["visual"]["theme"], "light")
+        self.assertEqual(result["storyboard"]["scenes"][1:], saved["scenes"][1:])
+
     def test_validation_rejects_unknown_evidence_and_layout_overflow(self):
         with self.assertRaisesRegex(ValueError, "sourceRefs"):
             validate_candidate(storyboard(), operation(), set())
