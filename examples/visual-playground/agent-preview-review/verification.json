@@ -1,0 +1,29 @@
+{
+  "sizeBytes": 1475040,
+  "durationMs": 15000,
+  "sha256": "5b4f878ede98aa7b60d0a5cfcb0c4049413dd2aa05828cb86cd5f34028278a70",
+  "revision": 1,
+  "cacheHits": 0,
+  "sceneCount": 3,
+  "model": "deepseek-flash",
+  "generationSeconds": 34.8,
+  "toolCalls": [
+    "search_video",
+    "search_video",
+    "read_context",
+    "read_context",
+    "review_storyboard_preview",
+    "review_storyboard_preview",
+    "save_storyboard"
+  ],
+  "reviewCount": 2,
+  "remainingSuggestions": 2,
+  "finalDraftMatchesLastReview": false,
+  "experimental": true,
+  "description": "真实模型与多模态预览检查的组件动画",
+  "agentGeneratedStoryboard": true,
+  "agentGeneratedCode": false,
+  "sourceType": "synthetic educational evidence; no real-video parsing",
+  "date": "2026-10-20",
+  "promptRevision": "before 2026-10-20 visual-direction prompt changes"
+}

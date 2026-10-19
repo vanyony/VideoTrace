@@ -1,0 +1,50 @@
+[
+  {
+    "advisoryOnly": true,
+    "coverage": "Three sampled frames per selected scene; not full-video, audio or factual verification",
+    "draftSha256": "b67bcc9498860a0900815bb3cb6bb7925b5b635a354722df1bbb77d352a5a186",
+    "issues": [
+      {
+        "category": "scale",
+        "confidence": 0.35,
+        "problem": "首帧雨滴贴近水面，尺寸偏小，与后两帧雨滴及涟漪的视觉分量相比略显弱，作为降雨起始帧主体不够突出。",
+        "sceneId": "s3_rain",
+        "severity": "suggestion",
+        "suggestion": "可略微增大首帧雨滴尺寸或提高其与水面背景的对比，使降雨起始动作更易被注意到。",
+        "timestampMs": 1000
+      }
+    ],
+    "model": "deepseek-flash",
+    "previewId": "cd0718c65d8c146cb608ff0f7f58e757052340ae8e143a903366bdfff9fa6594",
+    "sampledFrames": [
+      {
+        "sceneId": "s1_evaporate",
+        "sha256": "a92c211101d1df0df9fb307b84a2d9ee1ebdee7d1c86def2cc1b1e4e88be5292",
+        "timestampsMs": [
+          1000,
+          2500,
+          4000
+        ]
+      },
+      {
+        "sceneId": "s2_cloud",
+        "sha256": "52516306a059d09a4ef51ae3d4d3603f587fa2abef18fd5271e637f991c13ceb",
+        "timestampsMs": [
+          1000,
+          2500,
+          4000
+        ]
+      },
+      {
+        "sceneId": "s3_rain",
+        "sha256": "b54f867b4f209577ad756ffbad9760ff0b3b7589f8b8d641720dc4fccd06232f",
+        "timestampsMs": [
+          1000,
+          2500,
+          4000
+        ]
+      }
+    ],
+    "summary": "三幕抽样帧整体排版稳定：大标题均位于顶部留白区，未与太阳或云重叠；水面铺满底部，底部说明文字完整可读，未见溢出或裁切。s1中太阳与上升水汽、s2中云与凝结水滴、s3中雨滴与涟漪均可见，三幕主体大小与位置基本一致，跨幕衔接自然。抽样帧无法判断帧间运动是否顺滑，也未发现明确硬错误。"
+  }
+]

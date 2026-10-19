@@ -43,7 +43,7 @@ Windows 本地环境，Ryzen 7 8845H（8 核 16 线程），约 28 GiB 系统可
 | --- | --- | --- | --- |
 | Java 分析、摘要、检索意图、旧版问答 | DeepSeek 官方；Chat Completions | `LLM_BASE_URL`、`LLM_API_KEY`、`LLM_MODEL`、`LLM_TIMEOUT_SECONDS` | 可修改；需兼容现有文本聊天接口及结构化输出要求 |
 | 创作讨论、分镜 Agent | DeepSeek 官方；Chat Completions + Tool Calling | `CREATOR_LLM_BASE_URL`、`CREATOR_LLM_API_KEY`、`CREATOR_LLM_MODEL`、`CREATOR_LLM_OPTIONS`、`CREATOR_MODEL_TIMEOUT_SECONDS` | 可独立修改；模型需支持工具调用；未设置的覆盖项回退到相应 `LLM_*` 配置 |
-| 按需画面理解工具 | DeepSeek 官方；包含图片的 Chat Completions | `CREATOR_VISION_BASE_URL`、`CREATOR_VISION_API_KEY`、`CREATOR_VISION_MODEL` | 可独立修改；模型需支持图片输入；Key 未设置时优先复用 `LLM_API_KEY`，随后回退到创作模型 Key |
+| 按需原视频画面理解 / 实验分镜预览检查 | DeepSeek 官方；包含图片的 Chat Completions | `CREATOR_VISION_BASE_URL`、`CREATOR_VISION_API_KEY`、`CREATOR_VISION_MODEL` | 可独立修改；模型需支持图片输入；Key 未设置时优先复用 `LLM_API_KEY`，随后回退到创作模型 Key |
 | ASR | 硅基流动；`POST https://api.siliconflow.cn/v1/audio/transcriptions`，multipart 音频 | `ASR_URL`、`ASR_MODEL`、`SILICONFLOW_API_KEY` | 可修改；替代服务需兼容当前请求与转写响应格式 |
 | Embedding | 硅基流动；`POST https://api.siliconflow.cn/v1/embeddings` | `SILICONFLOW_BASE_URL`、`SILICONFLOW_API_KEY`、`EMBEDDING_MODEL` | 可修改；替换向量模型需重新生成已有向量，并核对 Qdrant 集合维度 |
 | 基础 OCR | 本地 Tesseract，无外部 API | `OCR_PROVIDER=local`、`OCR_COMMAND`、`TESSDATA_PREFIX` | 可修改可执行程序与语言包路径；当前使用中文和英文语言包 |
@@ -72,3 +72,10 @@ Java 与 Python 使用内部 HTTP API 交互，`CREATOR_URL` 和 `CREATOR_JAVA_U
 - 本地原始结果：`creator/data/upload-capacity/result.json`、`result-4h.json`、`creator/data/preprocessing-4h/result.json`。容量测试媒体、原始结果及运行日志留在本机，不上传 GitHub；另行公开的二维演示样片位于 `examples/diagram-demo/`。
 
 脚本依赖项目本地服务、Python 虚拟环境、FFmpeg、Tesseract 及相应本地配置。生成大文件和上传会消耗磁盘及本地服务资源；运行脚本前可先查看脚本参数和所需环境。
+
+
+## 视觉实验补充（2026-10-20）
+
+全屏画布、组件动画、多模态预览检查及独立 Remotion 样片见 [视觉实验说明](visual-playground.md)。预览检查复用 `CREATOR_VISION_*`，默认使用官方 DeepSeek 图片输入接口，可独立修改；抽样图片会发送给配置的模型服务。没有新增视频生成 API。
+
+这批样片与上述长视频容量测试独立：使用合成水循环文本、真实模型工具调用或开发时手工编排，不能并入真实上传解析的端到端测试结论。前三条样片早于设计 Prompt 调整；新增 Prompt v1 样片单独记录了一次同条件测试，不能据此声称稳定质量提升。

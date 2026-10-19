@@ -1,0 +1,1182 @@
+{
+  "schemaVersion": 1,
+  "revision": 1,
+  "title": "一滴水的旅程",
+  "targetAudience": "儿童与科普入门观众",
+  "musicId": "light_01",
+  "scenes": [
+    {
+      "sceneId": "s1_evaporate",
+      "template": "title",
+      "durationMs": 5000,
+      "headline": "蒸发：太阳把水变成水蒸气",
+      "points": [
+        "太阳提供能量，地表水蒸发成水蒸气",
+        "水蒸气是气态，不是液态水滴"
+      ],
+      "animation": "reveal",
+      "sourceRefs": [
+        "e_0_10000"
+      ],
+      "canvas": {
+        "background": "#fdf6e8",
+        "layout": "full",
+        "camera": [
+          {
+            "timeMs": 0,
+            "x": 360.0,
+            "y": 640.0,
+            "zoom": 1.0,
+            "easing": "easeInOut"
+          },
+          {
+            "timeMs": 5000,
+            "x": 360.0,
+            "y": 700.0,
+            "zoom": 1.12,
+            "easing": "easeInOut"
+          }
+        ],
+        "continuePrevious": false,
+        "elements": [
+          {
+            "id": "sun",
+            "kind": "sprite",
+            "x": 150.0,
+            "y": 620.0,
+            "width": 260.0,
+            "height": 260.0,
+            "color": "#f2a93b",
+            "fill": "#ffd166",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 3,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": true,
+            "sprite": "sun",
+            "curve": null,
+            "keyframes": [
+              {
+                "timeMs": 0,
+                "x": null,
+                "y": null,
+                "scale": 0.6,
+                "opacity": 0.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              },
+              {
+                "timeMs": 900,
+                "x": null,
+                "y": null,
+                "scale": 1.0,
+                "opacity": 1.0,
+                "rotation": null,
+                "easing": "easeOut"
+              }
+            ]
+          },
+          {
+            "id": "water",
+            "kind": "sprite",
+            "x": 360.0,
+            "y": 1150.0,
+            "width": 1100.0,
+            "height": 500.0,
+            "color": "#2f9e9e",
+            "fill": "#7fd6d0",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 2,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "water",
+            "curve": null,
+            "keyframes": [
+              {
+                "timeMs": 0,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 0.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              },
+              {
+                "timeMs": 700,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 1.0,
+                "rotation": null,
+                "easing": "easeOut"
+              }
+            ]
+          },
+          {
+            "id": "vapor_path",
+            "kind": "path",
+            "x": 360.0,
+            "y": 900.0,
+            "width": 200.0,
+            "height": 200.0,
+            "color": "#4fb3c9",
+            "fill": "#172641",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 1,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "cloud",
+            "curve": {
+              "points": [
+                {
+                  "x": 300.0,
+                  "y": 900.0
+                },
+                {
+                  "x": 240.0,
+                  "y": 760.0
+                },
+                {
+                  "x": 380.0,
+                  "y": 700.0
+                },
+                {
+                  "x": 330.0,
+                  "y": 560.0
+                }
+              ],
+              "startMs": 600,
+              "endMs": 4600,
+              "loop": true
+            },
+            "keyframes": [
+              {
+                "timeMs": 0,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 0.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              },
+              {
+                "timeMs": 800,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 0.85,
+                "rotation": null,
+                "easing": "easeInOut"
+              }
+            ]
+          },
+          {
+            "id": "vapor_dot",
+            "kind": "circle",
+            "x": 300.0,
+            "y": 900.0,
+            "width": 26.0,
+            "height": 26.0,
+            "color": "#4fb3c9",
+            "fill": "#d9f2f7",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 4,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "cloud",
+            "curve": {
+              "points": [
+                {
+                  "x": 300.0,
+                  "y": 900.0
+                },
+                {
+                  "x": 240.0,
+                  "y": 760.0
+                },
+                {
+                  "x": 380.0,
+                  "y": 700.0
+                },
+                {
+                  "x": 330.0,
+                  "y": 560.0
+                }
+              ],
+              "startMs": 600,
+              "endMs": 4600,
+              "loop": true
+            },
+            "keyframes": [
+              {
+                "timeMs": 0,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 0.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              },
+              {
+                "timeMs": 800,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 1.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              }
+            ]
+          },
+          {
+            "id": "vapor_dot2",
+            "kind": "circle",
+            "x": 430.0,
+            "y": 900.0,
+            "width": 20.0,
+            "height": 20.0,
+            "color": "#4fb3c9",
+            "fill": "#eaf8fb",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 4,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "cloud",
+            "curve": {
+              "points": [
+                {
+                  "x": 430.0,
+                  "y": 900.0
+                },
+                {
+                  "x": 500.0,
+                  "y": 780.0
+                },
+                {
+                  "x": 400.0,
+                  "y": 700.0
+                },
+                {
+                  "x": 470.0,
+                  "y": 580.0
+                }
+              ],
+              "startMs": 1200,
+              "endMs": 4800,
+              "loop": true
+            },
+            "keyframes": [
+              {
+                "timeMs": 0,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 0.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              },
+              {
+                "timeMs": 1400,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 1.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              }
+            ]
+          },
+          {
+            "id": "t1",
+            "kind": "text",
+            "x": 360.0,
+            "y": 160.0,
+            "width": 620.0,
+            "height": 180.0,
+            "color": "#1f4f5c",
+            "fill": "#172641",
+            "text": "蒸发",
+            "fontSize": 100,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 10,
+            "space": "screen",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "cloud",
+            "curve": null,
+            "keyframes": [
+              {
+                "timeMs": 0,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 0.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              },
+              {
+                "timeMs": 600,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 1.0,
+                "rotation": null,
+                "easing": "easeOut"
+              }
+            ]
+          },
+          {
+            "id": "c1",
+            "kind": "text",
+            "x": 360.0,
+            "y": 1160.0,
+            "width": 620.0,
+            "height": 100.0,
+            "color": "#2b5a63",
+            "fill": "#172641",
+            "text": "太阳给能量，水变成水蒸气",
+            "fontSize": 34,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 10,
+            "space": "screen",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "cloud",
+            "curve": null,
+            "keyframes": [
+              {
+                "timeMs": 0,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 0.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              },
+              {
+                "timeMs": 1000,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 1.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "sceneId": "s2_cloud",
+      "template": "title",
+      "durationMs": 5000,
+      "headline": "成云：水蒸气冷却凝结成小水滴",
+      "points": [
+        "水蒸气冷却凝结为小水滴",
+        "小水滴聚集形成云"
+      ],
+      "animation": "reveal",
+      "sourceRefs": [
+        "e_10000_20000"
+      ],
+      "canvas": {
+        "background": "#fdf6e8",
+        "layout": "full",
+        "camera": [
+          {
+            "timeMs": 0,
+            "x": 360.0,
+            "y": 640.0,
+            "zoom": 1.0,
+            "easing": "easeInOut"
+          },
+          {
+            "timeMs": 5000,
+            "x": 360.0,
+            "y": 560.0,
+            "zoom": 1.15,
+            "easing": "easeInOut"
+          }
+        ],
+        "continuePrevious": true,
+        "elements": [
+          {
+            "id": "water",
+            "kind": "sprite",
+            "x": 360.0,
+            "y": 1150.0,
+            "width": 1100.0,
+            "height": 500.0,
+            "color": "#2f9e9e",
+            "fill": "#7fd6d0",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 2,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "water",
+            "curve": null,
+            "keyframes": []
+          },
+          {
+            "id": "cloud_main",
+            "kind": "sprite",
+            "x": 360.0,
+            "y": 700.0,
+            "width": 420.0,
+            "height": 300.0,
+            "color": "#b9c9d6",
+            "fill": "#ffffff",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 3,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "cloud",
+            "curve": null,
+            "keyframes": [
+              {
+                "timeMs": 0,
+                "x": null,
+                "y": null,
+                "scale": 0.45,
+                "opacity": 0.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              },
+              {
+                "timeMs": 1600,
+                "x": null,
+                "y": null,
+                "scale": 1.0,
+                "opacity": 1.0,
+                "rotation": null,
+                "easing": "easeOut"
+              }
+            ]
+          },
+          {
+            "id": "cloud_left",
+            "kind": "sprite",
+            "x": 180.0,
+            "y": 760.0,
+            "width": 240.0,
+            "height": 180.0,
+            "color": "#b9c9d6",
+            "fill": "#f4f9fc",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 2,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "cloud",
+            "curve": null,
+            "keyframes": [
+              {
+                "timeMs": 0,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 0.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              },
+              {
+                "timeMs": 2000,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 1.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              }
+            ]
+          },
+          {
+            "id": "cloud_right",
+            "kind": "sprite",
+            "x": 540.0,
+            "y": 750.0,
+            "width": 260.0,
+            "height": 190.0,
+            "color": "#b9c9d6",
+            "fill": "#f4f9fc",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 2,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "cloud",
+            "curve": null,
+            "keyframes": [
+              {
+                "timeMs": 0,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 0.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              },
+              {
+                "timeMs": 2400,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 1.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              }
+            ]
+          },
+          {
+            "id": "condense_path",
+            "kind": "path",
+            "x": 360.0,
+            "y": 900.0,
+            "width": 200.0,
+            "height": 200.0,
+            "color": "#4fb3c9",
+            "fill": "#172641",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 1,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "cloud",
+            "curve": {
+              "points": [
+                {
+                  "x": 360.0,
+                  "y": 950.0
+                },
+                {
+                  "x": 300.0,
+                  "y": 860.0
+                },
+                {
+                  "x": 420.0,
+                  "y": 800.0
+                },
+                {
+                  "x": 360.0,
+                  "y": 720.0
+                }
+              ],
+              "startMs": 400,
+              "endMs": 4200,
+              "loop": true
+            },
+            "keyframes": [
+              {
+                "timeMs": 0,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 0.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              },
+              {
+                "timeMs": 600,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 0.8,
+                "rotation": null,
+                "easing": "easeInOut"
+              }
+            ]
+          },
+          {
+            "id": "condense_dot",
+            "kind": "circle",
+            "x": 360.0,
+            "y": 950.0,
+            "width": 22.0,
+            "height": 22.0,
+            "color": "#4fb3c9",
+            "fill": "#eaf8fb",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 4,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "cloud",
+            "curve": {
+              "points": [
+                {
+                  "x": 360.0,
+                  "y": 950.0
+                },
+                {
+                  "x": 300.0,
+                  "y": 860.0
+                },
+                {
+                  "x": 420.0,
+                  "y": 800.0
+                },
+                {
+                  "x": 360.0,
+                  "y": 720.0
+                }
+              ],
+              "startMs": 400,
+              "endMs": 4200,
+              "loop": true
+            },
+            "keyframes": [
+              {
+                "timeMs": 0,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 0.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              },
+              {
+                "timeMs": 600,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 1.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              }
+            ]
+          },
+          {
+            "id": "t2",
+            "kind": "text",
+            "x": 360.0,
+            "y": 160.0,
+            "width": 620.0,
+            "height": 180.0,
+            "color": "#1f4f5c",
+            "fill": "#172641",
+            "text": "成云",
+            "fontSize": 100,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 10,
+            "space": "screen",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "cloud",
+            "curve": null,
+            "keyframes": [
+              {
+                "timeMs": 0,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 0.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              },
+              {
+                "timeMs": 600,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 1.0,
+                "rotation": null,
+                "easing": "easeOut"
+              }
+            ]
+          },
+          {
+            "id": "c2",
+            "kind": "text",
+            "x": 360.0,
+            "y": 1160.0,
+            "width": 620.0,
+            "height": 100.0,
+            "color": "#2b5a63",
+            "fill": "#172641",
+            "text": "水蒸气冷却，凝结成小水滴",
+            "fontSize": 34,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 10,
+            "space": "screen",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "cloud",
+            "curve": null,
+            "keyframes": [
+              {
+                "timeMs": 0,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 0.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              },
+              {
+                "timeMs": 1000,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 1.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "sceneId": "s3_rain",
+      "template": "title",
+      "durationMs": 5000,
+      "headline": "降雨：水滴长大落下，回到水面",
+      "points": [
+        "云中水滴长大后形成降水",
+        "水回到地表，继续水循环"
+      ],
+      "animation": "reveal",
+      "sourceRefs": [
+        "e_20000_30000"
+      ],
+      "canvas": {
+        "background": "#fdf6e8",
+        "layout": "full",
+        "camera": [
+          {
+            "timeMs": 0,
+            "x": 360.0,
+            "y": 640.0,
+            "zoom": 1.0,
+            "easing": "easeInOut"
+          },
+          {
+            "timeMs": 5000,
+            "x": 360.0,
+            "y": 700.0,
+            "zoom": 1.1,
+            "easing": "easeInOut"
+          }
+        ],
+        "continuePrevious": true,
+        "elements": [
+          {
+            "id": "water",
+            "kind": "sprite",
+            "x": 360.0,
+            "y": 1150.0,
+            "width": 1100.0,
+            "height": 500.0,
+            "color": "#2f9e9e",
+            "fill": "#7fd6d0",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 2,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "water",
+            "curve": null,
+            "keyframes": []
+          },
+          {
+            "id": "cloud_main",
+            "kind": "sprite",
+            "x": 360.0,
+            "y": 700.0,
+            "width": 420.0,
+            "height": 300.0,
+            "color": "#b9c9d6",
+            "fill": "#ffffff",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 3,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "cloud",
+            "curve": null,
+            "keyframes": []
+          },
+          {
+            "id": "cloud_left",
+            "kind": "sprite",
+            "x": 180.0,
+            "y": 760.0,
+            "width": 240.0,
+            "height": 180.0,
+            "color": "#b9c9d6",
+            "fill": "#f4f9fc",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 2,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "cloud",
+            "curve": null,
+            "keyframes": []
+          },
+          {
+            "id": "cloud_right",
+            "kind": "sprite",
+            "x": 540.0,
+            "y": 750.0,
+            "width": 260.0,
+            "height": 190.0,
+            "color": "#b9c9d6",
+            "fill": "#f4f9fc",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 2,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "cloud",
+            "curve": null,
+            "keyframes": []
+          },
+          {
+            "id": "drop",
+            "kind": "sprite",
+            "x": 360.0,
+            "y": 860.0,
+            "width": 100.0,
+            "height": 100.0,
+            "color": "#1f6fb2",
+            "fill": "#4aa3e0",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 5,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "droplet",
+            "curve": {
+              "points": [
+                {
+                  "x": 360.0,
+                  "y": 860.0
+                },
+                {
+                  "x": 300.0,
+                  "y": 980.0
+                },
+                {
+                  "x": 420.0,
+                  "y": 1060.0
+                },
+                {
+                  "x": 360.0,
+                  "y": 1150.0
+                }
+              ],
+              "startMs": 600,
+              "endMs": 2600,
+              "loop": false
+            },
+            "keyframes": [
+              {
+                "timeMs": 0,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 0.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              },
+              {
+                "timeMs": 400,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 1.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              },
+              {
+                "timeMs": 2600,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 1.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              },
+              {
+                "timeMs": 3000,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 0.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              }
+            ]
+          },
+          {
+            "id": "ripple",
+            "kind": "sprite",
+            "x": 360.0,
+            "y": 1150.0,
+            "width": 200.0,
+            "height": 80.0,
+            "color": "#e8fbfd",
+            "fill": "#bfeef2",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 4,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "ripple",
+            "curve": null,
+            "keyframes": [
+              {
+                "timeMs": 0,
+                "x": null,
+                "y": null,
+                "scale": 0.3,
+                "opacity": 0.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              },
+              {
+                "timeMs": 2600,
+                "x": null,
+                "y": null,
+                "scale": 0.3,
+                "opacity": 0.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              },
+              {
+                "timeMs": 3400,
+                "x": null,
+                "y": null,
+                "scale": 1.6,
+                "opacity": 0.9,
+                "rotation": null,
+                "easing": "easeOut"
+              },
+              {
+                "timeMs": 4800,
+                "x": null,
+                "y": null,
+                "scale": 2.4,
+                "opacity": 0.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              }
+            ]
+          },
+          {
+            "id": "t3",
+            "kind": "text",
+            "x": 360.0,
+            "y": 160.0,
+            "width": 620.0,
+            "height": 180.0,
+            "color": "#1f4f5c",
+            "fill": "#172641",
+            "text": "降雨",
+            "fontSize": 100,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 10,
+            "space": "screen",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "cloud",
+            "curve": null,
+            "keyframes": [
+              {
+                "timeMs": 0,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 0.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              },
+              {
+                "timeMs": 600,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 1.0,
+                "rotation": null,
+                "easing": "easeOut"
+              }
+            ]
+          },
+          {
+            "id": "c3",
+            "kind": "text",
+            "x": 360.0,
+            "y": 1160.0,
+            "width": 620.0,
+            "height": 100.0,
+            "color": "#2b5a63",
+            "fill": "#172641",
+            "text": "水滴长大落下，回到水面",
+            "fontSize": 34,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 10,
+            "space": "screen",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "cloud",
+            "curve": null,
+            "keyframes": [
+              {
+                "timeMs": 0,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 0.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              },
+              {
+                "timeMs": 1000,
+                "x": null,
+                "y": null,
+                "scale": null,
+                "opacity": 1.0,
+                "rotation": null,
+                "easing": "easeInOut"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

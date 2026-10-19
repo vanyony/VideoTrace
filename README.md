@@ -1,5 +1,7 @@
 # VideoTrace
 
+> 当前为 **`codex/visual-playground` 视觉实验分支**。全屏画布、镜头和多模态预览检查在此迭代；React / Remotion 仍是独立试验。[实验说明与视频效果](docs/visual-playground.md)。
+
 AI 视频理解与创作平台。通过语音转写、画面文字识别和大语言模型，将视频转化为带时间戳的内容证据，再通过创作 Agent 完成选题讨论、分镜生成和二维图解动画短视频制作。
 
 适用于课程、会议、访谈、发布会和操作教程等场景。用户可以先讨论创作方向，也可以直接提出明确需求；分镜生成后可询问依据、局部修改，经人工确认后渲染成片。
@@ -14,6 +16,8 @@ AI 视频理解与创作平台。通过语音转写、画面文字识别和大�
 - **分镜与成片**：生成关联时间戳证据的结构化分镜，支持指定场景修改；人工确认后输出含文字卡片、二维物体图解及可选背景音乐的竖屏 MP4。
 - **二维图解动画**：10 种常用物体、6 种布局、3 套主题，支持滑入、脉冲、连线绘制与逐项出现；Agent 选择预设元素和关系，渲染器确定性执行。
 - **自由画布动画**：Agent 可组合圆形、矩形、文字、图标和连线，自行安排坐标、尺寸与层级；每幕最多 20 个元素，每元素最多 4 个关键帧，支持位移、缩放、透明度和缓动。程序校验引用、动画边界与文字排版，错误交回 Agent 修正。
+- **实验全屏动画**：`canvas.layout=full` 支持40个元素、每元素12个关键帧、画外入场、镜头平移/缩放及固定于屏幕的标题；新增太阳、地球、云、水滴、水面等组件。默认画布保留原安全区。
+- **实验视觉反馈**：Agent 可调用 `review_storyboard_preview` 查看生成画面的三帧预览，按多模态建议修改；最多两次检查，不代替用户确认。
 - **发布会与动态文字风格**：大字号标题、渐变背景、错峰拼版卡片、描边文字与遮罩揭示；支持淡化、推移及擦除衔接，适合短节奏信息视频。
 - **证据定位**：将分析结果和检索片段关联到原视频时间戳，点击查看对应内容。
 - **任务进度**：视频分析通过 SSE 推送状态，创作工作台轮询任务进度；支持失败重试和已生成作品预览。
@@ -23,6 +27,17 @@ AI 视频理解与创作平台。通过语音转写、画面文字识别和大�
 创作不剪辑原视频，不生成写实画面或 AI 配音。旧版独立问答入口保留，创作对话直接复用视频证据检索能力，不依赖旧问答记录。
 
 ## 动画演示
+
+### 视觉实验分支：水循环
+
+| 样片 | 生成方式 | 视频与预览 |
+| --- | --- | --- |
+| Remotion 绘制对照 | 既有 Agent 分镜 + 开发时编写的 React/SVG 效果 | [15秒视频](examples/visual-playground/remotion-comparison/demo-15s.mp4) · [预览](examples/visual-playground/remotion-comparison/preview.png) |
+| 萌版《一滴水的旅程》 | 手工设计镜头，独立 Remotion 渲染；不是 Agent 自动编排 | [15秒视频](examples/visual-playground/remotion-journey/demo-15s.mp4) · [预览](examples/visual-playground/remotion-journey/preview.png) |
+| Agent + 多模态预览检查 | 真实 DeepSeek 工具调用、合成证据、两次检查与自动修改，Python 渲染 | [15秒视频](examples/visual-playground/agent-preview-review/demo-15s.mp4) · [预览](examples/visual-playground/agent-preview-review/preview.png) · [反馈](examples/visual-playground/agent-preview-review/review-feedback.json) |
+| 新设计 Prompt v1 | 同条件单次测试：更大主体与镜头设计指导，保留字幕干扰等未解决问题 | [15秒视频](examples/visual-playground/prompt-design-v1/demo-15s.mp4) · [前后对照](examples/visual-playground/prompt-design-v1/comparison.png) · [验证](examples/visual-playground/prompt-design-v1/verification.json) |
+
+[分支范围、动画字段、复现命令与验证边界](docs/visual-playground.md)。这些样片不代表新的真实视频上传解析验收，Remotion 尚未接入主任务链路；新设计 Prompt 只完成一次对照，不代表稳定的质量或性能提升。
 
 ### 同一真实视频：模板版与自由画布版
 
@@ -93,7 +108,7 @@ ASR 语音转写 + 关键帧 OCR
 
 Java / Spring Boot 负责鉴权、视频归属、解析与检索、对话消息和业务任务状态；Python / FastAPI 提供内部任务接口，LangGraph 负责模型决策和工具执行。创作使用 MySQL 持久任务队列与内部 HTTP 接口，视频解析使用 Outbox + RocketMQ，两条链路各自管理重试。
 
-创作 Agent 通过 `choose_action` 选择讨论、生成或修改，再按阶段开放 `search_video`、`read_context`、`inspect_video_frame`、`finish_discussion`、`save_storyboard` 或 `patch_scenes`。渲染不作为模型工具开放，只能由用户确认触发。分镜版本校验拒绝过期请求，操作标识、重试次数和回调序号校验阻止迟到结果更新当前任务；未变场景可复用渲染缓存。
+创作 Agent 通过 `choose_action` 选择讨论、生成或修改，再按阶段开放 `search_video`、`read_context`、`inspect_video_frame`、`review_storyboard_preview`、`finish_discussion`、`save_storyboard` 或 `patch_scenes`。最终 MP4 渲染不作为模型工具开放，只能由用户确认触发；实验预览工具仅生成抽样图片，返回视觉建议。分镜版本校验拒绝过期请求，操作标识、重试次数和回调序号校验阻止迟到结果更新当前任务；未变场景可复用渲染缓存。
 
 后端围绕长耗时任务实现了以下机制：
 

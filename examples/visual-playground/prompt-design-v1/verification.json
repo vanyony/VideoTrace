@@ -1,0 +1,33 @@
+{
+  "sizeBytes": 2141733,
+  "durationMs": 15000,
+  "sha256": "304b11d1a6f56916b9cf1419e3b74ba6760151dfc83e7af1ff1c7dffbc617054",
+  "revision": 1,
+  "cacheHits": 0,
+  "sceneCount": 3,
+  "experimental": true,
+  "date": "2026-10-20",
+  "model": "deepseek-flash",
+  "sourceType": "synthetic water-cycle evidence; no real-video parsing",
+  "agentGeneratedStoryboard": true,
+  "agentGeneratedCode": false,
+  "generationSeconds": 26.58,
+  "toolCalls": [
+    "search_video",
+    "search_video",
+    "read_context",
+    "read_context",
+    "review_storyboard_preview",
+    "save_storyboard"
+  ],
+  "reviewCount": 1,
+  "lastReviewSuggestionCount": 1,
+  "finalDraftMatchesLastReview": false,
+  "promptRevision": "visual-direction-v1",
+  "promptSourceSha256": "5a1c1805519105f587c705e4b0045a59564d23d4badacdd694188ee5decd17e3",
+  "humanObservedLimitations": [
+    "A falling drop crosses the bottom caption region in the final output.",
+    "The final draft changed after its last multimodal review.",
+    "Single-run comparison; no stable quality or performance claim."
+  ]
+}

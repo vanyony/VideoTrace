@@ -1,0 +1,116 @@
+[
+  {
+    "advisoryOnly": true,
+    "coverage": "Three sampled frames per selected scene; not full-video, audio or factual verification",
+    "draftSha256": "ff6953e09eea82eb04b8204ae17eed7d34c99f232909dba0401558e878571db9",
+    "issues": [
+      {
+        "category": "contrast",
+        "confidence": 0.7,
+        "problem": "云朵与上升水滴为接近背景的浅色，在浅米色背景上对比度偏低，轮廓不够清晰，抽样帧中较难辨认主体。",
+        "sceneId": "s2_cloud",
+        "severity": "suggestion",
+        "suggestion": "可适度加深云与水滴的描边或填充色，提高与背景的明度差，保持整体浅色风格不变。",
+        "timestampMs": 2500
+      },
+      {
+        "category": "motion",
+        "confidence": 0.45,
+        "problem": "1000ms 帧可见雨滴，2500ms 与 4000ms 帧画面中未见雨滴，抽样帧无法确认降雨动作是否连续呈现。",
+        "sceneId": "s3_rain",
+        "severity": "suggestion",
+        "suggestion": "若为有意设计，可忽略；若希望降雨持续可见，可检查雨滴在后续时间点的可见性与位置，确保抽样帧中能体现下落过程。",
+        "timestampMs": 2500
+      }
+    ],
+    "model": "deepseek-flash",
+    "previewId": "af42eace7ebbbde968ca192b6df6719d3b8f1541b6e93e7f28b2951c5f89047e",
+    "sampledFrames": [
+      {
+        "sceneId": "s1_evaporate",
+        "sha256": "3cf8898b0a14db4d3aec06fa57416bcc70ab355b83dc7bc6cd29a6c776fa55a0",
+        "timestampsMs": [
+          1000,
+          2500,
+          4000
+        ]
+      },
+      {
+        "sceneId": "s2_cloud",
+        "sha256": "5fb0776900c0b11394e491b8ef35704e87309167a543289aad5886e4773eeb13",
+        "timestampsMs": [
+          1000,
+          2500,
+          4000
+        ]
+      },
+      {
+        "sceneId": "s3_rain",
+        "sha256": "85e97cbec9a379a0e2623ab1aa30e5c4193f71780b880c61f75342ce68041993",
+        "timestampsMs": [
+          1000,
+          2500,
+          4000
+        ]
+      }
+    ],
+    "summary": "三幕抽样帧的标题与底部说明文字均完整可读，未被裁切或遮挡；水面铺满底部，太阳与云未侵入标题区，主体大小与位置基本稳定。s2 中云与上升水滴的对比度偏低，在浅色背景上较难辨认；s3 中雨滴在 2500ms 与 4000ms 帧不可见，仅 1000ms 帧可见，抽样帧无法确认降雨动作是否连续。其余未见明确问题。"
+  },
+  {
+    "advisoryOnly": true,
+    "coverage": "Three sampled frames per selected scene; not full-video, audio or factual verification",
+    "draftSha256": "3932aa5ae3383beb847c9e00b989b6bd9da188cf099f6e335df64c3ba27d745e",
+    "issues": [
+      {
+        "category": "motion",
+        "confidence": 0.55,
+        "problem": "2500ms 抽样帧中雨滴几乎不可见，4000ms 帧同样未见清晰雨滴，与 1000ms 帧的明显雨滴形成落差，抽样帧无法确认雨滴下落是否在多个时间点持续可见。",
+        "sceneId": "s3_rain",
+        "severity": "suggestion",
+        "suggestion": "确认雨滴在下落全程保持可见，可适当提高雨滴不透明度或延长其可见时长，避免中途消失。",
+        "timestampMs": 2500
+      },
+      {
+        "category": "contrast",
+        "confidence": 0.5,
+        "problem": "云体为浅蓝白色，与米白背景明度接近，轮廓偏淡，在抽样帧中辨识度有限。",
+        "sceneId": "s2_cloud",
+        "severity": "suggestion",
+        "suggestion": "可略微加深云体边缘或填充色，提高与背景的对比度，保持整体柔和风格不变。",
+        "timestampMs": 1000
+      }
+    ],
+    "model": "deepseek-flash",
+    "previewId": "390e48c2777084efca2b1eb68a864ef1c7f043adfd68beb5455fc6af502f775b",
+    "sampledFrames": [
+      {
+        "sceneId": "s1_evaporate",
+        "sha256": "aba79c6263a0ee6df3d16083f41401693748b236b6754acbd6bb466edd712b8d",
+        "timestampsMs": [
+          1000,
+          2500,
+          4000
+        ]
+      },
+      {
+        "sceneId": "s2_cloud",
+        "sha256": "7012c9b6c4e78c7e60a214cf69ae5a93bcef3ab1065e22f9c4fc7ec0b4d49c23",
+        "timestampsMs": [
+          1000,
+          2500,
+          4000
+        ]
+      },
+      {
+        "sceneId": "s3_rain",
+        "sha256": "90245450421cf4fa74b6952bfbfeed15804632dba3ca4b37a6a98820dec93e71",
+        "timestampsMs": [
+          1000,
+          2500,
+          4000
+        ]
+      }
+    ],
+    "summary": "三幕标题与底部说明文字均完整可读，未见裁切或遮挡；深色文字在浅色背景上对比度充足。s1 上升光点与 s2 云体在浅色背景上偏淡，但轮廓仍可辨；s3 雨滴仅在 1000ms 帧清晰可见，2500ms 与 4000ms 帧几乎不可见，抽样帧无法确认雨滴下落过程是否持续可见。跨幕水面、太阳与云的位置基本一致，衔接自然。"
+  }
+]

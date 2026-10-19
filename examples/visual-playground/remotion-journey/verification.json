@@ -1,0 +1,16 @@
+{
+  "sizeBytes": 2225727,
+  "durationMs": 15000,
+  "sha256": "1d42f89ef77f8eae05efef5b404a2982a8cfebfb3452ffae4bb5f81a0ed128cb",
+  "audioPresent": true,
+  "fps": 24.0,
+  "elapsedSeconds": 45.445,
+  "scope": "Hand-directed Remotion camera/scene design prototype; not Agent-generated and not integrated into VideoTrace",
+  "experimental": true,
+  "description": "手工设计镜头的 React / Remotion 动画",
+  "agentGeneratedStoryboard": false,
+  "agentGeneratedCode": false,
+  "sourceType": "synthetic educational evidence; no real-video parsing",
+  "date": "2026-10-20",
+  "promptRevision": "before 2026-10-20 visual-direction prompt changes"
+}

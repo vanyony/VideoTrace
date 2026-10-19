@@ -1,0 +1,17 @@
+{
+  "sizeBytes": 1769032,
+  "durationMs": 15000,
+  "sha256": "ee12c69d3de869468e2f31ba01d5a83f233224e2214b6974d0ecf091f7577043",
+  "audioPresent": true,
+  "fps": 24.0,
+  "elapsedSeconds": 47.225,
+  "remotion": "4.0.537",
+  "scope": "Hand-authored React/SVG rendering probe using existing Agent storyboard; not a generic canvas adapter or production integration",
+  "experimental": true,
+  "description": "复用既有 Agent 分镜的 React / Remotion 绘制对照",
+  "agentGeneratedStoryboard": true,
+  "agentGeneratedCode": false,
+  "sourceType": "synthetic educational evidence; no real-video parsing",
+  "date": "2026-10-20",
+  "promptRevision": "before 2026-10-20 visual-direction prompt changes"
+}

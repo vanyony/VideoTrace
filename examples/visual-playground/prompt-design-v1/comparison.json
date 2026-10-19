@@ -1,0 +1,26 @@
+{
+  "scope": "Single-run prompt comparison using same model, synthetic evidence, duration and Python renderer; stochastic outputs, not a controlled quality benchmark",
+  "baseline": {
+    "generationSeconds": 34.8,
+    "reviewCount": 2,
+    "cloudBox": [
+      300,
+      200
+    ],
+    "finalDraftMatchesLastReview": false
+  },
+  "visualDirectionV1": {
+    "generationSeconds": 26.58,
+    "reviewCount": 1,
+    "cloudBox": [
+      420,
+      300
+    ],
+    "finalDraftMatchesLastReview": false
+  },
+  "observations": [
+    "Larger sun and cloud group in the new draft.",
+    "Rain remains visible later in the sampled scene.",
+    "The falling drop crosses the bottom caption region; this remains unresolved."
+  ]
+}

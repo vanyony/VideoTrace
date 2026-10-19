@@ -120,3 +120,16 @@ Java JSON 接口统一响应：
 401 检查登录/内部令牌；403 检查归属；404 检查任务或作品版本；409 常见于版本冲突、素材未就绪或操作仍在执行；429 表示限流。网络超时后先查询状态，用原 `requestId` 重试同一提交，不应立即创建新意图。错误信息与具体 HTTP 状态以服务响应为准。
 
 完整分镜字段、模式互斥与校验约束见 [渲染协议](diagram-rendering.md)，任务保护机制见 [架构说明](architecture.md)。
+
+
+## 视觉实验：模型工具协议
+
+这些是 Python Agent 的 Tool Calling 能力，不是新增的公开 HTTP 接口。最终视频仍由已有确认接口触发。
+
+| 工具 | 参数 | 行为 |
+| --- | --- | --- |
+| `review_storyboard_preview` | `{storyboard: 完整候选分镜, sceneIds?: 1到3个场景ID, focus?: 最多400字}` | 校验证据与修改范围，渲染抽样图片并获取多模态建议；不保存业务分镜，不生成MP4 |
+| `save_storyboard` | `{storyboard: 完整分镜}` | 提交候选分镜供人工确认；兼容旧版直接传分镜的调用 |
+| `patch_scenes` | 原有修订参数 | 预览修改后仍用此工具提交，保持版本与目标场景校验 |
+
+预览反馈含 `previewId`、`draftSha256`、采样时间与图片哈希、`summary`、`issues`、`advisoryOnly` 和缓存标识；问题包含场景ID、抽样时间、类别、严重程度、建议和置信度。模型响应引用未采样场景/时间会被拒绝。保存工具的追踪结果可含 `previewReview.matchesSavedDraft`，它只表示版本匹配，不代表视觉质量合格。[完整说明](visual-playground.md)。
