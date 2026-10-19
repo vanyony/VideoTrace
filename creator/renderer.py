@@ -78,8 +78,14 @@ def scene_layout(scene):
 
 
 def validate_layout(board: Storyboard):
+    errors = []
     for scene in board.scenes:
-        scene_layout(scene)
+        try:
+            scene_layout(scene)
+        except ValueError as error:
+            errors.append(f"scene {scene.sceneId}: {error}")
+    if errors:
+        raise ValueError("\n".join(errors))
 
 
 def frame(scene, t: float, layout=None):

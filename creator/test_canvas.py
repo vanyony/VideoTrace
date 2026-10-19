@@ -102,6 +102,18 @@ class CanvasTests(unittest.TestCase):
         self.assertIsNotNone(result["storyboard"]["scenes"][0]["canvas"])
         self.assertIn("save_storyboard", offered[-1])
 
+    def test_layout_reports_multiple_elements_and_scenes_for_one_repair(self):
+        data = self.board()
+        data["scenes"][0]["canvas"]["elements"][0].update(width=40, height=12)
+        data["scenes"][1]["canvas"] = {"elements": [
+            {"id": "other_label", "kind": "text", "text": "另一段超长说明", "width": 30, "height": 12}]}
+        with self.assertRaises(ValueError) as result:
+            validate_candidate(data, operation(), {"e_0_10000"})
+        message = str(result.exception)
+        self.assertIn("source", message)
+        self.assertIn("other_label", message)
+        self.assertIn("need height", message)
+
 
 if __name__ == "__main__":
     unittest.main()

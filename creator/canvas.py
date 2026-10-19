@@ -35,26 +35,30 @@ def state_at(element, time_ms):
 
 
 def validate_canvas_layout(scene):
+    errors = []
     if len(wrapped(scene.headline, font(46), 592)) > 3:
-        raise ValueError("canvas headline exceeds three lines")
+        errors.append("canvas headline exceeds three lines")
     if len(scene.points) > 2 or any(len(wrapped(p, font(28), 580)) > 2 for p in scene.points):
-        raise ValueError("canvas supports two short footer points, each two lines")
+        errors.append("canvas supports two short footer points, each two lines")
     for element in scene.canvas.elements:
         connector = element.kind in ("line", "arrow")
         if element.kind == "text" and not element.text.strip():
-            raise ValueError(f"canvas {element.id}: text must be nonblank")
+            errors.append(f"canvas {element.id}: text must be nonblank")
         if element.kind in ("icon", "line", "arrow") and element.text:
-            raise ValueError(f"canvas {element.id}: use a separate text element for labels")
+            errors.append(f"canvas {element.id}: use a separate text element for labels")
         if element.text:
             lines = wrapped(element.text, font(element.fontSize), element.width - 12)
             if len(lines) * element.fontSize * 1.35 > element.height - 8 or any(font(element.fontSize).getlength(c) > element.width - 12 for c in element.text):
-                raise ValueError(f"canvas {element.id}: text overflows element; enlarge its box or shorten text")
+                errors.append(f"canvas {element.id}: text overflows {element.width:g}x{element.height:g} box; need height >= {len(lines) * element.fontSize * 1.35 + 8:.0f}px; enlarge box or shorten text")
         if not connector:
             # Monotone easing keeps the entire interpolated box within endpoint bounds.
             for _, state, _ in states(element):
                 w, h = element.width * state["scale"], element.height * state["scale"]
                 if state["x"] - w / 2 < 40 or state["x"] + w / 2 > 680 or state["y"] - h / 2 < 360 or state["y"] + h / 2 > 980:
-                    raise ValueError(f"canvas {element.id}: animated bounds must stay inside x=40..680, y=360..980")
+                    errors.append(f"canvas {element.id}: animated bounds must stay inside x=40..680, y=360..980")
+                    break
+    if errors:
+        raise ValueError("; ".join(errors))
 
 
 @lru_cache(maxsize=64)

@@ -209,6 +209,7 @@ class CreatorAgent:
             "需要自由设计空间或运动时使用scene.canvas替代visual，两者不能同时存在；canvas只描述数据，绝不能包含代码、URL或文件路径。"
             "canvas.elements最多20项，kind为circle/rectangle/text/icon/line/arrow，id唯一；x/y为中心像素坐标，width/height为尺寸，z为层级，color/fill为#RRGGBB。"
             "节点及全部动画边界必须位于x=40..680、y=360..980内，标题和页脚由系统绘制；文字fontSize为16..64，用足够大的盒子避免溢出。icon不内嵌文字，请单独放text元素。"
+            "canvas文字盒子留12px水平与8px垂直余量；一行文字高度至少fontSize*1.35+8，两行至少fontSize*2.7+8。收到排版校验列表后，一次修正所有场景、所有列出元素，不要只修改第一个。"
             "line/arrow用fromId/toId连接两个非连线节点，自动随节点移动；连线放低z，避免穿过文字。每元素最多4个keyframes，timeMs严格递增且不超过场景时长；可改x/y/scale/opacity，未指定属性沿用前值，easing为linear/easeInOut/easeOut。连线仅支持opacity关键帧。"
             "自由画布优先设计清晰的层次与错峰入场；每幕最多两条短要点。修改时通过patch_scenes整体替换目标场景canvas；由visual切换canvas时同时将visual置null，反向同理。保留证据关联，禁止用无依据的数字或图形暗示事实。"
             "用户要求发布会风格、大字视觉或动态文字时，优先使用scene.motion（与visual/canvas互斥）：style为launch发布会拼版或kinetic动态文字；eyebrow是短栏目名；words为1到3个大标题短语，每个最多12字；accent为violet/cyan/lime；transition为fade/push/wipe。"

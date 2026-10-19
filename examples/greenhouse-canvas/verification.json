@@ -1,0 +1,51 @@
+{
+  "source": {
+    "page": "https://science.nasa.gov/kids/videos/video-what-is-the-greenhouse-effect/",
+    "download": "https://assets.science.nasa.gov/content/dam/science/cds/kids/nasa-kids-science/earth/what-is-the-greenhouse-effect-video/what-is-the-greenhouse-effect_1920x1080.mp4",
+    "original": {
+      "durationSeconds": 149.95,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "bytes": 104686543
+    },
+    "sample": {
+      "durationSeconds": 55.02,
+      "resolution": [
+        854,
+        480
+      ],
+      "bytes": 5035838
+    }
+  },
+  "model": "deepseek-flash",
+  "mode": "canvas",
+  "scope": "Real video parsed by ASR/OCR in the preceding end-to-end run; reuse persisted evidence for a new canvas creation task, real Java retrieval, DeepSeek and MinIO upload/download. No repeated ASR/OCR in this comparison.",
+  "storyboardSeconds": 27.31,
+  "renderSeconds": 26.95,
+  "creatorTools": [
+    "search_video",
+    "search_video",
+    "read_context",
+    "save_storyboard"
+  ],
+  "repairErrorsInSuccessfulAttempt": [],
+  "output": {
+    "bytes": 1239551,
+    "sha256": "0a0321f067b0bd43e64003fa50d43516ea4208deb49290a5bcfd82da8259c560",
+    "durationSeconds": 15.0,
+    "resolution": [
+      720,
+      1280
+    ],
+    "fps": 24.0
+  },
+  "artifactHashMatches": true,
+  "passed": true,
+  "notes": [
+    "Initial canvas attempt exhausted repair budget on text overflow. Validation was improved to return multiple scene/element errors together; subsequent attempt passed without repair errors.",
+    "The initial video analysis reported that some claims still needed human verification. This is a single functional acceptance sample, not a broad quality benchmark.",
+    "Original video and service credentials are not included."
+  ]
+}

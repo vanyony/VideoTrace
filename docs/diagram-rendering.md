@@ -145,3 +145,17 @@ creator/.venv/Scripts/python.exe scripts/render-diagram-demo.py
 前端新增 15 秒，保留 30/45/60 秒。Java 任务创建、分镜与成片回调，以及 Python 总时长校验均已支持 15 秒；每幕仍至少 2 秒，3～8 幕，分镜总时长必须等于选择器时长。已有接口的 30～60 秒整数时长兼容保留，新增支持 15 秒，不开放 16～29 秒任务。
 
 曾使用本机订阅登录的 Codex CLI 默认 `gpt-6-astra` 生成 30 秒自由画布样片，验证了 CLI → JSON → 本地渲染流程，未接入生产 Agent 的 API Tool Calling 链路。按后续用户偏好，未来 GPT 测试固定为 `gpt-6.1-sol`、`low`，不能将此前样片标为 6.1 sol。最新版公开风格样片使用 DeepSeek。
+
+## 真实视频自由画布验收
+
+公开样片：[15 秒 MP4](../examples/greenhouse-canvas/demo-15s.mp4) · [预览](../examples/greenhouse-canvas/preview.png) · [分镜](../examples/greenhouse-canvas/storyboard.json) · [验证摘要](../examples/greenhouse-canvas/verification.json)。
+
+源视频为 [NASA《What Is the Greenhouse Effect?》](https://science.nasa.gov/kids/videos/video-what-is-the-greenhouse-effect/)，原片约 149.95 秒；测试取前 55.02 秒并缩放到 854×480，保留真实画面和英语旁白。源视频和本地运行数据不上传仓库。
+
+第一次完整测试经过真实 HTTP 上传、RocketMQ 解析调度、ASR/OCR、Java 内容分析与证据检索、DeepSeek 分镜、显式渲染请求、MinIO 上传下载；处理约 97 秒（不含启动和素材下载），生成发布会/动态文字样片。随后本次自由画布测试复用该素材的持久化解析结果，在同一独立测试数据库创建新创作任务，未重复 ASR/OCR。
+
+自由画布成功尝试中，分镜约 27.31 秒，渲染及结果下载约 26.95 秒；模型调用两次 `search_video`、一次 `read_context`、一次 `save_storyboard`。5 幕各 3 秒，每幕 5～7 个元素，只使用 `canvas`，没有手工修改模型坐标或换成设计模板。输出为 720×1280、24 FPS、15 秒，1,239,551 字节；下载文件哈希与对象存储元数据一致。
+
+首次尝试发现文字框溢出，模型逐个修正后耗尽原有预算。修复后校验会一次汇总多个场景和元素的问题，并反馈所需文字框高度；提示词补充文字留白规则，让模型集中处理错误。保持原有修复次数与排版约束，没有通过放宽校验接受错误结果。重试成功，成功尝试未触发排版修复错误。针对批量反馈、画布和其他动画模式的 10 项回归检查通过。
+
+本次为单样本功能验收：原分析阶段存在部分结论需人工核验的提示；证据时间戳来自转写分段，不代表词级定位。自由画布主体仍为基础图形，不能据此宣称复杂美术生成能力。测试服务运行在独立数据库、MQ 主题、向量集合和端口，测试结束后停止；主服务未因本次测试重启。

@@ -24,6 +24,18 @@ AI 视频理解与创作平台。通过语音转写、画面文字识别和大�
 
 ## 动画演示
 
+### 真实视频 → 自由画布
+
+[观看或下载 15 秒《温室效应》样片](examples/greenhouse-canvas/demo-15s.mp4)
+
+![真实视频的自由画布样片](examples/greenhouse-canvas/preview.png)
+
+素材来自 [NASA《What Is the Greenhouse Effect?》](https://science.nasa.gov/kids/videos/video-what-is-the-greenhouse-effect/)前 55 秒真实画面与旁白。先完成上传、ASR/OCR、分析，再复用持久化证据，由 DeepSeek 检索并生成自由画布分镜；太阳、地球、温室、大气与箭头的位置及动画由模型编排。中间图形自由组合，页眉页脚仍由系统绘制。[分镜 JSON](examples/greenhouse-canvas/storyboard.json) · [验证记录](examples/greenhouse-canvas/verification.json)。
+
+原始解析与创作渲染链路已验证；自由画布对照复用同一解析结果，没有重新调用 ASR/OCR。首轮画布生成因文字溢出耗尽修复预算，改进为批量返回排版问题后重试通过。分析阶段仍有部分结论需人工核验的提示，本样片不代表大规模内容质量评测。
+
+### 发布会 / 动态文字
+
 **视频如何变成短视频**：原始视频 → 语音与画面文字 → Agent 汇集证据 → 分镜 → 手机成片。
 
 [观看或下载 15 秒发布会 / 动态文字样片](examples/motion-demo/demo-15s.mp4)

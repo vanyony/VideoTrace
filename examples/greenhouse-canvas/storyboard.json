@@ -1,0 +1,1187 @@
+{
+  "musicId": "light_01",
+  "revision": 1,
+  "scenes": [
+    {
+      "animation": "fade",
+      "canvas": {
+        "background": "#0b1428",
+        "elements": [
+          {
+            "color": "#f5c542",
+            "fill": "#f5c542",
+            "fontSize": 28,
+            "fromId": null,
+            "height": 96.0,
+            "icon": "file",
+            "id": "sun",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": 0.7,
+                "timeMs": 0,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeOut",
+                "opacity": 1.0,
+                "scale": 1.0,
+                "timeMs": 700,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "circle",
+            "opacity": 1,
+            "text": "",
+            "toId": null,
+            "width": 96.0,
+            "x": 150.0,
+            "y": 470.0,
+            "z": 2
+          },
+          {
+            "color": "#f5c542",
+            "fill": "#172641",
+            "fontSize": 24,
+            "fromId": null,
+            "height": 44.0,
+            "icon": "file",
+            "id": "sunlabel",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": null,
+                "timeMs": 300,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeInOut",
+                "opacity": 1.0,
+                "scale": null,
+                "timeMs": 900,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "text",
+            "opacity": 1,
+            "text": "太阳",
+            "toId": null,
+            "width": 120.0,
+            "x": 150.0,
+            "y": 560.0,
+            "z": 3
+          },
+          {
+            "color": "#4fd1e0",
+            "fill": "#1b6f8a",
+            "fontSize": 28,
+            "fromId": null,
+            "height": 180.0,
+            "icon": "file",
+            "id": "earth",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": 0.6,
+                "timeMs": 200,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeOut",
+                "opacity": 1.0,
+                "scale": 1.0,
+                "timeMs": 1100,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "circle",
+            "opacity": 1,
+            "text": "",
+            "toId": null,
+            "width": 180.0,
+            "x": 470.0,
+            "y": 560.0,
+            "z": 2
+          },
+          {
+            "color": "#9fe8f2",
+            "fill": "#172641",
+            "fontSize": 26,
+            "fromId": null,
+            "height": 44.0,
+            "icon": "file",
+            "id": "earthlabel",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": null,
+                "timeMs": 900,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeInOut",
+                "opacity": 1.0,
+                "scale": null,
+                "timeMs": 1500,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "text",
+            "opacity": 1,
+            "text": "宜居地球",
+            "toId": null,
+            "width": 160.0,
+            "x": 470.0,
+            "y": 700.0,
+            "z": 3
+          },
+          {
+            "color": "#f5c542",
+            "fill": "#172641",
+            "fontSize": 28,
+            "fromId": "sun",
+            "height": 40.0,
+            "icon": "file",
+            "id": "ray",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": null,
+                "timeMs": 1200,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeInOut",
+                "opacity": 1.0,
+                "scale": null,
+                "timeMs": 2000,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "arrow",
+            "opacity": 1,
+            "text": "",
+            "toId": "earth",
+            "width": 120.0,
+            "x": 300.0,
+            "y": 500.0,
+            "z": 1
+          },
+          {
+            "color": "#e8f2ff",
+            "fill": "#172641",
+            "fontSize": 26,
+            "fromId": null,
+            "height": 48.0,
+            "icon": "file",
+            "id": "life",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": null,
+                "timeMs": 1600,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeInOut",
+                "opacity": 1.0,
+                "scale": null,
+                "timeMs": 2300,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "text",
+            "opacity": 1,
+            "text": "动植物与人类",
+            "toId": null,
+            "width": 300.0,
+            "x": 470.0,
+            "y": 800.0,
+            "z": 3
+          }
+        ]
+      },
+      "durationMs": 3000,
+      "headline": "地球温度刚刚好",
+      "points": [
+        "适合动植物与人类生长"
+      ],
+      "sceneId": "s1_livable",
+      "sourceRefs": [
+        "e_0_60000"
+      ],
+      "template": "title"
+    },
+    {
+      "animation": "reveal",
+      "canvas": {
+        "background": "#0b1428",
+        "elements": [
+          {
+            "color": "#f5c542",
+            "fill": "#f5c542",
+            "fontSize": 28,
+            "fromId": null,
+            "height": 84.0,
+            "icon": "file",
+            "id": "sun2",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": 0.7,
+                "timeMs": 0,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeOut",
+                "opacity": 1.0,
+                "scale": 1.0,
+                "timeMs": 600,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "circle",
+            "opacity": 1,
+            "text": "",
+            "toId": null,
+            "width": 84.0,
+            "x": 120.0,
+            "y": 460.0,
+            "z": 2
+          },
+          {
+            "color": "#f5c542",
+            "fill": "#172641",
+            "fontSize": 24,
+            "fromId": null,
+            "height": 44.0,
+            "icon": "file",
+            "id": "sunlabel2",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": null,
+                "timeMs": 300,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeInOut",
+                "opacity": 1.0,
+                "scale": null,
+                "timeMs": 800,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "text",
+            "opacity": 1,
+            "text": "阳光",
+            "toId": null,
+            "width": 120.0,
+            "x": 120.0,
+            "y": 540.0,
+            "z": 3
+          },
+          {
+            "color": "#a78bfa",
+            "fill": "#2a2350",
+            "fontSize": 28,
+            "fromId": null,
+            "height": 240.0,
+            "icon": "file",
+            "id": "glass",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": 0.85,
+                "timeMs": 400,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeOut",
+                "opacity": 1.0,
+                "scale": 1.0,
+                "timeMs": 1200,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "rectangle",
+            "opacity": 1,
+            "text": "",
+            "toId": null,
+            "width": 300.0,
+            "x": 430.0,
+            "y": 640.0,
+            "z": 1
+          },
+          {
+            "color": "#c4b5fd",
+            "fill": "#172641",
+            "fontSize": 26,
+            "fromId": null,
+            "height": 44.0,
+            "icon": "file",
+            "id": "glasslabel",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": null,
+                "timeMs": 1000,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeInOut",
+                "opacity": 1.0,
+                "scale": null,
+                "timeMs": 1500,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "text",
+            "opacity": 1,
+            "text": "玻璃温室",
+            "toId": null,
+            "width": 200.0,
+            "x": 430.0,
+            "y": 790.0,
+            "z": 3
+          },
+          {
+            "color": "#f5c542",
+            "fill": "#172641",
+            "fontSize": 28,
+            "fromId": "sun2",
+            "height": 40.0,
+            "icon": "file",
+            "id": "inray",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": null,
+                "timeMs": 1200,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeInOut",
+                "opacity": 1.0,
+                "scale": null,
+                "timeMs": 1900,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "arrow",
+            "opacity": 1,
+            "text": "",
+            "toId": "glass",
+            "width": 120.0,
+            "x": 280.0,
+            "y": 500.0,
+            "z": 0
+          },
+          {
+            "color": "#fb923c",
+            "fill": "#fb923c",
+            "fontSize": 28,
+            "fromId": null,
+            "height": 64.0,
+            "icon": "file",
+            "id": "heat",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": 0.6,
+                "timeMs": 1600,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeOut",
+                "opacity": 1.0,
+                "scale": 1.0,
+                "timeMs": 2400,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "circle",
+            "opacity": 1,
+            "text": "",
+            "toId": null,
+            "width": 64.0,
+            "x": 430.0,
+            "y": 620.0,
+            "z": 2
+          },
+          {
+            "color": "#fdba74",
+            "fill": "#172641",
+            "fontSize": 24,
+            "fromId": null,
+            "height": 44.0,
+            "icon": "file",
+            "id": "heatlabel",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": null,
+                "timeMs": 2000,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeInOut",
+                "opacity": 1.0,
+                "scale": null,
+                "timeMs": 2600,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "text",
+            "opacity": 1,
+            "text": "热量留下",
+            "toId": null,
+            "width": 160.0,
+            "x": 430.0,
+            "y": 700.0,
+            "z": 3
+          }
+        ]
+      },
+      "durationMs": 3000,
+      "headline": "玻璃温室：阳光进得来",
+      "points": [
+        "玻璃墙与玻璃屋顶",
+        "热量被留在里面"
+      ],
+      "sceneId": "s2_greenhouse",
+      "sourceRefs": [
+        "e_0_60000"
+      ],
+      "template": "points"
+    },
+    {
+      "animation": "reveal",
+      "canvas": {
+        "background": "#0b1428",
+        "elements": [
+          {
+            "color": "#a78bfa",
+            "fill": "#1a1f3d",
+            "fontSize": 28,
+            "fromId": null,
+            "height": 300.0,
+            "icon": "file",
+            "id": "coat",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": 0.8,
+                "timeMs": 0,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeOut",
+                "opacity": 1.0,
+                "scale": 1.0,
+                "timeMs": 900,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "circle",
+            "opacity": 1,
+            "text": "",
+            "toId": null,
+            "width": 300.0,
+            "x": 360.0,
+            "y": 660.0,
+            "z": 1
+          },
+          {
+            "color": "#4fd1e0",
+            "fill": "#1b6f8a",
+            "fontSize": 28,
+            "fromId": null,
+            "height": 180.0,
+            "icon": "file",
+            "id": "earth3",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": 0.7,
+                "timeMs": 300,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeOut",
+                "opacity": 1.0,
+                "scale": 1.0,
+                "timeMs": 1100,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "circle",
+            "opacity": 1,
+            "text": "",
+            "toId": null,
+            "width": 180.0,
+            "x": 360.0,
+            "y": 660.0,
+            "z": 2
+          },
+          {
+            "color": "#9fe8f2",
+            "fill": "#172641",
+            "fontSize": 26,
+            "fromId": null,
+            "height": 44.0,
+            "icon": "file",
+            "id": "earthlabel3",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": null,
+                "timeMs": 900,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeInOut",
+                "opacity": 1.0,
+                "scale": null,
+                "timeMs": 1400,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "text",
+            "opacity": 1,
+            "text": "地球",
+            "toId": null,
+            "width": 140.0,
+            "x": 360.0,
+            "y": 660.0,
+            "z": 3
+          },
+          {
+            "color": "#c4b5fd",
+            "fill": "#172641",
+            "fontSize": 28,
+            "fromId": null,
+            "height": 48.0,
+            "icon": "file",
+            "id": "coatlabel",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": null,
+                "timeMs": 1300,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeInOut",
+                "opacity": 1.0,
+                "scale": null,
+                "timeMs": 1900,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "text",
+            "opacity": 1,
+            "text": "气体外套",
+            "toId": null,
+            "width": 260.0,
+            "x": 360.0,
+            "y": 850.0,
+            "z": 3
+          },
+          {
+            "color": "#e8f2ff",
+            "fill": "#172641",
+            "fontSize": 26,
+            "fromId": null,
+            "height": 48.0,
+            "icon": "file",
+            "id": "atmname",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": null,
+                "timeMs": 1900,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeInOut",
+                "opacity": 1.0,
+                "scale": null,
+                "timeMs": 2500,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "text",
+            "opacity": 1,
+            "text": "名为大气",
+            "toId": null,
+            "width": 300.0,
+            "x": 360.0,
+            "y": 910.0,
+            "z": 3
+          }
+        ]
+      },
+      "durationMs": 3000,
+      "headline": "地球的大气外套",
+      "points": [
+        "地球被气体包裹",
+        "这层气体叫大气"
+      ],
+      "sceneId": "s3_atmosphere",
+      "sourceRefs": [
+        "e_0_60000"
+      ],
+      "template": "points"
+    },
+    {
+      "animation": "highlight",
+      "canvas": {
+        "background": "#0b1428",
+        "elements": [
+          {
+            "color": "#f5c542",
+            "fill": "#f5c542",
+            "fontSize": 28,
+            "fromId": null,
+            "height": 88.0,
+            "icon": "file",
+            "id": "sun4",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": 0.7,
+                "timeMs": 0,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeOut",
+                "opacity": 1.0,
+                "scale": 1.0,
+                "timeMs": 600,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "circle",
+            "opacity": 1,
+            "text": "",
+            "toId": null,
+            "width": 88.0,
+            "x": 130.0,
+            "y": 450.0,
+            "z": 2
+          },
+          {
+            "color": "#f5c542",
+            "fill": "#172641",
+            "fontSize": 24,
+            "fromId": null,
+            "height": 44.0,
+            "icon": "file",
+            "id": "sunlabel4",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": null,
+                "timeMs": 300,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeInOut",
+                "opacity": 1.0,
+                "scale": null,
+                "timeMs": 800,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "text",
+            "opacity": 1,
+            "text": "太阳",
+            "toId": null,
+            "width": 120.0,
+            "x": 130.0,
+            "y": 530.0,
+            "z": 3
+          },
+          {
+            "color": "#a78bfa",
+            "fill": "#1a1f3d",
+            "fontSize": 28,
+            "fromId": null,
+            "height": 280.0,
+            "icon": "file",
+            "id": "coat4",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": null,
+                "timeMs": 200,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeInOut",
+                "opacity": 1.0,
+                "scale": null,
+                "timeMs": 900,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "circle",
+            "opacity": 1,
+            "text": "",
+            "toId": null,
+            "width": 280.0,
+            "x": 430.0,
+            "y": 660.0,
+            "z": 1
+          },
+          {
+            "color": "#4fd1e0",
+            "fill": "#1b6f8a",
+            "fontSize": 28,
+            "fromId": null,
+            "height": 170.0,
+            "icon": "file",
+            "id": "earth4",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": 0.75,
+                "timeMs": 400,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeOut",
+                "opacity": 1.0,
+                "scale": 1.0,
+                "timeMs": 1100,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "circle",
+            "opacity": 1,
+            "text": "",
+            "toId": null,
+            "width": 170.0,
+            "x": 430.0,
+            "y": 660.0,
+            "z": 2
+          },
+          {
+            "color": "#f5c542",
+            "fill": "#172641",
+            "fontSize": 28,
+            "fromId": "sun4",
+            "height": 40.0,
+            "icon": "file",
+            "id": "ray4",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": null,
+                "timeMs": 1000,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeInOut",
+                "opacity": 1.0,
+                "scale": null,
+                "timeMs": 1700,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "arrow",
+            "opacity": 1,
+            "text": "",
+            "toId": "earth4",
+            "width": 130.0,
+            "x": 280.0,
+            "y": 500.0,
+            "z": 0
+          },
+          {
+            "color": "#fb923c",
+            "fill": "#fb923c",
+            "fontSize": 28,
+            "fromId": null,
+            "height": 90.0,
+            "icon": "file",
+            "id": "warm",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": 0.5,
+                "timeMs": 1600,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeOut",
+                "opacity": 0.85,
+                "scale": 1.0,
+                "timeMs": 2400,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "circle",
+            "opacity": 1,
+            "text": "",
+            "toId": null,
+            "width": 90.0,
+            "x": 430.0,
+            "y": 660.0,
+            "z": 3
+          },
+          {
+            "color": "#fdba74",
+            "fill": "#172641",
+            "fontSize": 26,
+            "fromId": null,
+            "height": 48.0,
+            "icon": "file",
+            "id": "warmlabel",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": null,
+                "timeMs": 2000,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeInOut",
+                "opacity": 1.0,
+                "scale": null,
+                "timeMs": 2600,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "text",
+            "opacity": 1,
+            "text": "地表变暖",
+            "toId": null,
+            "width": 240.0,
+            "x": 430.0,
+            "y": 850.0,
+            "z": 4
+          }
+        ]
+      },
+      "durationMs": 3000,
+      "headline": "白天：阳光温暖地表",
+      "points": [
+        "阳光穿过大气",
+        "地表被晒暖"
+      ],
+      "sceneId": "s4_daytime",
+      "sourceRefs": [
+        "e_0_60000"
+      ],
+      "template": "points"
+    },
+    {
+      "animation": "fade",
+      "canvas": {
+        "background": "#0b1428",
+        "elements": [
+          {
+            "color": "#f5c542",
+            "fill": "#f5c542",
+            "fontSize": 28,
+            "fromId": null,
+            "height": 80.0,
+            "icon": "file",
+            "id": "sun5",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": 0.7,
+                "timeMs": 0,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeOut",
+                "opacity": 1.0,
+                "scale": 1.0,
+                "timeMs": 600,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "circle",
+            "opacity": 1,
+            "text": "",
+            "toId": null,
+            "width": 80.0,
+            "x": 130.0,
+            "y": 450.0,
+            "z": 2
+          },
+          {
+            "color": "#a78bfa",
+            "fill": "#1a1f3d",
+            "fontSize": 28,
+            "fromId": null,
+            "height": 260.0,
+            "icon": "file",
+            "id": "coat5",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": null,
+                "timeMs": 200,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeInOut",
+                "opacity": 1.0,
+                "scale": null,
+                "timeMs": 900,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "circle",
+            "opacity": 1,
+            "text": "",
+            "toId": null,
+            "width": 260.0,
+            "x": 400.0,
+            "y": 620.0,
+            "z": 1
+          },
+          {
+            "color": "#4fd1e0",
+            "fill": "#1b6f8a",
+            "fontSize": 28,
+            "fromId": null,
+            "height": 160.0,
+            "icon": "file",
+            "id": "earth5",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": 0.75,
+                "timeMs": 400,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeOut",
+                "opacity": 1.0,
+                "scale": 1.0,
+                "timeMs": 1100,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "circle",
+            "opacity": 1,
+            "text": "",
+            "toId": null,
+            "width": 160.0,
+            "x": 400.0,
+            "y": 620.0,
+            "z": 2
+          },
+          {
+            "color": "#f5c542",
+            "fill": "#172641",
+            "fontSize": 28,
+            "fromId": "sun5",
+            "height": 40.0,
+            "icon": "file",
+            "id": "ray5",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": null,
+                "timeMs": 900,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeInOut",
+                "opacity": 1.0,
+                "scale": null,
+                "timeMs": 1600,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "arrow",
+            "opacity": 1,
+            "text": "",
+            "toId": "earth5",
+            "width": 120.0,
+            "x": 270.0,
+            "y": 480.0,
+            "z": 0
+          },
+          {
+            "color": "#fdba74",
+            "fill": "#172641",
+            "fontSize": 28,
+            "fromId": null,
+            "height": 48.0,
+            "icon": "file",
+            "id": "keep",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": null,
+                "timeMs": 1500,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeInOut",
+                "opacity": 1.0,
+                "scale": null,
+                "timeMs": 2100,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "text",
+            "opacity": 1,
+            "text": "留住热量",
+            "toId": null,
+            "width": 300.0,
+            "x": 400.0,
+            "y": 790.0,
+            "z": 3
+          },
+          {
+            "color": "#9fe8f2",
+            "fill": "#172641",
+            "fontSize": 28,
+            "fromId": null,
+            "height": 48.0,
+            "icon": "file",
+            "id": "warm5",
+            "keyframes": [
+              {
+                "easing": "easeInOut",
+                "opacity": 0.0,
+                "scale": null,
+                "timeMs": 2000,
+                "x": null,
+                "y": null
+              },
+              {
+                "easing": "easeInOut",
+                "opacity": 1.0,
+                "scale": null,
+                "timeMs": 2600,
+                "x": null,
+                "y": null
+              }
+            ],
+            "kind": "text",
+            "opacity": 1,
+            "text": "地球保持温暖",
+            "toId": null,
+            "width": 340.0,
+            "x": 400.0,
+            "y": 860.0,
+            "z": 3
+          }
+        ]
+      },
+      "durationMs": 3000,
+      "headline": "温室效应让地球保暖",
+      "points": [
+        "与温室留住热量同理"
+      ],
+      "sceneId": "s5_summary",
+      "sourceRefs": [
+        "e_0_60000"
+      ],
+      "template": "title"
+    }
+  ],
+  "schemaVersion": 1,
+  "targetAudience": "对自然科学感兴趣的普通中文观众",
+  "title": "温室效应：地球为什么刚刚好"
+}
