@@ -20,6 +20,20 @@ class CanvasValidatorTest {
         nodes.add(element("link","arrow",360,640).put("fromId","video").put("toId","agent"));
         return canvas;
     }
+    @Test void rejectsUnknownFieldsAtEveryCanvasDepth() {
+        var original=canvas().put("layout","full");
+        original.putArray("camera").addObject().put("timeMs",0).put("x",360).put("y",640).put("zoom",1).put("easing","linear");
+        var node=(ObjectNode)original.path("elements").get(0);
+        node.putArray("keyframes").addObject().put("timeMs",0).put("opacity",1).put("easing","linear");
+        var curve=node.putObject("curve").put("startMs",0).put("endMs",2000).put("loop",false);
+        var points=curve.putArray("points");
+        for(int i=0;i<4;i++)points.addObject().put("x",180+i*20).put("y",500+i*20);
+        assertDoesNotThrow(()->CanvasValidator.validate(original,6000));
+        for(String pointer:new String[]{"","/camera/0","/elements/0","/elements/0/keyframes/0","/elements/0/curve","/elements/0/curve/points/0"}) {
+            var candidate=original.deepCopy(); ((ObjectNode)candidate.at(pointer)).put("code","malicious()");
+            assertThrows(IllegalArgumentException.class,()->CanvasValidator.validate(candidate,6000),pointer);
+        }
+    }
     @Test void validatesReferencesAndRejectsUnknownTargetsAndKinds() {
         var canvas=canvas(); assertDoesNotThrow(()->CanvasValidator.validate(canvas,6000));
         var link=(ObjectNode)canvas.path("elements").get(2);

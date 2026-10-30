@@ -77,7 +77,8 @@ def overlap_hints(scene, times):
 
 
 class PreviewFeedback(BaseModel):
-    model_config = ConfigDict(extra="forbid", strict=True)
+    # Provider-added envelope metadata is discarded; individual issues remain strictly validated.
+    model_config = ConfigDict(extra="ignore", strict=True)
     summary: str = Field(min_length=1, max_length=1000)
     issues: list[PreviewIssue] = Field(max_length=6)
 
@@ -104,7 +105,7 @@ class PreviewReviewer:
         fingerprint = json.dumps({"operationId": operation.operationId, "attempt": operation.attempt,
             "board": board.model_dump(), "scenes": [s.sceneId for s in scenes], "focus": focus,
             "renderer": TEMPLATE_VERSION, "font": file_sha256(Path(font_path())),
-            "vision": self.identity, "reviewVersion": 3}, sort_keys=True, ensure_ascii=False)
+            "vision": self.identity, "reviewVersion": 4}, sort_keys=True, ensure_ascii=False)
         preview_id = sha256(fingerprint.encode()).hexdigest()
         directory = self.settings.data_dir / "preview-reviews" / preview_id
         result_file = directory / "result.json"

@@ -100,6 +100,48 @@ def resolved_scenes(board):
     return result
 
 
+def materialize_review_edits(draft, previous):
+    """Turn explicit repair deltas into t=0 overrides without changing legacy inheritance."""
+    if not previous:
+        return draft
+    import copy
+    from .models import Scene
+    draft = copy.deepcopy(draft)
+    old_scenes = {s["sceneId"]: s for s in previous["scenes"]}
+    for scene in draft["scenes"]:
+        old = old_scenes.get(scene["sceneId"])
+        canvas = scene.get("canvas")
+        if not old or not old.get("canvas") or not canvas or not canvas.get("continuePrevious"):
+            continue
+        before = {e.id: e for e in Scene.model_validate(old).canvas.elements}
+        for raw in canvas["elements"]:
+            prior = before.get(raw["id"])
+            if not prior or prior.space != "world" or prior.kind in ("line", "arrow", "path"):
+                continue
+            from .canvas_models import CanvasElement
+            node = CanvasElement.model_validate(raw)
+            if node.space != "world" or node.kind != prior.kind or (node.kind == "sprite" and node.sprite != prior.sprite):
+                continue
+            frames = raw.get("keyframes", [])
+            first = frames[0] if frames and frames[0]["timeMs"] == 0 else {}
+            old_first = prior.keyframes[0] if prior.keyframes and prior.keyframes[0].timeMs == 0 else None
+            changed = {}
+            for key in ("x", "y", "scale", "opacity", "rotation"):
+                if node.curve and key in ("x", "y"):
+                    continue
+                if getattr(node, key) == getattr(prior, key):
+                    continue
+                if first.get(key) is not None and (old_first is None or first[key] != getattr(old_first, key)):
+                    continue  # An explicitly edited t=0 keyframe is authoritative.
+                changed[key] = getattr(node, key)
+            if changed:
+                if first:
+                    first.update(changed)
+                else:
+                    raw["keyframes"] = [{"timeMs": 0, **changed}, *frames]
+    return draft
+
+
 def validate_canvas_layout(scene):
     errors = []
     full = scene.canvas.layout == "full"

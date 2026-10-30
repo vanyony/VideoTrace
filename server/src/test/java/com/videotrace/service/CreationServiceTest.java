@@ -19,11 +19,54 @@ class CreationServiceTest {
             {"sceneId":"s3","template":"flow","animation":"highlight","durationMs":10000,"headline":"第三点","points":[],"sourceRefs":["e_0_10000"]}]}
             """);
     }
+    @Test void previewWarningsCannotBeHiddenBehindACleanStatusOrOlderSnapshot() throws Exception {
+        var metadata=json.createObjectNode().put("previewId","a".repeat(64)).put("draftSha256","b".repeat(64))
+                .put("matchesSavedDraft",true).put("summary","标题仍被遮挡").put("status","sampled_no_issues");
+        metadata.putArray("issues").addObject().put("sceneId","s1").put("severity","warning").put("category","layout")
+                .put("confidence",.9).put("timestampMs",1000).put("problem","太阳遮挡标题").put("suggestion","下移太阳");
+        var checked=CreationService.validatePreviewReview(metadata,board());
+        assertEquals("needs_attention",checked.path("status").asText());
+        assertEquals(1,checked.path("warningCount").asInt());
+        metadata.put("matchesSavedDraft",false);
+        assertThrows(IllegalArgumentException.class,()->CreationService.validatePreviewReview(metadata,board()));
+        assertNull(CreationService.validatePreviewReview(json.nullNode(),board()));
+    }
     @Test void readinessRequiresTimestampedTextRatherThanOnlyAContextShell() {
         assertFalse(CreationService.ready(null));
         assertFalse(CreationService.ready(new VideoContext("source","",List.of())));
         assertFalse(CreationService.ready(new VideoContext("source","",List.of(new VideoContext.VideoSegment(0,1,"",List.of(),List.of())))));
         assertTrue(CreationService.ready(context));
+    }
+    @Test void callbackRejectsCoercedVersionsAndUnknownFields() throws Exception {
+        for(String field:List.of("revision","schemaVersion")) {
+            for(var value:List.of(json.getNodeFactory().textNode("1"),json.getNodeFactory().numberNode(1.0),
+                    json.getNodeFactory().numberNode(4294967297L))) {
+                var candidate=board(); candidate.set(field,value);
+                assertThrows(IllegalArgumentException.class,()->CreationService.validateStoryboard(candidate,1,context),field+"="+value);
+            }
+        }
+        var root=board(); root.put("execute","malicious()");
+        assertThrows(IllegalArgumentException.class,()->CreationService.validateStoryboard(root,1,context));
+        var scene=board(); ((ObjectNode)scene.path("scenes").get(0)).put("code","malicious()");
+        assertThrows(IllegalArgumentException.class,()->CreationService.validateStoryboard(scene,1,context));
+    }
+    @Test void rejectsUnknownFieldsInVisualAndMotionDesigns() throws Exception {
+        var visualBoard=board();
+        var visual=((ObjectNode)visualBoard.path("scenes").get(0)).putObject("visual").put("layout","merge").put("theme","dark").put("motion","draw");
+        var items=visual.putArray("items");
+        items.addObject().put("icon","audio").put("label","语音").put("value",50);
+        items.addObject().put("icon","agent").put("label","助手").put("value",50);
+        assertDoesNotThrow(()->CreationService.validateStoryboard(visualBoard,1,context));
+        for(String pointer:List.of("/scenes/0/visual","/scenes/0/visual/items/0")) {
+            var candidate=visualBoard.deepCopy(); ((ObjectNode)candidate.at(pointer)).put("code","malicious()");
+            assertThrows(IllegalArgumentException.class,()->CreationService.validateStoryboard(candidate,1,context));
+        }
+        var motionBoard=board();
+        var motion=((ObjectNode)motionBoard.path("scenes").get(0)).putObject("motion").put("style","launch").put("eyebrow","创作").put("accent","violet").put("transition","push");
+        motion.putArray("words").add("证据");
+        assertDoesNotThrow(()->CreationService.validateStoryboard(motionBoard,1,context));
+        motion.put("code","malicious()");
+        assertThrows(IllegalArgumentException.class,()->CreationService.validateStoryboard(motionBoard,1,context));
     }
     @Test void validatesVersionEvidenceAndTimelineAtCallbackBoundary() throws Exception {
         ObjectNode board=board();

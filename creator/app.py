@@ -46,11 +46,16 @@ class Worker:
                     self.store.emit(operation, "COMPLETED", "视频已生成", artifact=artifact)
                 else:
                     storyboard = self.agent.run(operation)
+                    review = self.agent.preview_metadata(operation)
+                    fields = {"previewReview": review} if review else {}
+                    summary = ("分镜已保存，但仍有视觉问题或检查未完成，请人工核验后确认"
+                               if review and review["status"] == "needs_attention"
+                               else "分镜已准备好，请确认后生成视频")
                     if operation.type == "CONVERSE":
                         self.store.emit(operation, "DISCUSSED" if storyboard["action"] == "DISCUSS" else "AWAITING_CONFIRMATION",
-                                        "创作助手已回复" if storyboard["action"] == "DISCUSS" else "分镜已准备好，请确认后生成视频", **storyboard)
+                                        "创作助手已回复" if storyboard["action"] == "DISCUSS" else summary, **storyboard, **fields)
                     else:
-                        self.store.emit(operation, "AWAITING_CONFIRMATION", "分镜已准备好，请确认后生成视频", storyboard=storyboard)
+                        self.store.emit(operation, "AWAITING_CONFIRMATION", summary, storyboard=storyboard, **fields)
             except Exception as error:
                 if self.stop.is_set():
                     return  # Leave RUNNING durable; checkpoint and render cache resume on restart.

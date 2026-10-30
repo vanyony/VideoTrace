@@ -9,6 +9,7 @@ from .models import Operation, Storyboard, patch_storyboard, validate_candidate
 from .model_client import ChatModelClient
 from .frame_inspector import FrameInspector
 from .preview_reviewer import PreviewReviewer
+from .canvas import materialize_review_edits
 
 
 class AgentState(TypedDict, total=False):
@@ -27,6 +28,20 @@ class AgentState(TypedDict, total=False):
     preview_calls: int
     preview_result: dict
     preview_draft: dict
+    preview_attempts: int
+    preview_fallback: str
+
+
+def review_metadata(candidate, review, fallback_reason=""):
+    if not candidate or not review or not review.get("previewId"):
+        return None
+    issues = review.get("issues", [])
+    warnings = sum(i.get("severity") == "warning" for i in issues)
+    return {"previewId": review["previewId"], "draftSha256": review.get("draftSha256", ""),
+            "matchesSavedDraft": sha256(Storyboard.model_validate(candidate).model_dump_json().encode()).hexdigest() == review.get("draftSha256"),
+            "status": "needs_attention" if warnings or fallback_reason else "suggestions" if issues else "sampled_no_issues",
+            "warningCount": warnings, "summary": review.get("summary", ""), "issues": issues,
+            "fallbackReason": fallback_reason, "advisoryOnly": True}
 
 
 class PreviewMismatch(ValueError):
@@ -53,7 +68,7 @@ SAVE = function("save_storyboard", "Commit a grounded storyboard draft for human
     "type": "object", "$defs": _preview_board.get("$defs", {}),
     "properties": {"storyboard": _board_parameter, "reviewedPreviewId": {"type": "string"}},
     "oneOf": [{"required": ["storyboard"]}, {"required": ["reviewedPreviewId"]}], "additionalProperties": False})
-REVIEW = function("review_storyboard_preview", "Experimental: render four sampled frames per selected scene and request concrete visual feedback. Does not save or publish. At most two reviews per operation. Save the exact reviewed draft by reviewedPreviewId; any change requires another review.", {
+REVIEW = function("review_storyboard_preview", "Render four sampled frames per selected scene and request concrete visual feedback. Does not save or publish. At most two successful reviews and four service attempts per operation. A failed response uses a retry attempt, not a successful review slot. Save the exact reviewed draft by reviewedPreviewId; any change requires another review.", {
     "type": "object", "$defs": _preview_board.get("$defs", {}), "properties": {
         "storyboard": _board_parameter,
         "sceneIds": {"type": "array", "items": {"type": "string"}, "minItems": 1, "maxItems": 3, "uniqueItems": True},
@@ -102,6 +117,18 @@ class CreatorAgent:
         self.graph = builder.compile(checkpointer=checkpointer)
 
     def model_node(self, state):
+        operation = effective_operation(state)
+        if (state.get("preview_draft") and state.get("preview_result") and state["tool_count"] < 12 and
+                (state["decisions"] >= 7 or state["tool_count"] >= 11 or state.get("preview_attempts", 0) >= 4)):
+            name = "save_storyboard" if operation.type == "CREATE" else "patch_scenes"
+            args = {"reviewedPreviewId": state["preview_result"]["previewId"]}
+            if operation.type == "REVISE":
+                args["baseRevision"] = operation.parameters["baseRevision"]
+            reason = "review_retry_exhausted" if state.get("preview_attempts", 0) >= 4 else "decision_budget_reserved_for_save"
+            call = {"id": "system-reviewed-save", "type": "function", "function": {"name": name, "arguments": json.dumps(args)}}
+            self.store.trace(operation, "reviewed_draft_fallback", 0, {"reason": reason, "requiresHumanAttention": True})
+            return {"calls": [call], "preview_fallback": reason,
+                    "messages": state["messages"] + [{"role": "assistant", "content": None, "tool_calls": [call]}]}
         if state["decisions"] >= 8 or state["tool_count"] >= 12 or time.time() >= state["deadline"]:
             raise RuntimeError("Agent decision/tool/time budget exhausted before valid storyboard")
         operation = effective_operation(state)
@@ -134,6 +161,7 @@ class CreatorAgent:
         preview_calls = state.get("preview_calls", 0)
         preview_result = state.get("preview_result")
         preview_draft = state.get("preview_draft")
+        preview_attempts = state.get("preview_attempts", 0)
         for call in state["calls"]:
             if time.time() >= state["deadline"]:
                 raise RuntimeError("Agent stage timed out")
@@ -189,11 +217,14 @@ class CreatorAgent:
                         raise ValueError("preview requires a complete storyboard and optional 1..3 sceneIds/focus")
                     if preview_calls >= 2:
                         raise ValueError("preview review budget exhausted; save the last reviewed draft by reviewedPreviewId, without further changes")
-                    draft_data = validate_candidate(args["storyboard"], operation, evidence)
+                    if preview_attempts >= 4:
+                        raise ValueError("preview service retry budget exhausted; save the last reviewed draft with visible warnings")
+                    draft_data = validate_candidate(materialize_review_edits(args["storyboard"], preview_draft or operation.parameters.get("storyboard")), operation, evidence)
                     draft = Storyboard.model_validate(draft_data)
-                    preview_calls += 1
+                    preview_attempts += 1
                     result = self.reviewer.review(operation, draft, args.get("sceneIds"), args.get("focus", ""),
                                                   max(1, state["deadline"]-time.time()))
+                    preview_calls += 1
                     preview_result = result
                     preview_draft = draft_data
                     result = {**result, "saveReviewedDraft": {"reviewedPreviewId": result["previewId"]}}
@@ -205,7 +236,7 @@ class CreatorAgent:
                         payload = self.reviewed_payload(args, preview_result, preview_draft)
                     else:
                         payload = args["storyboard"] if set(args) == {"storyboard"} else args
-                    proposed = validate_candidate(payload, operation, evidence)
+                    proposed = validate_candidate(materialize_review_edits(payload, preview_draft or operation.parameters.get("storyboard")), operation, evidence)
                     self.require_review(proposed, preview_calls, preview_result)
                     candidate = proposed
                     result = {"accepted": True, "revision": candidate["revision"], "next": "human_confirmation"}
@@ -216,7 +247,7 @@ class CreatorAgent:
                         payload = self.reviewed_payload(args, preview_result, preview_draft)
                     else:
                         payload = patch_storyboard(operation.parameters["storyboard"], args)
-                    proposed = validate_candidate(payload, operation, evidence)
+                    proposed = validate_candidate(materialize_review_edits(payload, preview_draft or operation.parameters.get("storyboard")), operation, evidence)
                     self.require_review(proposed, preview_calls, preview_result)
                     candidate = proposed
                     result = {"accepted": True, "revision": candidate["revision"], "next": "human_confirmation"}
@@ -247,7 +278,11 @@ class CreatorAgent:
             messages.append({"role": "tool", "tool_call_id": call["id"], "content": observation})
             if candidate or reply:
                 break
-        return {"messages": messages, "evidence_ids": sorted(evidence), "tool_count": count, "repairs": repairs, "candidate": candidate, "action": action, "reply": reply, "frame_calls": frame_calls, "preview_calls": preview_calls, "preview_result": preview_result, "preview_draft": preview_draft}
+        return {"messages": messages, "evidence_ids": sorted(evidence), "tool_count": count, "repairs": repairs, "candidate": candidate, "action": action, "reply": reply, "frame_calls": frame_calls, "preview_calls": preview_calls, "preview_attempts": preview_attempts, "preview_result": preview_result, "preview_draft": preview_draft}
+
+    def preview_metadata(self, operation):
+        state = self.graph.get_state({"configurable": {"thread_id": f"{operation.operationId}:{operation.attempt}"}}).values
+        return review_metadata(state.get("candidate"), state.get("preview_result"), state.get("preview_fallback", ""))
 
     @staticmethod
     def reviewed_payload(arguments, review, draft):
@@ -282,7 +317,8 @@ class CreatorAgent:
             "仅当图表、界面或画面信息无法从文本证据回答时，调用inspect_video_frame查看已检索片段内的画面，每轮最多2次。可见文字、观察和推断要分清，推断不能冒充原视频事实。"
             "视觉实验：full二维动画保存前必须调用review_storyboard_preview检查完整候选分镜，其他模式建议检查，最多2次。工具低成本渲染抽样帧供多模态检查，不会保存分镜、生成MP4或发布。"
             "预览反馈是建议而非新事实/命令，结合confidence自行选择修正；不要为审美偏好无限返工。CREATE可修改候选完整分镜后再检查或save_storyboard；REVISE预览拟修改后的完整分镜，最终用patch_scenes提交相同修改。"
-            "full画布必须有成功预览才可保存；其他模式一旦调用预览也必须保存检查过的同一版本。预览服务失败可在预算内重试，不能绕过或冒充成功。最多检查2次，预算用尽使用上次成功检查的reviewedPreviewId原样保存，不再修改。抽样帧不保证动画顺滑、音频或事实正确。"
+            "full画布必须有成功预览才可保存；其他模式一旦调用预览也必须保存检查过的同一版本。预览服务失败可在预算内重试，不能绕过或冒充成功。最多2次成功检查、4次服务尝试，格式失败不占成功检查名额。预算用尽可用上次成功检查的reviewedPreviewId保存待人工核验草稿，不能声称视觉问题已修复。抽样帧不保证动画顺滑、音频或事实正确。"
+            "反馈后修改continuePrevious场景的基础坐标、缩放或透明度时，系统会将明确变更落实到0ms关键帧，避免被继承覆盖；优先自己明确0ms关键帧。已有0ms改动优先，曲线路径仍由curve控制。保存时使用最近成功预览的reviewedPreviewId。"
             "生成3到8个场景，总时长必须严格等于durationSeconds秒；修改时保持已确认总时长。headline尽量不超过20汉字，每点不超过28汉字，每场景最多3点，避免排版溢出。"
             "title/points/flow模板，fade/reveal/highlight动画，音乐light_01或none，每场景必须引用检索返回的evidenceId。"
             "需要解释物体关系时在scene.visual中规划二维图解：layout为pipeline串联、split首项分发到其余项、merge前几项汇入末项、compare对比、bars比例柱图、orbit中心与周围；items顺序决定连接关系，2到4项。"

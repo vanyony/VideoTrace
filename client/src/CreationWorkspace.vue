@@ -23,6 +23,15 @@
     <div v-if="task" class="creation-result">
       <div class="creation-header"><h3>{{ task.storyboard?.title || '创作任务' }}</h3><span role="status" aria-live="polite">{{ creationLabels[task.status] || task.status }} · 版本 {{ task.revision || 0 }}</span></div>
       <p v-if="task.summary" role="status">{{ task.summary }}</p>
+      <aside v-if="task.previewReview" class="creation-notice" role="status" aria-label="分镜视觉检查结果">
+        <strong>{{ task.previewReview.status === 'needs_attention' ? '当前分镜仍需人工核验' : task.previewReview.status === 'suggestions' ? '抽样检查有改进建议' : '抽样画面暂未发现明确问题' }}</strong>
+        <p>{{ task.previewReview.summary }}</p>
+        <p v-if="task.previewReview.fallbackReason">检查或修复预算已用尽，当前保留最近成功检查的草稿，未解决的问题仍需处理。</p>
+        <ul v-if="task.previewReview.issues?.length"><li v-for="(issue, index) in task.previewReview.issues" :key="index">
+          {{ issue.sceneId }} · {{ issue.severity === 'warning' ? '警告' : '建议' }}：{{ issue.problem }}<br>建议：{{ issue.suggestion }}
+        </li></ul>
+        <p>检查仅覆盖抽样画面，请核对原视频证据与最终分镜后再确认渲染。</p>
+      </aside>
       <p v-if="task.sourceDeleted" class="creation-notice">源视频已删除，已生成作品仍可访问，无法继续修改或渲染。</p>
       <p v-if="task.error" class="creation-error" role="alert">{{ typeof task.error === 'string' ? task.error : task.error.message || '创作失败' }}</p>
       <button v-if="task.status === 'FAILED' && task.retryable" :disabled="loading || task.sourceDeleted" @click="submit('retry')">重试失败步骤</button>

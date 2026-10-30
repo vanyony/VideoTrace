@@ -1,0 +1,1928 @@
+[
+  {
+    "id": "valid-baseline",
+    "invalid": false,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点1",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "durationSeconds": 30,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "raw"
+  },
+  {
+    "id": "valid-15seconds",
+    "invalid": false,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 5000,
+          "headline": "观点1",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 5000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 5000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "durationSeconds": 15,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "raw"
+  },
+  {
+    "id": "wrong-revision",
+    "invalid": true,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 2,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点1",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "durationSeconds": 30,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "raw"
+  },
+  {
+    "id": "string-revision",
+    "invalid": true,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": "1",
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点1",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "durationSeconds": 30,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "raw"
+  },
+  {
+    "id": "string-schema",
+    "invalid": true,
+    "storyboard": {
+      "schemaVersion": "1",
+      "revision": 1,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点1",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "durationSeconds": 30,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "raw"
+  },
+  {
+    "id": "unknown-root-field",
+    "invalid": true,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点1",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ],
+      "execute": "malicious()"
+    },
+    "parameters": {
+      "durationSeconds": 30,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "raw"
+  },
+  {
+    "id": "unknown-scene-field",
+    "invalid": true,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点1",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ],
+          "code": "malicious()"
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "durationSeconds": 30,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "raw"
+  },
+  {
+    "id": "duplicate-scene-id",
+    "invalid": true,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点1",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "durationSeconds": 30,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "raw"
+  },
+  {
+    "id": "unknown-evidence",
+    "invalid": true,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点1",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_10000_20000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "durationSeconds": 30,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "raw"
+  },
+  {
+    "id": "missing-evidence",
+    "invalid": true,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点1",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": []
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "durationSeconds": 30,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "raw"
+  },
+  {
+    "id": "wrong-selected-duration",
+    "invalid": true,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 9000,
+          "headline": "观点1",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "durationSeconds": 30,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "raw"
+  },
+  {
+    "id": "string-duration",
+    "invalid": true,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": "10000",
+          "headline": "观点1",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "durationSeconds": 30,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "raw"
+  },
+  {
+    "id": "negative-duration",
+    "invalid": true,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": -1,
+          "headline": "观点1",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "durationSeconds": 30,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "raw"
+  },
+  {
+    "id": "too-few-scenes",
+    "invalid": true,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点1",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "durationSeconds": 30,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "raw"
+  },
+  {
+    "id": "unknown-music",
+    "invalid": true,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "https://example.invalid/music",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点1",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "durationSeconds": 30,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "raw"
+  },
+  {
+    "id": "blank-title",
+    "invalid": true,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "title": "   ",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点1",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "durationSeconds": 30,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "raw"
+  },
+  {
+    "id": "long-headline",
+    "invalid": true,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "durationSeconds": 30,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "raw"
+  },
+  {
+    "id": "unknown-template",
+    "invalid": true,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "exec",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点1",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "durationSeconds": 30,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "raw"
+  },
+  {
+    "id": "nonstring-point",
+    "invalid": true,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点1",
+          "points": [
+            123
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "durationSeconds": 30,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "raw"
+  },
+  {
+    "id": "blank-point",
+    "invalid": true,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点1",
+          "points": [
+            " "
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "durationSeconds": 30,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "raw"
+  },
+  {
+    "id": "missing-points",
+    "invalid": false,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点1",
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "durationSeconds": 30,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "raw"
+  },
+  {
+    "id": "valid-but-unretrieved-evidence",
+    "invalid": false,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点1",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "durationSeconds": 30,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "raw"
+  },
+  {
+    "id": "valid-local-revision",
+    "invalid": false,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 2,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点1",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "改后",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "baseRevision": 1,
+      "storyboard": {
+        "schemaVersion": 1,
+        "revision": 1,
+        "title": "标题",
+        "targetAudience": "公众",
+        "musicId": "none",
+        "scenes": [
+          {
+            "sceneId": "s1",
+            "template": "points",
+            "animation": "fade",
+            "durationMs": 10000,
+            "headline": "观点1",
+            "points": [
+              "证据"
+            ],
+            "sourceRefs": [
+              "e_0_10000"
+            ]
+          },
+          {
+            "sceneId": "s2",
+            "template": "points",
+            "animation": "fade",
+            "durationMs": 10000,
+            "headline": "观点2",
+            "points": [
+              "证据"
+            ],
+            "sourceRefs": [
+              "e_0_10000"
+            ]
+          },
+          {
+            "sceneId": "s3",
+            "template": "points",
+            "animation": "fade",
+            "durationMs": 10000,
+            "headline": "观点3",
+            "points": [
+              "证据"
+            ],
+            "sourceRefs": [
+              "e_0_10000"
+            ]
+          }
+        ]
+      },
+      "targetSceneIds": [
+        "s2"
+      ],
+      "instruction": "只调整指定场景"
+    },
+    "type": "REVISE",
+    "inputMode": "raw"
+  },
+  {
+    "id": "local-outside-scene",
+    "invalid": true,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 2,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "越界",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "baseRevision": 1,
+      "storyboard": {
+        "schemaVersion": 1,
+        "revision": 1,
+        "title": "标题",
+        "targetAudience": "公众",
+        "musicId": "none",
+        "scenes": [
+          {
+            "sceneId": "s1",
+            "template": "points",
+            "animation": "fade",
+            "durationMs": 10000,
+            "headline": "观点1",
+            "points": [
+              "证据"
+            ],
+            "sourceRefs": [
+              "e_0_10000"
+            ]
+          },
+          {
+            "sceneId": "s2",
+            "template": "points",
+            "animation": "fade",
+            "durationMs": 10000,
+            "headline": "观点2",
+            "points": [
+              "证据"
+            ],
+            "sourceRefs": [
+              "e_0_10000"
+            ]
+          },
+          {
+            "sceneId": "s3",
+            "template": "points",
+            "animation": "fade",
+            "durationMs": 10000,
+            "headline": "观点3",
+            "points": [
+              "证据"
+            ],
+            "sourceRefs": [
+              "e_0_10000"
+            ]
+          }
+        ]
+      },
+      "targetSceneIds": [
+        "s2"
+      ],
+      "instruction": "只调整指定场景"
+    },
+    "type": "REVISE",
+    "inputMode": "raw"
+  },
+  {
+    "id": "local-global-title",
+    "invalid": true,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 2,
+      "title": "越界",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点1",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "baseRevision": 1,
+      "storyboard": {
+        "schemaVersion": 1,
+        "revision": 1,
+        "title": "标题",
+        "targetAudience": "公众",
+        "musicId": "none",
+        "scenes": [
+          {
+            "sceneId": "s1",
+            "template": "points",
+            "animation": "fade",
+            "durationMs": 10000,
+            "headline": "观点1",
+            "points": [
+              "证据"
+            ],
+            "sourceRefs": [
+              "e_0_10000"
+            ]
+          },
+          {
+            "sceneId": "s2",
+            "template": "points",
+            "animation": "fade",
+            "durationMs": 10000,
+            "headline": "观点2",
+            "points": [
+              "证据"
+            ],
+            "sourceRefs": [
+              "e_0_10000"
+            ]
+          },
+          {
+            "sceneId": "s3",
+            "template": "points",
+            "animation": "fade",
+            "durationMs": 10000,
+            "headline": "观点3",
+            "points": [
+              "证据"
+            ],
+            "sourceRefs": [
+              "e_0_10000"
+            ]
+          }
+        ]
+      },
+      "targetSceneIds": [
+        "s2"
+      ],
+      "instruction": "只调整指定场景"
+    },
+    "type": "REVISE",
+    "inputMode": "raw"
+  },
+  {
+    "id": "valid-baseline-normalized",
+    "invalid": false,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "durationMs": 10000,
+          "headline": "观点1",
+          "points": [
+            "证据"
+          ],
+          "animation": "fade",
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "animation": "fade",
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "animation": "fade",
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "durationSeconds": 30,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "normalized"
+  },
+  {
+    "id": "valid-15seconds-normalized",
+    "invalid": false,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "durationMs": 5000,
+          "headline": "观点1",
+          "points": [
+            "证据"
+          ],
+          "animation": "fade",
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "durationMs": 5000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "animation": "fade",
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "durationMs": 5000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "animation": "fade",
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "durationSeconds": 15,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "normalized"
+  },
+  {
+    "id": "blank-title-normalized",
+    "invalid": true,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "title": "   ",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "durationMs": 10000,
+          "headline": "观点1",
+          "points": [
+            "证据"
+          ],
+          "animation": "fade",
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "animation": "fade",
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "animation": "fade",
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "durationSeconds": 30,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "normalized"
+  },
+  {
+    "id": "missing-points-normalized",
+    "invalid": false,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "durationMs": 10000,
+          "headline": "观点1",
+          "points": [],
+          "animation": "fade",
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "durationMs": 10000,
+          "headline": "观点2",
+          "points": [
+            "证据"
+          ],
+          "animation": "fade",
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "animation": "fade",
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "durationSeconds": 30,
+      "requirement": "依据视频事实制作分镜"
+    },
+    "type": "CREATE",
+    "inputMode": "normalized"
+  },
+  {
+    "id": "valid-local-revision-normalized",
+    "invalid": false,
+    "storyboard": {
+      "schemaVersion": 1,
+      "revision": 2,
+      "title": "标题",
+      "targetAudience": "公众",
+      "musicId": "none",
+      "scenes": [
+        {
+          "sceneId": "s1",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点1",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s2",
+          "template": "points",
+          "durationMs": 10000,
+          "headline": "改后",
+          "points": [
+            "证据"
+          ],
+          "animation": "fade",
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        },
+        {
+          "sceneId": "s3",
+          "template": "points",
+          "animation": "fade",
+          "durationMs": 10000,
+          "headline": "观点3",
+          "points": [
+            "证据"
+          ],
+          "sourceRefs": [
+            "e_0_10000"
+          ]
+        }
+      ]
+    },
+    "parameters": {
+      "baseRevision": 1,
+      "storyboard": {
+        "schemaVersion": 1,
+        "revision": 1,
+        "title": "标题",
+        "targetAudience": "公众",
+        "musicId": "none",
+        "scenes": [
+          {
+            "sceneId": "s1",
+            "template": "points",
+            "animation": "fade",
+            "durationMs": 10000,
+            "headline": "观点1",
+            "points": [
+              "证据"
+            ],
+            "sourceRefs": [
+              "e_0_10000"
+            ]
+          },
+          {
+            "sceneId": "s2",
+            "template": "points",
+            "animation": "fade",
+            "durationMs": 10000,
+            "headline": "观点2",
+            "points": [
+              "证据"
+            ],
+            "sourceRefs": [
+              "e_0_10000"
+            ]
+          },
+          {
+            "sceneId": "s3",
+            "template": "points",
+            "animation": "fade",
+            "durationMs": 10000,
+            "headline": "观点3",
+            "points": [
+              "证据"
+            ],
+            "sourceRefs": [
+              "e_0_10000"
+            ]
+          }
+        ]
+      },
+      "targetSceneIds": [
+        "s2"
+      ],
+      "instruction": "只调整指定场景"
+    },
+    "type": "REVISE",
+    "inputMode": "normalized"
+  }
+]

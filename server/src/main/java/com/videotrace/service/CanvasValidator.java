@@ -9,7 +9,7 @@ import java.util.Set;
 final class CanvasValidator {
     private CanvasValidator() {}
     static void validate(JsonNode canvas,long duration) {
-        if(!canvas.isObject()) fail();
+        fields(canvas,"background","layout","camera","continuePrevious","elements");
         color(canvas,"background");
         String layout=canvas.path("layout").asText("framed");
         if(!Set.of("framed","full").contains(layout)) fail();
@@ -20,6 +20,7 @@ final class CanvasValidator {
             if(!camera.isArray() || camera.size()>8 || (!full && !camera.isEmpty())) fail();
             long last=-1;
             for(JsonNode key:camera) {
+                fields(key,"timeMs","x","y","zoom","easing");
                 integer(key,"timeMs",0,duration);
                 long time=key.path("timeMs").asLong(); if(time<=last) fail(); last=time;
                 number(key,"x",-720,1440); number(key,"y",-1280,2560);
@@ -32,6 +33,7 @@ final class CanvasValidator {
         if(!elements.isArray() || elements.isEmpty() || elements.size()>(full?40:20)) fail();
         Map<String,JsonNode> nodes=new HashMap<>();
         for(JsonNode e:elements) {
+            fields(e,"id","kind","x","y","width","height","color","fill","text","fontSize","icon","fromId","toId","z","space","opacity","scale","rotation","pulse","sprite","curve","keyframes");
             String id=e.path("id").asText();
             if(!id.matches("[A-Za-z0-9_-]{1,32}") || nodes.put(id,e)!=null) fail();
         }
@@ -63,10 +65,11 @@ final class CanvasValidator {
             JsonNode curve=e.path("curve");
             if(path && !curve.isObject()) fail();
             if(present(e,"curve")) {
+                fields(curve,"points","startMs","endMs","loop");
                 if(connector || !curve.isObject() || !curve.path("points").isArray() || curve.path("points").size()!=4) fail();
                 integer(curve,"startMs",0,duration); integer(curve,"endMs",1,duration);
                 if(curve.path("endMs").asLong()<=curve.path("startMs").asLong() || !curve.path("loop").isBoolean()) fail();
-                for(JsonNode point:curve.path("points")) { number(point,"x",full?-720:40,full?1440:680); number(point,"y",full?-1280:360,full?2560:980); }
+                for(JsonNode point:curve.path("points")) { fields(point,"x","y"); number(point,"x",full?-720:40,full?1440:680); number(point,"y",full?-1280:360,full?2560:980); }
             }
             JsonNode frames=e.path("keyframes");
             if(!frames.isArray() || frames.size()>(full?12:4)) fail();
@@ -75,6 +78,7 @@ final class CanvasValidator {
             double maxScale=scale;
             if(!stroke && !present(e,"curve") && (frames.isEmpty() || frames.get(0).path("timeMs").asLong()!=0)) bounds(x,y,width,height,scale,full);
             for(JsonNode frame:frames) {
+                fields(frame,"timeMs","x","y","scale","opacity","rotation","easing");
                 integer(frame,"timeMs",0,duration);
                 long time=frame.path("timeMs").asLong(); if(time<=previous) fail(); previous=time;
                 if(!Set.of("linear","easeInOut","easeOut").contains(frame.path("easing").asText())) fail();
@@ -108,6 +112,13 @@ final class CanvasValidator {
         }
     }
     static boolean present(JsonNode node,String key) { return node.hasNonNull(key); }
+    static void fields(JsonNode node,String... allowed) {
+        if(!node.isObject()) throw new IllegalArgumentException("分镜节点必须为对象");
+        Set<String> names=Set.of(allowed);
+        node.fieldNames().forEachRemaining(name -> {
+            if(!names.contains(name)) throw new IllegalArgumentException("分镜包含未声明字段: "+name);
+        });
+    }
     static double number(JsonNode node,String key,double min,double max) {
         JsonNode value=node.path(key); double result=value.asDouble(Double.NaN);
         if(!value.isNumber() || !Double.isFinite(result) || result<min || result>max) fail();

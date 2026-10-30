@@ -292,6 +292,9 @@ public class CreationService {
                 if(total!=task.path("durationSeconds").asLong()*1000) throw new IllegalArgumentException("分镜总时长必须符合所选时长");
                 validateTargets(operation.path("parameters"),board);
                 task.set("storyboard",board); task.put("revision",revision);
+                ObjectNode review=validatePreviewReview(event.path("previewReview"),board);
+                if(review==null) task.remove("previewReview");
+                else task.set("previewReview",review);
             }
             if(status.equals("COMPLETED")) {
                 JsonNode artifact=event.path("artifact"); int rev=task.path("revision").asInt();
@@ -321,6 +324,41 @@ public class CreationService {
         return text(event,"reply",4000);
     }
 
+    static ObjectNode validatePreviewReview(JsonNode input,JsonNode board) {
+        if(input.isMissingNode() || input.isNull()) return null; // Existing checkpoints remain compatible.
+        if(!input.isObject() || !input.path("matchesSavedDraft").asBoolean()
+                || !input.path("previewId").asText().matches("[a-f0-9]{64}")
+                || !input.path("draftSha256").asText().matches("[a-f0-9]{64}")
+                || !input.path("issues").isArray() || input.path("issues").size()>6)
+            throw new IllegalArgumentException("无效预览检查元数据");
+        var result=com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.objectNode();
+        result.put("previewId",input.path("previewId").asText()).put("draftSha256",input.path("draftSha256").asText())
+                .put("matchesSavedDraft",true).put("advisoryOnly",true);
+        result.put("summary",text(input,"summary",1000));
+        String fallback=input.path("fallbackReason").asText("");
+        if(fallback.length()>80) throw new IllegalArgumentException("无效预览回退原因");
+        result.put("fallbackReason",fallback);
+        var issues=result.putArray("issues"); int warnings=0;
+        for(JsonNode item:input.path("issues")) {
+            String sceneId=text(item,"sceneId",48),severity=text(item,"severity",16),category=text(item,"category",16);
+            JsonNode scene=null;
+            for(JsonNode candidate:board.path("scenes")) if(sceneId.equals(candidate.path("sceneId").asText())) scene=candidate;
+            double confidence=item.path("confidence").asDouble(-1);
+            long timestamp=item.path("timestampMs").asLong(-1);
+            if(scene==null || !Set.of("warning","suggestion").contains(severity)
+                    || !Set.of("layout","contrast","scale","motion","continuity","content").contains(category)
+                    || !Double.isFinite(confidence) || confidence<0 || confidence>1 || timestamp<0 || timestamp>scene.path("durationMs").asLong())
+                throw new IllegalArgumentException("无效预览问题引用");
+            issues.addObject().put("sceneId",sceneId).put("severity",severity).put("category",category)
+                    .put("confidence",confidence).put("timestampMs",timestamp)
+                    .put("problem",text(item,"problem",400)).put("suggestion",text(item,"suggestion",400));
+            if(severity.equals("warning")) warnings++;
+        }
+        result.put("warningCount",warnings).put("status",warnings>0 || !fallback.isEmpty() ? "needs_attention"
+                : issues.isEmpty() ? "sampled_no_issues" : "suggestions");
+        return result;
+    }
+
     private void appendMessage(ObjectNode task,String id,String role,String content) {
         var messages=json.createArrayNode();
         if(task.path("messages").isArray()) task.path("messages").forEach(messages::add);
@@ -344,7 +382,10 @@ public class CreationService {
     }
 
     static void validateStoryboard(JsonNode board,int revision,VideoContext context) {
-        if(!board.isObject() || board.path("schemaVersion").asInt()!=1 || board.path("revision").asInt()!=revision) throw new IllegalArgumentException("分镜版本无效");
+        CanvasValidator.fields(board,"schemaVersion","revision","title","targetAudience","musicId","scenes");
+        if(!board.path("schemaVersion").isIntegralNumber() || !board.path("schemaVersion").canConvertToInt()
+                || board.path("schemaVersion").intValue()!=1 || !board.path("revision").isIntegralNumber()
+                || !board.path("revision").canConvertToInt() || board.path("revision").intValue()!=revision) throw new IllegalArgumentException("分镜版本无效");
         text(board,"title",80); text(board,"targetAudience",80);
         if(!Set.of("none","light_01").contains(board.path("musicId").asText())) throw new IllegalArgumentException("音乐不在白名单");
         JsonNode scenes=board.path("scenes");
@@ -353,6 +394,7 @@ public class CreationService {
         context.segments().forEach(s -> refs.add(evidenceId(s.startMs(),s.endMs())));
         long duration=0;
         for(JsonNode scene:scenes) {
+            CanvasValidator.fields(scene,"sceneId","template","durationMs","headline","points","animation","sourceRefs","visual","canvas","motion");
             String id=text(scene,"sceneId",48);
             if(!id.matches("[A-Za-z0-9_-]+") || !ids.add(id)) throw new IllegalArgumentException("场景 ID 必须唯一");
             if(!Set.of("title","points","flow").contains(scene.path("template").asText()) || !Set.of("fade","reveal","highlight").contains(scene.path("animation").asText())) throw new IllegalArgumentException("场景模板或动画无效");
@@ -360,6 +402,7 @@ public class CreationService {
             if(scene.hasNonNull("motion")) {
                 if(scene.hasNonNull("visual") || scene.hasNonNull("canvas")) throw new IllegalArgumentException("动画模式互斥");
                 JsonNode motion=scene.path("motion");
+                CanvasValidator.fields(motion,"style","eyebrow","words","accent","transition");
                 if(!motion.isObject() || !Set.of("launch","kinetic").contains(motion.path("style").asText())
                     || !Set.of("violet","cyan","lime").contains(motion.path("accent").asText())
                     || !Set.of("fade","push","wipe").contains(motion.path("transition").asText())
@@ -372,12 +415,14 @@ public class CreationService {
             }
             JsonNode visual=scene.path("visual");
             if(!visual.isMissingNode() && !visual.isNull()) {
+                CanvasValidator.fields(visual,"layout","theme","motion","items");
                 if(!visual.isObject() || !Set.of("pipeline","split","merge","compare","bars","orbit").contains(visual.path("layout").asText())
                     || !Set.of("dark","light","warm").contains(visual.path("theme").asText())
                     || !Set.of("slide","pulse","draw","reveal").contains(visual.path("motion").asText())) throw new IllegalArgumentException("图解配置无效");
                 JsonNode items=visual.path("items");
                 if(!items.isArray() || items.size()<2 || items.size()>4) throw new IllegalArgumentException("图解需要 2～4 个元素");
                 for(JsonNode item:items) {
+                    CanvasValidator.fields(item,"icon","label","value");
                     if(!Set.of("video","audio","text","agent","cards","phone","server","database","person","file").contains(item.path("icon").asText())) throw new IllegalArgumentException("图解物体无效");
                     text(item,"label",12);
                     if(!item.path("value").isIntegralNumber() || item.path("value").asInt()<0 || item.path("value").asInt()>100) throw new IllegalArgumentException("图解比例无效");
