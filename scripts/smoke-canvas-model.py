@@ -16,7 +16,9 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 from PIL import Image
 from creator.agent import CreatorAgent
 from creator.models import Operation, Storyboard
-from creator.renderer import frame, render
+from creator.renderer import render
+from creator.remotion_renderer import preview_frames
+from creator.preview_reviewer import sample_times
 from creator.settings import Settings
 from creator.store import Store
 
@@ -68,8 +70,10 @@ if __name__ == "__main__":
         "scenes": len(board.scenes), "toolCalls": [row["name"] for row in traces if row["name"] != "model"],
         "repairErrors": [json.loads(row["result"])["error"] for row in traces if "error" in json.loads(row["result"])]}
     sheet = Image.new("RGB", (360 * len(board.scenes), 640))
+    snapshots=preview_frames(board,board.scenes,output/'frames',180)
     for i, scene in enumerate(board.scenes):
-        sheet.paste(Image.fromarray(frame(scene, min(1.6, scene.durationMs / 1000 * .6))).resize((360, 640)), (360 * i, 0))
+        with Image.open(snapshots[scene.sceneId,sample_times(scene)[1]]) as still:
+            sheet.paste(still.resize((360,640)),(360*i,0))
     sheet.save(output / "contact-sheet.png")
     (output / "result.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     if args.render:

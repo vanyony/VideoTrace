@@ -1,6 +1,6 @@
 # VideoTrace
 
-> 当前为 **`codex/visual-playground` 视觉实验分支**。全屏画布、镜头和多模态预览检查在此迭代；React / Remotion 仍是独立试验。[实验说明与视频效果](docs/visual-playground.md)。
+> 创作渲染采用 **预置 React 组件 + Remotion**：Agent 提交受约束分镜 JSON，预览抽帧和最终 MP4 使用相同组件。Vue 主站继续负责上传、讨论、编辑与人工确认。历史视觉样片见[实验说明](docs/visual-playground.md)。
 
 面向视频二次创作的 AI 平台。通过语音转写、画面文字识别和大语言模型，将视频转化为带时间戳的内容证据，再通过创作 Agent 完成选题讨论、分镜生成和二维图解动画短视频制作。
 
@@ -11,13 +11,13 @@
 - **视频导入**：本地文件上传及在线视频链接导入（需配置受控出口代理）；大文件支持分片上传、断点续传和分片校验。
 - **异步解析**：提取语音转写（ASR）与关键帧文字（OCR），持久化阶段结果，中断后复用已完成阶段。
 - **视频证据检索**：对内容分块，结合 BGE 语义检索与本地 BM25，通过 RRF 排名融合选取相关片段，为创作讨论与分镜生成提供证据。
-- **创作对话**：模型判断讨论、生成或修改意图；模糊需求先讨论，明确需求或授权自行决定时直接生成分镜。讨论和解释不会增加分镜版本。
+- **创作对话**：会话保存讨论、创作或修改模式，新会话默认讨论，后续沿用；模型需要时调用 `switch_mode`。所有模式均可提问和解释，写分镜前单独核验当前消息的授权，讨论不增加分镜版本。
 - **分镜与成片**：生成关联时间戳证据的结构化分镜，支持指定场景修改；人工确认后输出含文字卡片、二维物体图解及可选背景音乐的竖屏 MP4。
 - **二维图解动画**：10 种常用物体、6 种布局、3 套主题，支持滑入、脉冲、连线绘制与逐项出现；Agent 选择预设元素和关系，渲染器确定性执行。
 - **自由画布动画**：Agent 可组合圆形、矩形、文字、图标和连线，自行安排坐标、尺寸与层级；每幕最多 20 个元素，每元素最多 4 个关键帧，支持位移、缩放、透明度和缓动。程序校验引用、动画边界与文字排版，错误交回 Agent 修正。
 - **实验全屏动画**：`canvas.layout=full` 支持40个元素、每元素12个关键帧、画外入场、镜头平移/缩放及固定于屏幕的标题；新增太阳、地球、云、水滴、水面等组件。默认画布保留原安全区。
-- **实验视觉反馈**：Agent 可调用 `review_storyboard_preview` 查看每幕四帧预览，按多模态建议修改；最多两次检查，保存时校验分镜与最后成功检查的版本一致，不代替用户确认。
-- **发布会与动态文字风格**：大字号标题、渐变背景、错峰拼版卡片、描边文字与遮罩揭示；支持淡化、推移及擦除衔接，适合短节奏信息视频。
+- **实验视觉反馈**：Agent 可调用 `review_storyboard_preview` 查看每幕四帧 Remotion 预览，最多两次成功检查、四次服务尝试；保存须匹配已检查分镜。预算不足时可保留最近成功检查的草稿，未解决问题及兜底原因显示在前端，仍需人工核验。
+- **发布会与动态文字风格**：大字号标题、渐变背景、错峰文字入场；支持淡化、推移及擦除衔接，适合短节奏信息视频。
 - **证据定位**：分镜引用和检索片段关联原视频时间戳，为创作提供可追溯的依据。
 - **任务进度**：创作工作台轮询素材准备和创作任务进度，文字提取通过 SSE 推送状态；支持失败重试和已生成作品预览。
 
@@ -37,7 +37,7 @@
 | 新设计 Prompt v1 | 同条件单次测试：更大主体与镜头设计指导，保留字幕干扰等未解决问题 | [15秒视频](examples/visual-playground/prompt-design-v1/demo-15s.mp4) · [前后对照](examples/visual-playground/prompt-design-v1/comparison.png) · [验证](examples/visual-playground/prompt-design-v1/verification.json) |
 | 《快递包裹的一天》 | 真实模型、合成证据、两次有效检查，最终保存版本匹配最后检查；仍保留视觉建议 | [15秒视频](examples/visual-playground/parcel-preview-review/demo-15s.mp4) · [预览](examples/visual-playground/parcel-preview-review/preview.png) · [验证](examples/visual-playground/parcel-preview-review/verification.json) |
 
-[分支范围、动画字段、复现命令与验证边界](docs/visual-playground.md)。这些样片不代表新的真实视频上传解析验收，Remotion 尚未接入主任务链路；新设计 Prompt 只完成一次对照，不代表稳定的质量或性能提升。
+[历史实验范围、动画字段、复现命令与验证边界](docs/visual-playground.md)。以上保留样片是在迁移前制作的，不代表当前 React / Remotion 正式链路的验收；新设计 Prompt 的单次对照也不代表稳定的质量或性能提升。
 
 ### 同一真实视频：模板版与自由画布版
 
@@ -79,6 +79,7 @@
 | 后端 | Java 21、Spring Boot、MyBatis-Plus、OkHttp |
 | 前端 | Vue 3、Vite |
 | 创作服务 | Python 3.11、FastAPI、LangGraph、Pydantic、SQLite Checkpoint |
+| 创作渲染 | React、Remotion、Node.js、Chromium、FFmpeg |
 | 数据与缓存 | MySQL、Flyway、Redis、Redisson |
 | 异步任务 | RocketMQ |
 | 对象存储与向量检索 | MinIO、Qdrant |
@@ -105,12 +106,12 @@ ASR 语音转写 + 关键帧 OCR
         ↓
 按需检索证据与上下文 → 结构化校验与有限修正
         ↓
-人工确认分镜 → FFmpeg 渲染 → MinIO 成片存储
+人工确认分镜 → React 组件 + Remotion 渲染 → MinIO 成片存储
 ```
 
 Java / Spring Boot 负责鉴权、视频归属、解析与检索、对话消息和业务任务状态；Python / FastAPI 提供内部任务接口，LangGraph 负责模型决策和工具执行。创作使用 MySQL 持久任务队列与内部 HTTP 接口，视频解析使用 Outbox + RocketMQ，两条链路各自管理重试。
 
-创作 Agent 通过 `choose_action` 选择讨论、生成或修改，再按阶段开放 `search_video`、`read_context`、`inspect_video_frame`、`review_storyboard_preview`、`finish_discussion`、`save_storyboard` 或 `patch_scenes`。最终 MP4 渲染不作为模型工具开放，只能由用户确认触发；实验预览工具仅生成抽样图片，返回视觉建议。分镜版本校验拒绝过期请求，操作标识、重试次数和回调序号校验阻止迟到结果更新当前任务；未变场景可复用渲染缓存。
+创作会话将 `DISCUSS / CREATE / REVISE` 模式保存在任务快照中，新会话默认讨论，下一条消息沿用上次成功回复或提交后的模式。`switch_mode`、检索与 `finish_discussion` 常驻；生成/修改工具按模式开放，不再强制每条消息先分类。任何模式都能直接回答问题。模式切换不代表修改授权：只有准备预览或提交分镜时，才由独立模型检查最新用户消息是否明确授权，本轮复用该结果；服务端将授权动作、消息指纹与当前操作再次核对。明确停止或重新讨论时切回讨论，分镜生成后转入修改模式；最终 MP4 仍需用户点击确认。分镜版本、操作标识、重试次数和回调序号检查阻止过期操作；同一完整分镜与渲染版本可复用成片缓存。授权的语义判断仍有模型误判风险，需用多轮和对抗用例持续验证。
 
 后端围绕长耗时任务实现了以下机制：
 
@@ -200,6 +201,9 @@ Pop-Location
 ```powershell
 py -3.11 -m venv creator/.venv
 creator/.venv/Scripts/python.exe -m pip install -r creator/requirements-lock.txt
+npm --prefix creator/remotion ci
+# 未配置 Chrome/Chromium 时安装 Remotion 托管的无头浏览器：
+npm --prefix creator/remotion run browser:install
 ```
 
 在根目录 `.env` 中配置以下参数，然后重新启动 Java 后端，使两端读取相同的内部认证令牌：
@@ -215,6 +219,7 @@ creator/.venv/Scripts/python.exe -m pip install -r creator/requirements-lock.txt
 | `CREATOR_MINIO_ACCESS_KEY`、`CREATOR_MINIO_SECRET_KEY` | 单独配置的受限存储账号，允许读取/写入目标桶的 `creations/*`；不要使用管理员账号 |
 | `CREATOR_DATA_DIR` | SQLite 状态和渲染缓存目录，默认 `creator/data`，需持久保存 |
 | `CREATOR_FONT_PATH` | 中文字体路径；Windows 自动检测微软雅黑，Linux 可指定 Noto Sans CJK |
+| `REMOTION_BROWSER_EXECUTABLE` | 可选的 Chrome/Chromium 绝对路径；Windows 优先检测已安装 Chrome，否则使用托管无头浏览器 |
 
 创作模型覆盖项未设置时沿用 `LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL`；旧配置未设置独立 LLM 地址或密钥时仍兼容回退到 `SILICONFLOW_*`。更换创作模型不改变 Java 的 ASR、Embedding 服务配置。DeepSeek 官方接口默认禁用 thinking，以兼容强制工具调用；其他服务不附带 DeepSeek 专用字段。当前工作流不保留多轮 `reasoning_content`，请使用非思考模式。修改配置后重启创作服务生效。
 
@@ -222,7 +227,7 @@ creator/.venv/Scripts/python.exe -m pip install -r creator/requirements-lock.txt
 creator/.venv/Scripts/python.exe -m uvicorn creator.app:app --host 127.0.0.1 --port 8091 --env-file .env
 ```
 
-当前只支持单个 Python 服务进程，不要启用多个 worker。渲染依赖锁定环境中的 MoviePy 和 imageio-ffmpeg；Java 视频解析仍需系统 FFmpeg、ffprobe 和 OCR 工具。
+当前只支持单个 Python 服务进程，不要启用多个 worker。创作服务还需 Node.js 22+ 与 Chrome/Chromium；Linux 需安装浏览器所需系统库。`creator/remotion/` 中预置 React 组件将分镜 JSON 渲染为 720×1280、24 FPS 的 MP4，预览使用同一 Composition。模型不能提交或执行 React 代码。Python 保留结构校验、跨幕状态解析、任务控制和成片元数据验证；Java 视频解析仍需系统 FFmpeg、ffprobe 和 OCR 工具。历史成片保留，新渲染版本不会复用旧渲染缓存。
 
 ### 5. 启动前端
 
@@ -252,6 +257,8 @@ npm run dev
 
 ## 测试与构建
 
+持久会话模式、对抗输入与全工具暴露实验的范围和结果见 [Agent 路由评测](docs/agent-routing-evaluation.md)。正式配置仍按模式开放写工具，全工具暴露及模型直接输出 TSX 均为独立试验，未改变正式配置。
+
 后端测试：
 
 ```powershell
@@ -272,7 +279,18 @@ Python 创作服务测试（在项目根目录执行）：
 
 ```powershell
 creator/.venv/Scripts/python.exe -m unittest discover -s creator -t . -p 'test_*.py' -v
+npm --prefix creator/remotion test
 ```
+
+真实 Chromium 渲染集成需先安装 Remotion 依赖和浏览器，再显式启用：
+
+```powershell
+$env:CREATOR_REMOTION_INTEGRATION='1'
+creator/.venv/Scripts/python.exe -m unittest creator.test_remotion_integration -v
+Remove-Item Env:CREATOR_REMOTION_INTEGRATION
+```
+
+它验证实际 MP4、音轨、缓存、预览帧一致性及取消任务；不会调用付费模型或上传 MinIO。普通回归默认跳过这两项。
 
 创作集成验收（先完成后端打包、启动基础设施并配置 `.env`）：
 

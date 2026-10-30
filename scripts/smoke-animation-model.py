@@ -20,7 +20,9 @@ from PIL import Image
 from creator.agent import CreatorAgent
 from creator.canvas import resolved_scenes
 from creator.models import Operation, Storyboard
-from creator.renderer import frame, render
+from creator.renderer import render
+from creator.remotion_renderer import preview_frames
+from creator.preview_reviewer import sample_times
 from creator.settings import Settings
 from creator.store import Store
 
@@ -148,8 +150,10 @@ def main():
         assert all(s.canvas.layout == "full" for s in board.scenes)
         assert report["cameraKeyframes"] >= 2
     sheet = Image.new('RGB',(360*len(board.scenes),640))
+    snapshots=preview_frames(board,resolved_scenes(board),output/'frames',180)
     for i,s in enumerate(resolved_scenes(board)):
-        sheet.paste(Image.fromarray(frame(s,2.5)).resize((360,640)),(360*i,0))
+        with Image.open(snapshots[s.sceneId,sample_times(s)[1]]) as still:
+            sheet.paste(still.resize((360,640)),(360*i,0))
     sheet.save(output / 'preview.png')
     (output / 'result.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
     print(json.dumps(report,ensure_ascii=False),flush=True)

@@ -8,6 +8,7 @@ import tempfile
 import time
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 from langgraph.checkpoint.sqlite import SqliteSaver
 
@@ -24,6 +25,28 @@ def feedback(issues=None):
 
 
 class PreviewReviewerTests(unittest.TestCase):
+    def test_matching_patch_can_include_review_reference_but_changed_patch_is_rejected(self):
+        from .models import validate_candidate
+        old=storyboard();op=operation(type='REVISE',parameters={'storyboard':old,'baseRevision':1,'instruction':'改第二幕标题'})
+        patch_args={'baseRevision':1,'updates':[{'sceneId':'s_2','headline':'新标题'}]}
+        board=validate_candidate(patch_storyboard(old,patch_args),op,set())
+        digest=sha256(Storyboard.model_validate(board).model_dump_json().encode()).hexdigest()
+        with tempfile.TemporaryDirectory() as directory:
+            agent=CreatorAgent(settings(directory),Store(Path(directory)/'ops.sqlite'),Java(),None,model=lambda *_:None)
+            state={'operation':op.model_dump(),'messages':[],'evidence_ids':[],'tool_count':0,'repairs':0,'deadline':time.time()+30,
+              'preview_calls':1,'preview_result':{'previewId':'checked','draftSha256':digest},'preview_draft':board,
+              'calls':completion('patch_scenes',{**patch_args,'reviewedPreviewId':'checked'})['choices'][0]['message']['tool_calls']}
+            accepted=agent.tools_node(state)
+            self.assertEqual(accepted['candidate'],board)
+            changed=copy.deepcopy(state);changed['calls'][0]['function']['arguments']=json.dumps({'baseRevision':1,'reviewedPreviewId':'checked','updates':[{'sceneId':'s_2','headline':'未检查改动'}]})
+            self.assertIsNone(agent.tools_node(changed)['candidate'])
+
+    def setUp(self):
+        from .test_remotion_renderer import preview_stub
+        self.frames=patch('creator.preview_reviewer.preview_frames',preview_stub)
+        self.frames.start()
+        self.addCleanup(self.frames.stop)
+
     def test_rendered_strips_feedback_and_completed_result_cache(self):
         calls = []
         def vision(messages, timeout):

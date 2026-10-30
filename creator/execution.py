@@ -99,9 +99,12 @@ class RenderGraph:
         metadata_file = directory / "metadata.json"
         metadata = None
         if metadata_file.is_file() and (directory / "output.mp4").is_file():
+            from .remotion_renderer import renderer_identity, sha256_json
+            from .models import Storyboard
             cached = json.loads(metadata_file.read_text(encoding="utf-8"))
             verified = probe(directory / "output.mp4", sum(s["durationMs"] for s in board["scenes"]))
-            if cached["sha256"] == verified["sha256"]:
+            if (cached["sha256"] == verified["sha256"] and cached.get("renderer")==renderer_identity()
+                    and cached.get("storyboardSha256")==sha256_json(Storyboard.model_validate(board))):
                 metadata = {**cached, **verified}
         if metadata is None:
             metadata = run_child(job, self.settings.render_timeout, self.stop)

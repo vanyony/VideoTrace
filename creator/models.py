@@ -111,6 +111,10 @@ class Operation(StrictModel):
             if type(duration) is not int or (duration != 15 and duration not in range(30, 61)):
                 raise ValueError("durationSeconds must be 15 or 30..60")
             if self.type == "CONVERSE":
+                if p.get('mode','DISCUSS') not in ('DISCUSS','CREATE','REVISE'):
+                    raise ValueError('invalid conversation mode')
+                if p.get('mode')=='REVISE' and p.get('storyboard') is None:
+                    raise ValueError('REVISE mode requires a storyboard')
                 if not isinstance(p.get("instruction"), str) or not 1 <= len(p["instruction"].strip()) <= 2000:
                     raise ValueError("instruction must contain 1..2000 characters")
                 messages = p.get("messages", [])

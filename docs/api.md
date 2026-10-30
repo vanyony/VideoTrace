@@ -69,6 +69,8 @@ Java JSON 接口统一响应：
 
 `requirement`、`instruction` 最多 2000 字。页面提供 15/30/45/60 秒；接口兼容 30～60 秒整数，另外支持 15 秒。修改现有任务时保持已确认总时长，改变选择器需新建任务。
 
+任务快照包含独立的会话 `mode`：`DISCUSS/CREATE/REVISE`。它由服务端保存并传入下一次内部 `CONVERSE` 操作，客户端不能用请求字段自行授予修改权限；渲染风格仍由 `visual/canvas/motion` 字段表示。新会话默认讨论，生成分镜后模式为修改；所有模式均可直接回复，明确停止或重新讨论时可切回讨论。当前执行未结束时，不接受另一条消息插入运行中的图。
+
 模板版或自由画布版通过创作需求指定，例如“使用发布会大字模板”或“用自由画布解释物体关系”；当前没有独立的模式选择控件。实际返回模式以分镜字段为准，客户端不能仅凭需求文本判定已生成的画面类型。
 
 `requestId` 最多 128 字符，仅字母、数字、下划线、连字符；同一用户同一请求意图复用 ID，内容变更使用新 ID。`baseRevision` 必须等于当前任务版本。首次讨论尚未产生分镜时通常为 0，首次分镜为 1；根据查询结果取值，不在客户端自行猜测递增。
@@ -114,6 +116,8 @@ Java JSON 接口统一响应：
 
 这些接口还检查当前操作、素材归属和解析版本。模型的 `inspect_video_frame` 工具接收的问题由 Python 处理，Java 帧接口不负责调用视觉模型。
 
+`CONVERSE.parameters` 增加 `mode`，继续携带最新 `instruction`、近期 `messages`、当前分镜及 `baseRevision`。终态讨论/分镜回调返回本轮 `action` 和后续 `mode`，二者不必相同：修改模式下回答问题时为 `action=DISCUSS, mode=REVISE`。写分镜前的独立模型检查产生 `changeAuthorization={authorized, action, instructionSha256, reason, ...}`；新操作落库前要求 `authorized` 为真、动作匹配、消息 SHA256 与当前 instruction 一致。摘要绑定不代替语义判断，也不是客户端可提交的授权凭据。旧版已投递且不含 mode 的操作兼容原回调。
+
 ## 错误处理
 
 401 检查登录/内部令牌；403 检查归属；404 检查任务或作品版本；409 常见于版本冲突、素材未就绪或操作仍在执行；429 表示限流。网络超时后先查询状态，用原 `requestId` 重试同一提交，不应立即创建新意图。错误信息与具体 HTTP 状态以服务响应为准。
@@ -127,8 +131,14 @@ Java JSON 接口统一响应：
 
 | 工具 | 参数 | 行为 |
 | --- | --- | --- |
+| `switch_mode` | `{mode: DISCUSS/CREATE/REVISE}` | 常驻；按已有分镜状态检查切换，下一次模型决策生效，不与其他工具批量调用；切换不授予写权限 |
+| `finish_discussion` | `{reply: 非空字符串，最多4000字}` | 所有会话模式可回复，不改变分镜或版本 |
 | `review_storyboard_preview` | `{storyboard: 完整候选分镜, sceneIds?: 1到3个场景ID, focus?: 最多400字}` | 校验证据与修改范围，渲染抽样图片并获取多模态建议；不保存业务分镜，不生成MP4 |
 | `save_storyboard` | `{reviewedPreviewId: 最新成功预览ID}` 或 `{storyboard: 完整分镜}` | 引用已检查快照或提交同指纹分镜；兼容旧版直接传分镜，full与已开始检查的操作必须匹配成功检查 |
 | `patch_scenes` | 原有修订参数，或 `{baseRevision, reviewedPreviewId}` | 保存已检查的修订，保持版本与目标场景校验 |
+
+正式配置还常驻 `search_video/read_context/inspect_video_frame`；`review_storyboard_preview/save_storyboard/patch_scenes` 按当前模式开放。`patch_scenes` 可以携带预览 ID 和与预览一致的 patch，最终仍校验指纹；`targetSceneIds` 属于公开修改请求的范围约束，不是 patch 工具参数。预览服务最多四次尝试、其中最多两次成功；外层多余反馈元数据丢弃，单个问题及来源引用仍严格校验。
+
+任务可返回 `previewReview`，含 `status=sampled_no_issues/suggestions/needs_attention`、问题列表、`fallbackReason`、`matchesSavedDraft`。它绑定已保存分镜，表示抽样检查情况；不能作为自动发布许可或整片质量保证。
 
 预览反馈含 `previewId`、`draftSha256`、采样时间与图片哈希、`summary`、`issues`、`advisoryOnly` 和缓存标识；问题包含场景ID、抽样时间、相关元素ID、类别、严重程度、建议和置信度。模型响应引用未采样场景/时间会被拒绝。保存工具的追踪结果可含 `previewReview.matchesSavedDraft`，它只表示版本匹配，不代表视觉质量合格；full或已启用预览的操作不允许保存不匹配的分镜。[完整说明](visual-playground.md)。

@@ -89,7 +89,7 @@ public class CreationService {
             String taskId=UUID.randomUUID().toString();
             ObjectNode task=json.createObjectNode().put("taskId",taskId).put("ownerId",owner).put("mediaId",mediaId)
                     .put("sourceVersion",version).put("requirement",request.path("requirement").asText().trim())
-                    .put("durationSeconds",duration).put("status","QUEUED").put("revision",0)
+                    .put("durationSeconds",duration).put("status","QUEUED").put("revision",0).put("mode","DISCUSS")
                     .put("summary","等待创作服务处理").put("error","").put("retryable",false);
             task.putNull("storyboard");
             db.update("INSERT INTO creation_tasks(task_id,owner_id,media_id,snapshot) VALUES(?,?,?,?)",taskId,owner,mediaId,write(task));
@@ -146,7 +146,10 @@ public class CreationService {
             if(task.path("messages").size()>=199) throw error(ErrorCode.CONFLICT,"此对话已达到 200 条消息上限，请新建对话");
             appendMessage(task,id+":user","user",payload.path("instruction").asText());
         }
-        if(type.equals("CONVERSE")) params.set("messages",boundedMessages(task.path("messages")));
+        if(type.equals("CONVERSE")) {
+            params.set("messages",boundedMessages(task.path("messages")));
+            params.put("mode",task.path("mode").asText("DISCUSS"));
+        }
         if(payload.has("retryParameters")) params=(ObjectNode)payload.get("retryParameters");
         ObjectNode op=json.createObjectNode().put("taskId",task.path("taskId").asText()).put("operationId",id)
                 .put("ownerId",task.path("ownerId").asLong()).put("mediaId",task.path("mediaId").asLong())
@@ -278,6 +281,7 @@ public class CreationService {
             String reply=null;
             if(type.equals("CONVERSE") && Set.of("DISCUSSED","AWAITING_CONFIRMATION").contains(status)) {
                 reply=validateReply(event,status);
+                task.put("mode",validateConversationMode(event,operation.path("parameters")));
                 if(status.equals("AWAITING_CONFIRMATION")) {
                     boolean hasBoard=operation.path("parameters").path("storyboard").isObject();
                     if(hasBoard!=event.path("action").asText().equals("REVISE")) throw new IllegalArgumentException("对话动作与已有分镜不匹配");
@@ -292,6 +296,7 @@ public class CreationService {
                 if(total!=task.path("durationSeconds").asLong()*1000) throw new IllegalArgumentException("分镜总时长必须符合所选时长");
                 validateTargets(operation.path("parameters"),board);
                 task.set("storyboard",board); task.put("revision",revision);
+                task.put("mode","REVISE");
                 ObjectNode review=validatePreviewReview(event.path("previewReview"),board);
                 if(review==null) task.remove("previewReview");
                 else task.set("previewReview",review);
@@ -322,6 +327,27 @@ public class CreationService {
         if(status.equals("DISCUSSED") ? !action.equals("DISCUSS") : !Set.of("CREATE","REVISE").contains(action))
             throw new IllegalArgumentException("对话动作与状态不匹配");
         return text(event,"reply",4000);
+    }
+
+    static String validateConversationMode(JsonNode event,JsonNode parameters) {
+        boolean writing=event.path("status").asText().equals("AWAITING_CONFIRMATION");
+        String mode=event.path("mode").asText(parameters.has("mode")?"":writing?"REVISE":"DISCUSS");
+        if(!Set.of("DISCUSS","CREATE","REVISE").contains(mode)) throw new IllegalArgumentException("无效会话模式");
+        boolean hasBoard=parameters.path("storyboard").isObject();
+        if((mode.equals("CREATE") && hasBoard) || (mode.equals("REVISE") && !hasBoard && !writing)
+                || (writing && !mode.equals("REVISE"))) throw new IllegalArgumentException("会话模式与分镜状态不匹配");
+        // Old, already dispatched operations did not carry mode or authorization metadata.
+        if(writing && parameters.has("mode")) {
+            JsonNode authorization=event.path("changeAuthorization");
+            String expected;
+            try {expected=HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(parameters.path("instruction").asText().getBytes(StandardCharsets.UTF_8)));}
+            catch(java.security.NoSuchAlgorithmException e) {throw new IllegalStateException(e);}
+            if(!authorization.isObject() || !authorization.path("authorized").isBoolean() || !authorization.path("authorized").booleanValue()
+                    || !authorization.path("action").asText().equals(event.path("action").asText())
+                    || !expected.equals(authorization.path("instructionSha256").asText()))
+                throw new IllegalArgumentException("缺少当前用户消息的分镜修改授权");
+        }
+        return mode;
     }
 
     static ObjectNode validatePreviewReview(JsonNode input,JsonNode board) {

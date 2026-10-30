@@ -15,6 +15,9 @@ if __name__ == "__main__":
     board["revision"] = 2
     board["scenes"][0]["headline"] = "价格变化"
     second = render(Storyboard.model_validate(board), root / "2" / "render-2")
-    assert second["cacheHits"] == 2, second
+    assert second["cacheHits"] == 0, second
     assert first["sha256"] != second["sha256"]
-    print(json.dumps({"first": first, "second": second}, ensure_ascii=False))
+    repeated = render(Storyboard.model_validate(board), root / "2" / "render-3")
+    assert repeated["cacheHits"] == 1, repeated
+    assert second["sha256"] == repeated["sha256"]
+    print(json.dumps({"first": first, "second": second, "repeated": repeated}, ensure_ascii=False))

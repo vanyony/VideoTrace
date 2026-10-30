@@ -65,17 +65,18 @@ class CreatorTests(unittest.TestCase):
                       "baseRevision": board["revision"] if board else 0, "storyboard": board,
                       "messages": [{"role": "user", "content": instruction}]}
             op = operation(type="CONVERSE", parameters=params)
-            agent = CreatorAgent(settings(directory), store, java, SqliteSaver(connection), model=model)
+            agent = CreatorAgent(settings(directory), store, java, SqliteSaver(connection), model=model, authorize=lambda op,action,timeout:{"authorized":True,"action":action,"reason":"unit fixture"})
             result = agent.run(op)
             self.assertEqual(result, agent.run(op))  # Completed checkpoint never repeats model or tools.
-            self.assertEqual(["choose_action"], offered[0])
+            self.assertIn("switch_mode", offered[0])
+            self.assertIn("finish_discussion", offered[0])
             self.assertTrue(all("render" not in tool for names in offered for tool in names))
             return result, offered, java.calls
 
     def test_conversation_discussion_questions_and_no_generation(self):
         for instruction, board in [("先别生成，讨论一下方向", None), ("为什么第二段这样写", storyboard())]:
             result, offered, calls = self.run_conversation([
-                completion("choose_action", {"action": "DISCUSS"}),
+                completion("switch_mode", {"mode": "DISCUSS"}),
                 completion("search_video", {"query": "素材主题"}),
                 completion("finish_discussion", {"reply": "素材可以面向初学者，请确认受众。"})], board=board, instruction=instruction)
             self.assertEqual("DISCUSS", result["action"])
@@ -86,12 +87,12 @@ class CreatorTests(unittest.TestCase):
 
     def test_conversation_explicit_generation_and_revision(self):
         result, _, _ = self.run_conversation([
-            completion("choose_action", {"action": "CREATE"}),
+            completion("switch_mode", {"mode": "CREATE"}),
             completion("search_video", {"query": "变化"}),
             completion("save_storyboard", storyboard())], instruction="自行决定受众，直接生成30秒分镜")
         self.assertEqual(1, result["storyboard"]["revision"])
         result, _, _ = self.run_conversation([
-            completion("choose_action", {"action": "REVISE"}),
+            completion("switch_mode", {"mode": "REVISE"}),
             completion("patch_scenes", {"baseRevision": 1, "updates": [{"sceneId": "s_2", "headline": "新的标题"}]})],
             board=storyboard(), instruction="请把第二段标题改为新的标题")
         self.assertEqual(2, result["storyboard"]["revision"])
@@ -99,7 +100,7 @@ class CreatorTests(unittest.TestCase):
 
     def test_conversation_discussion_cannot_mutate_even_with_unoffered_tool(self):
         result, _, _ = self.run_conversation([
-            completion("choose_action", {"action": "DISCUSS"}),
+            completion("switch_mode", {"mode": "DISCUSS"}),
             completion("save_storyboard", storyboard()),
             completion("finish_discussion", {"reply": "先讨论受众。"})])
         self.assertIsNone(result["storyboard"])
@@ -109,13 +110,13 @@ class CreatorTests(unittest.TestCase):
         board["scenes"][0]["visual"] = {"layout": "pipeline", "theme": "dark", "motion": "draw",
             "items": [{"icon": "video", "label": "视频"}, {"icon": "agent", "label": "助手"}]}
         result, _, _ = self.run_conversation([
-            completion("choose_action", {"action": "CREATE"}), completion("search_video", {"query": "视频处理"}),
+            completion("switch_mode", {"mode": "CREATE"}), completion("search_video", {"query": "视频处理"}),
             completion("save_storyboard", board)], instruction="生成带二维流程图的30秒分镜")
         saved = result["storyboard"]
         self.assertEqual(saved["scenes"][0]["visual"]["layout"], "pipeline")
         visual = saved["scenes"][0]["visual"] | {"theme": "light"}
         result, _, _ = self.run_conversation([
-            completion("choose_action", {"action": "REVISE"}),
+            completion("switch_mode", {"mode": "REVISE"}),
             completion("patch_scenes", {"baseRevision": 1, "updates": [{"sceneId": "s_1", "visual": visual}]})],
             board=saved, instruction="只把第一幕图解改成浅色")
         self.assertEqual(result["storyboard"]["scenes"][0]["visual"]["theme"], "light")

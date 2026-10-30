@@ -22,6 +22,7 @@
     <label v-if="tasks.length" class="creation-history">创作任务<select :value="task?.taskId" :disabled="loading" @change="selectTask($event.target.value)"><option v-for="item in tasks" :key="item.taskId" :value="item.taskId">{{ item.storyboard?.title || item.taskId }} · {{ creationLabels[item.status] || item.status }}</option></select></label>
     <div v-if="task" class="creation-result">
       <div class="creation-header"><h3>{{ task.storyboard?.title || '创作任务' }}</h3><span role="status" aria-live="polite">{{ creationLabels[task.status] || task.status }} · 版本 {{ task.revision || 0 }}</span></div>
+      <p class="creation-notice">当前模式：{{ { DISCUSS: '讨论', CREATE: '创作', REVISE: '修改' }[task.mode || 'DISCUSS'] }} · 可随时提问；明确要求后才会改动分镜。</p>
       <p v-if="task.summary" role="status">{{ task.summary }}</p>
       <aside v-if="task.previewReview" class="creation-notice" role="status" aria-label="分镜视觉检查结果">
         <strong>{{ task.previewReview.status === 'needs_attention' ? '当前分镜仍需人工核验' : task.previewReview.status === 'suggestions' ? '抽样检查有改进建议' : '抽样画面暂未发现明确问题' }}</strong>
@@ -49,7 +50,7 @@
         </article></div>
         <button class="creation-primary" :disabled="!canEdit" @click="submit('render', { baseRevision: task.revision })">确认版本 {{ task.revision }}，生成视频</button>
       </template>
-      <form class="creation-form" @submit.prevent="sendMessage"><label>继续交流<textarea v-model="instruction" rows="2" required maxlength="2000" :disabled="!canEdit" placeholder="可以讨论创作方向、提问，或明确要求生成及修改分镜。" /></label><p v-if="targetScenes.length">已选 {{ targetScenes.length }} 个场景，修改要求仅作用于所选场景。</p><p v-else>助手会根据消息判断是讨论、生成还是修改分镜。生成视频仍需点击确认按钮。</p><button :disabled="!canEdit || !instruction.trim()">发送</button></form>
+      <form class="creation-form" @submit.prevent="sendMessage"><label>继续交流<textarea v-model="instruction" rows="2" required maxlength="2000" :disabled="!canEdit" placeholder="可以讨论创作方向、提问，或明确要求生成及修改分镜。" /></label><p v-if="targetScenes.length">已选 {{ targetScenes.length }} 个场景，修改要求仅作用于所选场景。</p><p v-else>助手默认沿用当前模式，需要时切换。生成视频仍需点击确认按钮。</p><button :disabled="!canEdit || !instruction.trim()">发送</button></form>
       <div v-if="artifactRevision(task) != null" class="creation-artifact"><p>成片版本 {{ artifactRevision(task) }}</p><button :disabled="loading" @click="loadArtifact">{{ artifact ? '刷新成片链接' : '加载成片预览与下载' }}</button><template v-if="artifact"><video :src="artifact.url" controls playsinline preload="metadata" aria-label="生成的短视频" /><a :href="artifact.url" target="_blank" rel="noopener" download>下载 MP4</a><p>链接短时有效，过期后请刷新。</p></template></div>
     </div>
   </section>

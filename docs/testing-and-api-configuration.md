@@ -51,7 +51,7 @@ Windows 本地环境，Ryzen 7 8845H（8 核 16 线程），约 28 GiB 系统可
 | 基础 OCR | 本地 Tesseract，无外部 API | `OCR_PROVIDER=local`、`OCR_COMMAND`、`TESSDATA_PREFIX` | 可修改可执行程序与语言包路径；当前使用中文和英文语言包 |
 | 可选多模态 OCR | `OCR_PROVIDER=multimodal`；图片 Chat Completions | `OCR_URL`、`OCR_MODEL`、`OCR_API_KEY` | 切换后才调用外部服务；Key 未设置时复用 `SILICONFLOW_API_KEY`；与按需画面理解工具分别配置 |
 | BM25 关键词检索 | Java 本地计算，无外部 API | 不使用模型 Key | 与 Embedding 检索融合；不需要付费模型调用 |
-| MP4 渲染 | 本地 Pillow / MoviePy / FFmpeg，无视频生成 API | `FFMPEG_DIR`、`CREATOR_FONT_PATH`、`CREATOR_RENDER_TIMEOUT_SECONDS` | 支持文字、二维图解、自由画布及发布会/动态文字风格；页面可选 15/30/45/60 秒 |
+| MP4 渲染 | 本地 React / Remotion / Chromium / FFmpeg，无视频生成 API | `REMOTION_BROWSER_EXECUTABLE`、`CREATOR_FONT_PATH`、`CREATOR_RENDER_TIMEOUT_SECONDS` | Python 保留结构/文字校验和成片验证；需安装 Node.js、锁定渲染依赖和浏览器 |
 
 当前 `.env.example` 的文本和画面理解模型默认值均为 `deepseek-flash`，Embedding 为 `BAAI/bge-m3`，ASR 为 `TeleAI/TeleSpeechASR`。多模态 OCR 示例值为 `zai-org/GLM-5.3-Flash`，但 `OCR_PROVIDER=local` 时该模型配置不会生效。模型名称是否可用取决于提供商账户与接口支持。
 
@@ -77,6 +77,8 @@ Java 与 Python 使用内部 HTTP API 交互，`CREATOR_URL` 和 `CREATOR_JAVA_U
 
 
 ## 视觉实验补充（2026-10-20）
+
+2026-10-30 的 Remotion 正式链路、持久会话模式和工具暴露评测见 [Agent 与渲染验收](agent-routing-evaluation.md)。下面的样片和数字为历史记录。
 
 全屏画布、组件动画、多模态预览检查及独立 Remotion 样片见 [视觉实验说明](visual-playground.md)。预览检查复用 `CREATOR_VISION_*`，默认使用官方 DeepSeek 图片输入接口，可独立修改；抽样图片会发送给配置的模型服务。没有新增视频生成 API。
 

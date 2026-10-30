@@ -1,0 +1,477 @@
+{
+  "schemaVersion": 1,
+  "revision": 1,
+  "title": "Remotion 组件渲染验收",
+  "targetAudience": "创作者",
+  "musicId": "light_01",
+  "scenes": [
+    {
+      "sceneId": "template0",
+      "template": "title",
+      "durationMs": 2000,
+      "headline": "把证据变成故事",
+      "points": [
+        "检索原视频证据",
+        "生成可编辑分镜"
+      ],
+      "animation": "fade",
+      "sourceRefs": [
+        "e_0_60000"
+      ]
+    },
+    {
+      "sceneId": "template1",
+      "template": "points",
+      "durationMs": 2000,
+      "headline": "React 组件驱动画面",
+      "points": [
+        "检索原视频证据",
+        "生成可编辑分镜"
+      ],
+      "animation": "reveal",
+      "sourceRefs": [
+        "e_0_60000"
+      ]
+    },
+    {
+      "sceneId": "template2",
+      "template": "flow",
+      "durationMs": 2000,
+      "headline": "人工确认后生成成片",
+      "points": [
+        "检索原视频证据",
+        "生成可编辑分镜"
+      ],
+      "animation": "highlight",
+      "sourceRefs": [
+        "e_0_60000"
+      ]
+    },
+    {
+      "sceneId": "diagram",
+      "template": "title",
+      "durationMs": 2000,
+      "headline": "证据驱动创作",
+      "points": [
+        "从原视频到可编辑分镜"
+      ],
+      "animation": "fade",
+      "sourceRefs": [
+        "e_0_60000"
+      ],
+      "visual": {
+        "layout": "pipeline",
+        "theme": "dark",
+        "motion": "draw",
+        "items": [
+          {
+            "icon": "video",
+            "label": "原视频",
+            "value": 50
+          },
+          {
+            "icon": "agent",
+            "label": "创作 Agent",
+            "value": 50
+          },
+          {
+            "icon": "cards",
+            "label": "结构化分镜",
+            "value": 50
+          }
+        ]
+      }
+    },
+    {
+      "sceneId": "framed",
+      "template": "title",
+      "durationMs": 2000,
+      "headline": "可复用视觉组件",
+      "points": [
+        "人物与信息卡片"
+      ],
+      "animation": "fade",
+      "sourceRefs": [
+        "e_0_60000"
+      ],
+      "canvas": {
+        "background": "#0b1428",
+        "layout": "framed",
+        "camera": [],
+        "continuePrevious": false,
+        "elements": [
+          {
+            "id": "person",
+            "kind": "icon",
+            "x": 240.0,
+            "y": 620.0,
+            "width": 120.0,
+            "height": 80.0,
+            "color": "#64dfbf",
+            "fill": "#172641",
+            "text": "",
+            "fontSize": 28,
+            "icon": "person",
+            "fromId": null,
+            "toId": null,
+            "z": 1,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "cloud",
+            "curve": null,
+            "keyframes": []
+          },
+          {
+            "id": "card",
+            "kind": "rectangle",
+            "x": 500.0,
+            "y": 620.0,
+            "width": 120.0,
+            "height": 80.0,
+            "color": "#64dfbf",
+            "fill": "#172641",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 1,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "cloud",
+            "curve": null,
+            "keyframes": []
+          },
+          {
+            "id": "link",
+            "kind": "arrow",
+            "x": 360.0,
+            "y": 640.0,
+            "width": 120.0,
+            "height": 80.0,
+            "color": "#64dfbf",
+            "fill": "#172641",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": "person",
+            "toId": "card",
+            "z": 1,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "cloud",
+            "curve": null,
+            "keyframes": []
+          }
+        ]
+      }
+    },
+    {
+      "sceneId": "full",
+      "template": "title",
+      "durationMs": 2000,
+      "headline": "全屏画布",
+      "points": [],
+      "animation": "fade",
+      "sourceRefs": [
+        "e_0_60000"
+      ],
+      "canvas": {
+        "background": "#0b1428",
+        "layout": "full",
+        "camera": [
+          {
+            "timeMs": 0,
+            "x": 360.0,
+            "y": 640.0,
+            "zoom": 1.0,
+            "easing": "easeInOut"
+          },
+          {
+            "timeMs": 2000,
+            "x": 360.0,
+            "y": 620.0,
+            "zoom": 1.03,
+            "easing": "easeInOut"
+          }
+        ],
+        "continuePrevious": false,
+        "elements": [
+          {
+            "id": "sun",
+            "kind": "sprite",
+            "x": 160.0,
+            "y": 280.0,
+            "width": 160.0,
+            "height": 160.0,
+            "color": "#64dfbf",
+            "fill": "#172641",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 1,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "sun",
+            "curve": null,
+            "keyframes": []
+          },
+          {
+            "id": "earth",
+            "kind": "sprite",
+            "x": 510.0,
+            "y": 280.0,
+            "width": 160.0,
+            "height": 160.0,
+            "color": "#64dfbf",
+            "fill": "#172641",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 1,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "earth",
+            "curve": null,
+            "keyframes": []
+          },
+          {
+            "id": "cloud",
+            "kind": "sprite",
+            "x": 160.0,
+            "y": 520.0,
+            "width": 160.0,
+            "height": 160.0,
+            "color": "#64dfbf",
+            "fill": "#172641",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 1,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "cloud",
+            "curve": null,
+            "keyframes": []
+          },
+          {
+            "id": "droplet",
+            "kind": "sprite",
+            "x": 510.0,
+            "y": 520.0,
+            "width": 160.0,
+            "height": 160.0,
+            "color": "#64dfbf",
+            "fill": "#172641",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 1,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "droplet",
+            "curve": null,
+            "keyframes": []
+          },
+          {
+            "id": "factory",
+            "kind": "sprite",
+            "x": 160.0,
+            "y": 760.0,
+            "width": 160.0,
+            "height": 160.0,
+            "color": "#64dfbf",
+            "fill": "#172641",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 1,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "factory",
+            "curve": null,
+            "keyframes": []
+          },
+          {
+            "id": "truck",
+            "kind": "sprite",
+            "x": 510.0,
+            "y": 760.0,
+            "width": 160.0,
+            "height": 160.0,
+            "color": "#64dfbf",
+            "fill": "#172641",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 1,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "truck",
+            "curve": null,
+            "keyframes": []
+          },
+          {
+            "id": "water",
+            "kind": "sprite",
+            "x": 160.0,
+            "y": 1000.0,
+            "width": 160.0,
+            "height": 160.0,
+            "color": "#64dfbf",
+            "fill": "#172641",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 1,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "water",
+            "curve": null,
+            "keyframes": []
+          },
+          {
+            "id": "ripple",
+            "kind": "sprite",
+            "x": 510.0,
+            "y": 1000.0,
+            "width": 160.0,
+            "height": 160.0,
+            "color": "#64dfbf",
+            "fill": "#172641",
+            "text": "",
+            "fontSize": 28,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 1,
+            "space": "world",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "ripple",
+            "curve": null,
+            "keyframes": []
+          },
+          {
+            "id": "heading",
+            "kind": "text",
+            "x": 360.0,
+            "y": 90.0,
+            "width": 640.0,
+            "height": 90.0,
+            "color": "#64dfbf",
+            "fill": "#172641",
+            "text": "八种预置 React 图形",
+            "fontSize": 40,
+            "icon": "file",
+            "fromId": null,
+            "toId": null,
+            "z": 1,
+            "space": "screen",
+            "opacity": 1.0,
+            "scale": 1.0,
+            "rotation": 0.0,
+            "pulse": false,
+            "sprite": "cloud",
+            "curve": null,
+            "keyframes": []
+          }
+        ]
+      }
+    },
+    {
+      "sceneId": "launch",
+      "template": "title",
+      "durationMs": 2000,
+      "headline": "创作交给你",
+      "points": [
+        "内容可追溯",
+        "分镜可编辑"
+      ],
+      "animation": "fade",
+      "sourceRefs": [
+        "e_0_60000"
+      ],
+      "motion": {
+        "style": "launch",
+        "eyebrow": "VIDEO TRACE",
+        "words": [
+          "内容理解",
+          "二次创作"
+        ],
+        "accent": "cyan",
+        "transition": "push"
+      }
+    },
+    {
+      "sceneId": "kinetic",
+      "template": "title",
+      "durationMs": 2000,
+      "headline": "创作交给你",
+      "points": [
+        "内容可追溯",
+        "分镜可编辑"
+      ],
+      "animation": "fade",
+      "sourceRefs": [
+        "e_0_60000"
+      ],
+      "motion": {
+        "style": "kinetic",
+        "eyebrow": "VIDEO TRACE",
+        "words": [
+          "内容理解",
+          "二次创作"
+        ],
+        "accent": "cyan",
+        "transition": "wipe"
+      }
+    }
+  ]
+}

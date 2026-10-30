@@ -66,10 +66,11 @@ class FeedbackRecoveryTests(unittest.TestCase):
         self.assertEqual(state["preview_attempts"], 2)
 
     def test_harmless_top_level_metadata_does_not_discard_valid_preview_issues(self):
+        from .test_remotion_renderer import preview_stub
         response = {"choices": [{"finish_reason": "stop", "message": {"content": json.dumps({
             "summary": "未发现明确问题", "issues": [], "confidence": .9, "elementIds": []})}}]}
         with tempfile.TemporaryDirectory() as directory:
-            reviewer = PreviewReviewer(settings(directory), model=lambda *_: response)
+            reviewer = PreviewReviewer(settings(directory), model=lambda *_: response,frame_renderer=preview_stub)
             result = reviewer.review(operation(), Storyboard.model_validate(storyboard()), ["s_1"], "", 30)
             self.assertEqual(result["issues"], [])
             self.assertNotIn("confidence", result)

@@ -7,6 +7,7 @@
 | 视觉实验分支、萌版样片、多模态预览与设计 Prompt | [视觉实验说明](visual-playground.md) |
 | 项目功能、样片与首次启动 | [项目 README](../README.md) |
 | Java/Python 职责、Agent 决策与任务可靠性 | [架构与状态流转](architecture.md) |
+| 持久模式、对抗输入、全工具暴露及 Remotion 验收边界 | [Agent 与渲染评测](agent-routing-evaluation.md) |
 | 上传、解析、创作、确认与下载的接口 | [核心 API 契约](api.md) |
 | 启动检查、配置生效、故障排查与数据保留 | [运行与排障](operations.md) |
 | 外部模型 API、上传容量及四小时测试结果 | [测试与 API 配置](testing-and-api-configuration.md) |

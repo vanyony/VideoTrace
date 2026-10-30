@@ -14,7 +14,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from .canvas import resolved_scenes, state_at, camera_at
 from .frame_inspector import vision_settings
 from .model_client import ChatModelClient
-from .renderer import TEMPLATE_VERSION, font, font_path, frame, sha256 as file_sha256
+from .renderer import font
+from .remotion_renderer import preview_frames, renderer_identity
 
 
 class PreviewIssue(BaseModel):
@@ -84,11 +85,12 @@ class PreviewFeedback(BaseModel):
 
 
 class PreviewReviewer:
-    def __init__(self, settings, model=None):
+    def __init__(self, settings, model=None, frame_renderer=None):
         self.settings = settings
         config = vision_settings(settings)
         self.identity = {"url": config.llm_url, "model": config.llm_model}
         self.model = model or ChatModelClient(config).chat
+        self.frame_renderer = frame_renderer or preview_frames
 
     def review(self, operation, board, scene_ids, focus, timeout):
         started = time.monotonic()
@@ -104,8 +106,8 @@ class PreviewReviewer:
             raise ValueError("preview review supports one to three scenes")
         fingerprint = json.dumps({"operationId": operation.operationId, "attempt": operation.attempt,
             "board": board.model_dump(), "scenes": [s.sceneId for s in scenes], "focus": focus,
-            "renderer": TEMPLATE_VERSION, "font": file_sha256(Path(font_path())),
-            "vision": self.identity, "reviewVersion": 4}, sort_keys=True, ensure_ascii=False)
+            "renderer": renderer_identity(),
+            "vision": self.identity, "reviewVersion": 5}, sort_keys=True, ensure_ascii=False)
         preview_id = sha256(fingerprint.encode()).hexdigest()
         directory = self.settings.data_dir / "preview-reviews" / preview_id
         result_file = directory / "result.json"
@@ -113,18 +115,15 @@ class PreviewReviewer:
             return {**json.loads(result_file.read_text(encoding="utf-8")), "cached": True}
         directory.mkdir(parents=True, exist_ok=True)
         manifest, content = [], []
+        rendered_frames=self.frame_renderer(board,scenes,directory,max(.1,timeout-(time.monotonic()-started)))
         for scene in scenes:
-            index = next(i for i, s in enumerate(all_scenes) if s.sceneId == scene.sceneId)
-            prior = all_scenes[index-1] if index and any(s.motion for s in all_scenes) else None
-            previous_frame = frame(prior, prior.durationMs/1000-1/24) if prior else None
-            from .motion import scene_transition
             times = sample_times(scene)
             strip = Image.new("RGB", (720, 1360), "#111c2d")
             for index, timestamp in enumerate(times):
                 if time.monotonic()-started >= timeout:
                     raise ValueError("preview rendering deadline exhausted")
-                rendered = scene_transition(prior, scene, previous_frame, timestamp/1000)
-                image = Image.fromarray(rendered).resize((360, 640), Image.Resampling.LANCZOS)
+                with Image.open(rendered_frames[scene.sceneId,timestamp]) as rendered:
+                    image = rendered.convert('RGB').resize((360, 640), Image.Resampling.LANCZOS)
                 x, y = (index%2)*360, (index//2)*680
                 strip.paste(image, (x, y+40))
                 ImageDraw.Draw(strip).text((x+10, y+8), f"{scene.sceneId} / {timestamp}ms", font=font(16), fill="white")

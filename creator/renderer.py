@@ -3,7 +3,6 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import subprocess
 import sys
 from functools import lru_cache
 
@@ -12,7 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 from .models import Storyboard
 
 WIDTH, HEIGHT, FPS = 720, 1280, 24
-TEMPLATE_VERSION = "playground-v7.1"
+TEMPLATE_VERSION = "remotion-v1"
 
 
 def font_path() -> str:
@@ -142,65 +141,8 @@ def probe(path: Path, expected_duration_ms: int) -> dict:
 
 
 def render(board: Storyboard, directory: Path) -> dict:
-    import imageio_ffmpeg
-    from moviepy import VideoClip
-    validate_layout(board)
-    directory.mkdir(parents=True, exist_ok=True)
-    cache = directory.parent.parent / "scene-cache"
-    cache.mkdir(parents=True, exist_ok=True)
-    duration = sum(s.durationMs for s in board.scenes)
-    output = directory / "output.mp4"
-    hits = 0
-    paths = []
-    font_digest = sha256(Path(font_path()))
-    from .canvas import resolved_scenes
-    scenes = resolved_scenes(board)
-    styled = any(scene.motion for scene in scenes)
-    for index, scene in enumerate(scenes):
-        visual = scene.model_dump(exclude={"sceneId", "sourceRefs"})
-        predecessor = scenes[index - 1] if styled and index else None
-        predecessor_visual = predecessor.model_dump(exclude={"sceneId", "sourceRefs"}) if predecessor else None
-        key = hashlib.sha256(json.dumps([visual, predecessor_visual, TEMPLATE_VERSION, font_digest, WIDTH, HEIGHT, FPS], sort_keys=True).encode()).hexdigest()
-        path = cache / f"{key}.mp4"
-        if path.is_file():
-            try:
-                probe(path, scene.durationMs)
-                hits += 1
-            except Exception:
-                path.unlink()
-        if not path.is_file():
-            temporary = cache / f"{key}.tmp.mp4"
-            layout = scene_layout(scene)
-            previous_frame = frame(predecessor, predecessor.durationMs / 1000 - 1 / FPS) if predecessor else None
-            from .motion import scene_transition
-            clip = VideoClip(lambda t, s=scene, layout=layout, previous=previous_frame, pred=predecessor:
-                             scene_transition(pred, s, previous, t, layout),
-                             duration=scene.durationMs / 1000)
-            try:
-                clip.write_videofile(str(temporary), fps=FPS, codec="libx264", audio=False,
-                                     preset="ultrafast", threads=2, logger=None, ffmpeg_params=["-pix_fmt", "yuv420p"])
-            finally:
-                clip.close()
-            probe(temporary, scene.durationMs)
-            temporary.replace(path)
-        paths.append(path.resolve())
-    concat = directory / "concat.txt"
-    # Cache names are hashes; all paths originate inside this task's private cache.
-    concat.write_text("\n".join("file '" + str(p).replace("\\", "/").replace("'", "'\\''") + "'" for p in paths), encoding="utf-8")
-    temporary = directory / "output.tmp.mp4"
-    command = [imageio_ffmpeg.get_ffmpeg_exe(), "-y", "-f", "concat", "-safe", "0", "-i", str(concat)]
-    if board.musicId == "light_01":
-        command += ["-stream_loop", "-1", "-i", str(Path(__file__).parent / "assets" / "light_01.wav"),
-                    "-map", "0:v:0", "-map", "1:a:0", "-c:a", "aac", "-b:a", "96k", "-af", "volume=0.18"]
-    command += ["-c:v", "copy", "-t", str(duration / 1000), "-movflags", "+faststart", str(temporary)]
-    result = subprocess.run(command, capture_output=True, timeout=120, check=False)
-    if result.returncode:
-        raise RuntimeError("FFmpeg assembly failed: " + result.stderr.decode(errors="replace")[-1000:])
-    metadata = probe(temporary, duration)
-    temporary.replace(output)
-    metadata.update({"path": str(output.resolve()), "revision": board.revision, "cacheHits": hits, "sceneCount": len(paths)})
-    (directory / "metadata.json").write_text(json.dumps(metadata), encoding="utf-8")
-    return metadata
+    from .remotion_renderer import render as render_remotion
+    return render_remotion(board, directory)
 
 
 if __name__ == "__main__":

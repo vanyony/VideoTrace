@@ -6,8 +6,8 @@
 
 1. 配置根目录 `.env`，启动 Docker Compose 基础设施。
 2. 构建 Java JAR，启动 Java 后端，让 Flyway 完成数据库迁移。
-3. 配置两端相同的内部令牌与 Python 的独立 MinIO 凭据，启动一个 Python 创作进程。
-4. 启动前端，登录，上传一个短视频，完成分析，再检查创作就绪状态。
+3. 安装 `creator/remotion` 的锁定依赖、Chrome/Chromium 和中文字体；配置两端相同的内部令牌与 Python 的独立 MinIO 凭据，启动一个 Python 创作进程。
+4. 启动前端，登录，上传一个短视频，完成素材准备，再检查创作就绪状态。
 
 ```powershell
 docker compose ps
@@ -89,6 +89,9 @@ Java 的 `MINIO_*` 配置不会自动补全 Python 的 `CREATOR_MINIO_ACCESS_KEY
 | 模型返回 401/403/429 | 对应提供商的凭据、模型权限及额度 | 根据 ASR/Embedding/文本/视觉各自配置排查，避免混用 Key |
 | 分镜有效但渲染上传失败 | `CREATOR_MINIO_*`、Bucket、前缀权限和网络 | 配置独立账号；不要反复生成分镜来掩盖存储错误 |
 | 中文乱码或找不到字体 | `CREATOR_FONT_PATH` 和实际字体文件 | 指定可读中文字体；不同字体影响排版和缓存 |
+| Remotion 无法启动或找不到依赖 | Node.js 22+、`creator/remotion/node_modules`、浏览器运行库 | 执行 `npm --prefix creator/remotion ci`；必要时运行 `npm --prefix creator/remotion run browser:install` 或配置 `REMOTION_BROWSER_EXECUTABLE` |
+| 写授权被拒绝或缺少当前消息授权 | 最新 instruction、当前 mode、授权动作与消息摘要 | 模式不构成授权；确认当前消息明确要求修改，检查文本模型 JSON 回包，勿复用旧授权或放松落库校验 |
+| 分镜显示“仍需人工核验” | `previewReview.issues/status/fallbackReason` | 保留了已检查草稿不代表完成视觉修复；检查后再确认或继续提出修改 |
 | OCR 无法启动 | `OCR_COMMAND`、语言包与 `TESSDATA_PREFIX` | 验证 Tesseract 可运行且含 `chi_sim/eng` |
 | 找不到 FFmpeg/ffprobe | Java 进程的 PATH 与 `FFMPEG_DIR` | 从正确环境启动；Python 的 imageio-ffmpeg 不等于系统已装 ffprobe |
 | 分镜持续被拒绝 | 错误中的场景/元素、文字框高度、边界和证据 ID | 修正需求或让 Agent 按反馈集中修复，不放松校验绕过 |
@@ -114,6 +117,8 @@ SQLite 使用 WAL。备份时停止写入或使用 SQLite 一致性备份机制�
 ## 已知限制
 
 - 当前 Python 仅支持单进程 worker，SQLite 不是已验证的横向扩展方案。
+- 模式在成功回复/分镜提交时随任务快照保存，当前执行中不接受新消息插入；修改代码需构建并重启 Java/Python，两侧协议一起更新。模式字段在现有 JSON 快照中，无新增表迁移。
+- 直接生成并执行 TSX 只做过本地人工审核实验，未提供生产任意代码执行服务或隔离沙箱。
 - 四小时音频预处理中发现一个 825 字节无效尾段，尚未修复；不要宣称四小时云端完整解析已通过。
 - 来源时间戳跟随解析分段，不是词级精确定位；证据引用合法不能替代事实复核。
 - 真实单样本分析出现过 Critic 提示，仍需用户确认内容，不能将渲染成功当作语义正确。

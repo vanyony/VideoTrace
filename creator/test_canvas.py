@@ -79,7 +79,7 @@ class CanvasTests(unittest.TestCase):
         from .test_creator import CreatorTests
         harness = CreatorTests()
         result, _, _ = harness.run_conversation([
-            completion("choose_action", {"action": "CREATE"}), completion("search_video", {"query": "视频"}),
+            completion("switch_mode", {"mode": "CREATE"}), completion("search_video", {"query": "视频"}),
             completion("save_storyboard", old)])
         self.assertEqual(result["storyboard"]["scenes"][0]["canvas"]["elements"][2]["toId"], "agent")
 
@@ -97,7 +97,7 @@ class CanvasTests(unittest.TestCase):
         invalid["scenes"][0]["canvas"]["elements"][0]["keyframes"][0]["x"] = 5
         from .test_creator import CreatorTests
         result, offered, _ = CreatorTests().run_conversation([
-            completion("choose_action", {"action": "CREATE"}), completion("search_video", {"query": "视频"}),
+            completion("switch_mode", {"mode": "CREATE"}), completion("search_video", {"query": "视频"}),
             completion("save_storyboard", invalid), completion("save_storyboard", data)])
         self.assertIsNotNone(result["storyboard"]["scenes"][0]["canvas"])
         self.assertIn("save_storyboard", offered[-1])

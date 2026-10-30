@@ -104,19 +104,19 @@ class ModelStub(BaseHTTPRequestHandler):
         elif body.get("tools"):
             messages = body["messages"]
             names = {tool["function"]["name"] for tool in body["tools"]}
-            observed = [m for m in messages if m["role"] == "tool" and '"action"' not in m["content"]]
-            if "choose_action" in names:
-                params = json.loads(next(m["content"] for m in messages if m["role"] == "user"))
-                instruction = params["instruction"]
-                action = "CREATE" if instruction == "按三个变化直接生成分镜" else "REVISE" if instruction == "第二点改成价格变化，其他不变" else "DISCUSS"
-                name, args = "choose_action", {"action": action}
+            observed = [m for m in messages if m["role"] == "tool" and '"action"' not in m["content"] and '"mode"' not in m["content"]]
+            params = json.loads(next(m["content"] for m in messages if m["role"] == "user"))
+            instruction = params.get("instruction", "")
+            desired = "CREATE" if instruction == "按三个变化直接生成分镜" else "REVISE" if instruction == "第二点改成价格变化，其他不变" else None
+            if "switch_mode" in names and desired and ("save_storyboard" if desired=="CREATE" else "patch_scenes") not in names:
+                name, args = "switch_mode", {"mode": desired}
             elif not observed:
                 name, args = "search_video", {"query": "价格 续航 使用", "limit": 3}
             elif len(observed) == 1:
                 name, args = "read_context", {"evidenceId": "e_0_10000", "windowMs": 10000}
             elif len(observed) == 2 and "inspect_video_frame" in names and "检查画面内容" in messages[1]["content"]:
                 name, args = "inspect_video_frame", {"evidenceId": "e_0_10000", "timestampMs": 5000, "question": "检查画面内容"}
-            elif "finish_discussion" in names:
+            elif "finish_discussion" in names and desired is None:
                 name, args = "finish_discussion", {"reply": "视频介绍了价格、续航与使用方式的变化，可以选择其中一个角度。当前只讨论，不修改分镜。"}
             elif "patch_scenes" in names:
                 params = json.loads(next(m["content"] for m in messages if m["role"] == "user"))
@@ -128,6 +128,11 @@ class ModelStub(BaseHTTPRequestHandler):
                       "choices": [{"index": 0, "finish_reason": "tool_calls", "message": {"role": "assistant", "content": None,
                       "tool_calls": [{"id": "call_" + secrets.token_hex(4), "type": "function", "function": {"name": name, "arguments": json.dumps(args, ensure_ascii=False)}}]}}],
                       "usage": {"prompt_tokens": 10, "completion_tokens": 10, "total_tokens": 20}}
+        elif "写操作授权检查员" in body.get("messages", [{}])[0].get("content", ""):
+            params=json.loads(body["messages"][-1]["content"])
+            result={"choices":[{"finish_reason":"stop","message":{"content":json.dumps({
+                "authorized":params["latestUserMessage"] in ("按三个变化直接生成分镜","第二点改成价格变化，其他不变"),
+                "action":params["requestedAction"],"reason":"deterministic integration fixture"})}}]}
         elif any(isinstance(m.get("content"), list) for m in body.get("messages", [])):
             assert body["model"] == "stub-vision"
             result = {"choices": [{"finish_reason": "stop", "message": {"content": json.dumps({

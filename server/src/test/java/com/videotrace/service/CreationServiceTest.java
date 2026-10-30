@@ -11,6 +11,20 @@ import static org.junit.jupiter.api.Assertions.*;
 class CreationServiceTest {
     final ObjectMapper json=new ObjectMapper();
     final VideoContext context=new VideoContext("source","",List.of(new VideoContext.VideoSegment(0,10000,"素材事实",List.of(),List.of())));
+    @Test void persistedModeDoesNotAuthorizeWritingAndOldMessageProofCannotBeReused() throws Exception {
+        var params=json.createObjectNode().put("mode","REVISE").put("instruction","把第二幕改成绿色");params.set("storyboard",board());
+        var event=json.createObjectNode().put("status","DISCUSSED").put("mode","REVISE").put("action","DISCUSS");
+        assertEquals("REVISE",CreationService.validateConversationMode(event,params));
+        event.put("status","AWAITING_CONFIRMATION").put("action","REVISE");
+        assertThrows(IllegalArgumentException.class,()->CreationService.validateConversationMode(event,params));
+        var proof=event.putObject("changeAuthorization").put("authorized",true).put("action","REVISE");
+        proof.put("instructionSha256",java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(params.path("instruction").asText().getBytes(java.nio.charset.StandardCharsets.UTF_8))));
+        assertEquals("REVISE",CreationService.validateConversationMode(event,params));
+        params.put("instruction","为什么用绿色？");
+        assertThrows(IllegalArgumentException.class,()->CreationService.validateConversationMode(event,params));
+        event.put("mode","CREATE");
+        assertThrows(IllegalArgumentException.class,()->CreationService.validateConversationMode(event,params));
+    }
     ObjectNode board() throws Exception {
         return (ObjectNode)json.readTree("""
             {"schemaVersion":1,"revision":1,"title":"标题","targetAudience":"公众","musicId":"none","scenes":[

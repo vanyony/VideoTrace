@@ -8,7 +8,9 @@ sys.path.insert(0, str(ROOT))
 
 from PIL import Image
 from creator.models import Storyboard
-from creator.renderer import frame, render, validate_layout
+from creator.renderer import render, validate_layout
+from creator.remotion_renderer import preview_frames
+from creator.preview_reviewer import sample_times
 
 
 def node(id, kind, x, y, width=120, height=100, **kwargs):
@@ -85,9 +87,11 @@ if __name__ == "__main__":
     board = demo_board(); validate_layout(board)
     (output / "storyboard.json").write_text(board.model_dump_json(indent=2), encoding="utf-8")
     sheet = Image.new("RGB", (360 * len(board.scenes), 640))
+    snapshots=preview_frames(board,board.scenes,output/'frames',180)
     for i, scene in enumerate(board.scenes):
-        still = Image.fromarray(frame(scene, 3.5))
+        still = Image.open(snapshots[scene.sceneId,sample_times(scene)[1]])
         still.save(output / f"scene-{i+1}.png")
         sheet.paste(still.resize((360, 640)), (360 * i, 0))
+        still.close()
     sheet.save(output / "contact-sheet.png")
     print(json.dumps(render(board, output / "render")), flush=True)
