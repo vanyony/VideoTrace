@@ -18,8 +18,70 @@ function setup() {
   return { workspace, scheduled, cancelled, hide: () => { hidden = true } }
 }
 function mockFetch(snapshot = () => draft) {
-  globalThis.fetch = async url => json(url.includes('eligibility') ? { eligible: true, sourceVersion: 2 } : url.includes('?mediaId') ? [draft] : snapshot())
+  globalThis.fetch = async url => json(url.includes('source-status') ? { state: 'COMPLETED' } : url.includes('eligibility') ? { eligible: true, sourceVersion: 2 } : url.includes('?mediaId') ? [draft] : snapshot())
 }
+
+test('source preparation resumes from durable status and enables creation on completion', async () => {
+  let state = 'NOT_STARTED', submissions = 0
+  globalThis.fetch = async (url, options = {}) => {
+    if (url.includes('prepare-source')) { submissions++; state = 'QUEUED'; return json({ state }) }
+    if (url.includes('source-status')) return json({ state, message: state })
+    if (url.includes('eligibility')) return json({ eligible: state === 'COMPLETED' })
+    return json([])
+  }
+  const { workspace, scheduled, hide } = setup()
+  await workspace.open(item)
+  assert.equal(workspace.eligibility.value.eligible, false)
+  await workspace.prepareSource()
+  assert.equal(submissions, 1)
+  assert.equal(workspace.sourceStatus.value.state, 'QUEUED')
+  hide(); workspace.reschedule()
+  assert.equal(scheduled.at(-1).delay, 15000)
+  state = 'COMPLETED'
+  await scheduled.at(-1).fn()
+  assert.equal(workspace.eligibility.value.eligible, true)
+  assert.equal(workspace.sourceStatus.value.state, 'COMPLETED')
+  workspace.close()
+})
+
+test('lost preparation acceptance is recovered by reading canonical status', async () => {
+  let state = 'NOT_STARTED'
+  globalThis.fetch = async (url, options = {}) => {
+    if (url.includes('prepare-source')) { state = 'PROCESSING'; throw new TypeError('connection lost') }
+    if (url.includes('source-status')) return json({ state })
+    if (url.includes('eligibility')) return json({ eligible: false })
+    return json([])
+  }
+  const { workspace, scheduled } = setup()
+  await workspace.open(item)
+  await workspace.prepareSource()
+  assert.equal(workspace.sourceStatus.value.state, 'PROCESSING')
+  assert.equal(workspace.preparing.value, false)
+  assert.ok(scheduled.length)
+  workspace.close()
+})
+
+test('late source status cannot restore state after closing and reopening the same media', async () => {
+  let delayed = false, resolve
+  globalThis.fetch = async url => {
+    if (url.includes('source-status')) {
+      if (delayed) return new Promise(done => { resolve = done })
+      return json({ state: 'NOT_STARTED' })
+    }
+    return json(url.includes('eligibility') ? { eligible: false } : [])
+  }
+  const { workspace } = setup()
+  await workspace.open(item)
+  delayed = true
+  const old = workspace.refreshSource()
+  workspace.close(); delayed = false
+  await workspace.open(item)
+  resolve(json({ state: 'COMPLETED' }))
+  await old
+  assert.equal(workspace.sourceStatus.value.state, 'NOT_STARTED')
+  assert.equal(workspace.eligibility.value.eligible, false)
+  workspace.close()
+})
 
 test('polling slows while hidden and stops at confirmation and on close', async () => {
   let snapshot = draft

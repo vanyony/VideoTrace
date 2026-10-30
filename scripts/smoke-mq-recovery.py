@@ -20,39 +20,41 @@ def sql(statement):
     return result.stdout.strip()
 
 def main():
-    goal = "Infrastructure recovery check " + secrets.token_hex(5)
-    path = query("/analysis/ai", id=media_id, goal=goal, mode="GENERAL")
+    path = query("/creation/prepare-source", mediaId=media_id)
+    assert ok(query("/creation/source-status", mediaId=media_id), token=token)["state"] != "COMPLETED", "Use an unprepared fixture"
     task = None
     try:
         subprocess.run(["docker", "stop", "-t", "5", "videotrace-rmqbroker-1"], check=True, timeout=25)
         status, body = request(path, "POST", token)
         assert status == 202 and body["code"] == 0, (status, body)
-        task = ok(query("/analysis/tasks/latest", id=media_id, goal=goal, mode="GENERAL"), token=token)
-        assert task["state"] == "QUEUED", task
-        assert request(path, "POST", token)[0] == 409
+        task = {"taskId": sql(f"SELECT task_id FROM analysis_executions WHERE media_id={media_id} AND task_kind='PREPARATION' ORDER BY creation_order DESC LIMIT 1;")}
+        assert ok(query("/creation/source-status", mediaId=media_id), token=token)["state"] == "QUEUED", task
+        assert request(path, "POST", token)[0] == 202
+        assert sql(f"SELECT COUNT(*) FROM analysis_executions WHERE media_id={media_id} AND task_kind='PREPARATION' AND state IN ('QUEUED','RUNNING');") == "1"
         row = sql("SELECT status,attempts FROM analysis_deliveries WHERE task_id='" + task["taskId"] + "';")
         assert row.split("\t")[0] == "PENDING", row
         assert sql("SELECT COUNT(*) FROM analysis_executions WHERE task_id='" + task["taskId"] + "';") == "1"
-        print("Broker offline: HTTP 202, durable PENDING delivery, duplicate HTTP 409.", flush=True)
+        print("Broker offline: HTTP 202, durable PENDING delivery, duplicate HTTP 202 with one durable task.", flush=True)
     finally:
         subprocess.run(["docker", "start", "videotrace-rmqbroker-1"], check=True, timeout=25)
     deadline = time.monotonic() + 150
     while time.monotonic() < deadline:
-        current = ok("/analysis/tasks/" + task["taskId"], token=token)
-        if current["state"] in ("FAILED", "SUCCEEDED"):
+        current = ok(query("/creation/source-status", mediaId=media_id), token=token)
+        if current["state"] in ("FAILED", "COMPLETED"):
             break
         time.sleep(2)
     else:
         raise AssertionError("No terminal state after broker restoration")
     assert current["state"] == "FAILED", current
-    assert 1 <= current["attempts"] <= 3, current
+    attempts = int(sql("SELECT attempts FROM analysis_executions WHERE task_id='" + task["taskId"] + "';"))
+    assert 1 <= attempts <= 3, attempts
     assert sql("SELECT status FROM analysis_deliveries WHERE task_id='" + task["taskId"] + "';") == "OBSERVED"
     other = local["SMOKE_OTHER_TOKEN"]
-    assert request("/analysis/tasks/" + task["taskId"], token=other)[0] == 403
+    assert request(query("/creation/source-status", mediaId=media_id), token=other)[0] == 403
     report = {"taskId": task["taskId"], "mediaId": media_id, "state": current["state"],
-              "executionAttempts": current["attempts"],
-              "lastError": current["lastError"],
-              "checks": ["broker offline durable acceptance", "duplicate rejection",
+              "executionAttempts": attempts,
+              "lastError": current["message"],
+              "checks": ["broker offline durable acceptance", "idempotent duplicate acceptance",
                          "automatic delivery after broker restart", "consumer observation",
                          "bounded failure handling", "task ownership"],
               "scope": "Synthetic upload and unavailable model/tools; FAILED is expected, no AI success claimed."}

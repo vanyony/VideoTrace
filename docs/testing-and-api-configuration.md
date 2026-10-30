@@ -1,3 +1,5 @@
+> 当前平台已移除独立视频分析。下列容量记录为历史测量；当前素材准备入口为创作页及 `POST /creation/prepare-source`，Java 使用 OkHttp 直接请求模型。
+
 # 视频容量测试与 API 配置
 
 记录日期：2026-10-19。容量测试对应实现包含提交 `0036b4f`，随后增加二维图解渲染。本文不包含任何真实 API Key。
@@ -41,7 +43,7 @@ Windows 本地环境，Ryzen 7 8845H（8 核 16 线程），约 28 GiB 系统可
 
 | 用途 | 当前方式 / 接口形式 | 配置项 | 修改约束 |
 | --- | --- | --- | --- |
-| Java 分析、摘要、检索意图、旧版问答 | DeepSeek 官方；Chat Completions | `LLM_BASE_URL`、`LLM_API_KEY`、`LLM_MODEL`、`LLM_TIMEOUT_SECONDS` | 可修改；需兼容现有文本聊天接口及结构化输出要求 |
+| Java 素材摘要、检索意图 | DeepSeek 官方；Chat Completions | `LLM_BASE_URL`、`LLM_API_KEY`、`LLM_MODEL`、`LLM_TIMEOUT_SECONDS` | 可修改；需兼容现有文本聊天接口及结构化输出要求 |
 | 创作讨论、分镜 Agent | DeepSeek 官方；Chat Completions + Tool Calling | `CREATOR_LLM_BASE_URL`、`CREATOR_LLM_API_KEY`、`CREATOR_LLM_MODEL`、`CREATOR_LLM_OPTIONS`、`CREATOR_MODEL_TIMEOUT_SECONDS` | 可独立修改；模型需支持工具调用；未设置的覆盖项回退到相应 `LLM_*` 配置 |
 | 按需原视频画面理解 / 实验分镜预览检查 | DeepSeek 官方；包含图片的 Chat Completions | `CREATOR_VISION_BASE_URL`、`CREATOR_VISION_API_KEY`、`CREATOR_VISION_MODEL` | 可独立修改；模型需支持图片输入；Key 未设置时优先复用 `LLM_API_KEY`，随后回退到创作模型 Key |
 | ASR | 硅基流动；`POST https://api.siliconflow.cn/v1/audio/transcriptions`，multipart 音频 | `ASR_URL`、`ASR_MODEL`、`SILICONFLOW_API_KEY` | 可修改；替代服务需兼容当前请求与转写响应格式 |

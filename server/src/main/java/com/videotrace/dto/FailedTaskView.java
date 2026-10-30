@@ -1,6 +1,6 @@
 package com.videotrace.dto;
 
-import com.videotrace.entity.FailedAnalysisTask;
+import com.videotrace.entity.FailedProcessingTask;
 
 import java.time.LocalDateTime;
 
@@ -23,7 +23,7 @@ public record FailedTaskView(
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
-    public static FailedTaskView from(FailedAnalysisTask task) {
+    public static FailedTaskView from(FailedProcessingTask task) {
         return new FailedTaskView(
                 task.getId(),
                 task.getMediaId(),

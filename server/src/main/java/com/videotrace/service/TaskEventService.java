@@ -1,10 +1,9 @@
 package com.videotrace.service;
 
-import com.videotrace.dto.AnalysisMode;
+import com.videotrace.dto.ProcessingScope;
 import com.videotrace.dto.TaskEvent;
 import com.videotrace.dto.TaskStatus;
 import com.videotrace.dto.TaskStage;
-import com.videotrace.utils.AnalysisTaskKeys;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -25,7 +24,6 @@ import java.util.function.Supplier;
 @Service
 public class TaskEventService implements MessageListener {
 
-    public static final String ANALYSIS = "analysis";
     public static final String TRANSCRIPTION = "transcription";
     public static final String REDIS_CHANNEL = "videotrace:task-events";
 
@@ -47,20 +45,20 @@ public class TaskEventService implements MessageListener {
                                 String goal,
                                 TaskStatus initialStatus,
                                 TaskStage stage) {
-        return subscribe(mediaId, type, goal, AnalysisMode.GENERAL, initialStatus, stage);
+        return subscribe(mediaId, type, goal, ProcessingScope.GENERAL, initialStatus, stage);
     }
 
     public SseEmitter subscribe(Long mediaId,
                                 String type,
                                 String goal,
-                                AnalysisMode mode,
+                                ProcessingScope mode,
                                 TaskStatus initialStatus,
                                 TaskStage stage) {
         return subscribe(mediaId, type, goal, mode, () -> TaskEvent.of(initialStatus, stage));
     }
 
     /** Register before querying state so completion during the query cannot fall into a gap. */
-    public SseEmitter subscribe(Long mediaId, String type, String goal, AnalysisMode mode,
+    public SseEmitter subscribe(Long mediaId, String type, String goal, ProcessingScope mode,
                                 Supplier<TaskEvent> initialEvent) {
         String key = key(mediaId, type, goal, mode);
         SseEmitter emitter = new SseEmitter(STREAM_TIMEOUT_MS);
@@ -86,21 +84,8 @@ public class TaskEventService implements MessageListener {
         return emitter;
     }
 
-    public void publishAnalysis(Long mediaId, String goal, TaskStatus status, TaskStage stage) {
-        publishAnalysis(mediaId, goal, AnalysisMode.GENERAL, status, stage);
-    }
-
-    public void publishAnalysis(Long mediaId,
-                                String goal,
-                                AnalysisMode mode,
-                                TaskStatus status,
-                                TaskStage stage) {
-        TaskExecutionContext.check();
-        publish(key(mediaId, ANALYSIS, goal, mode), TaskEvent.of(status, stage));
-    }
-
     public void publishTranscription(Long mediaId, TaskStatus status, TaskStage stage) {
-        publish(key(mediaId, TRANSCRIPTION, "", AnalysisMode.GENERAL), TaskEvent.of(status, stage));
+        publish(key(mediaId, TRANSCRIPTION, "", ProcessingScope.GENERAL), TaskEvent.of(status, stage));
     }
 
     private void publish(String key, TaskEvent event) {
@@ -171,10 +156,8 @@ public class TaskEventService implements MessageListener {
         private Subscription(SseEmitter emitter) { this.emitter = emitter; }
     }
 
-    private String key(Long mediaId, String type, String goal, AnalysisMode mode) {
-        String suffix = ANALYSIS.equals(type)
-                ? AnalysisTaskKeys.goalDigest(goal, mode)
-                : "default";
+    private String key(Long mediaId, String type, String goal, ProcessingScope mode) {
+        String suffix = "default";
         return type + ":" + mediaId + ":" + suffix;
     }
 }

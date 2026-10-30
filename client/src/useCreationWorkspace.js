@@ -14,9 +14,11 @@ export function sourceTimestamp(reference) {
 export function useCreationWorkspace({ hidden = () => document.hidden, schedule = setTimeout, cancel = clearTimeout } = {}) {
   const media = ref(null), eligibility = ref(null), tasks = ref([]), task = ref(null)
   const loading = ref(false), error = ref(''), artifact = ref(null)
+  const sourceStatus = ref(null), preparing = ref(false)
+  let sourceTimer, sourceGeneration = 0
   let generation = 0, timer, controller, pendingSubmission, eligibilityError = ''
   function stop() { cancel(timer); controller?.abort(); controller = null }
-  function close() { generation++; stop(); pendingSubmission = null; eligibilityError = ''; media.value = null; task.value = null; tasks.value = []; artifact.value = null; loading.value = false; error.value = '' }
+  function close() { generation++; sourceGeneration++; stop(); cancel(sourceTimer); sourceStatus.value = null; preparing.value = false; pendingSubmission = null; eligibilityError = ''; media.value = null; task.value = null; tasks.value = []; artifact.value = null; loading.value = false; error.value = '' }
   async function request(path, body, signal) {
     const response = await apiRequest(path, body === undefined ? { signal } : { method: 'POST', signal, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
     if (!response.ok) {
@@ -63,6 +65,46 @@ export function useCreationWorkspace({ hidden = () => document.hidden, schedule 
     error.value = results.filter(result => result.status === 'rejected' && result.reason.name !== 'AbortError').map(result => result.reason.message).join('；')
     loading.value = false
     if (tasks.value.length) await select(tasks.value[0])
+    await refreshSource()
+  }
+  function pollSource() {
+    cancel(sourceTimer)
+    if (media.value && ['QUEUED', 'PROCESSING'].includes(sourceStatus.value?.state))
+      sourceTimer = schedule(() => refreshSource(), hidden() ? 15000 : 2500)
+  }
+  async function refreshSource() {
+    const item = media.value, session = captureAuthSession(), version = sourceGeneration
+    if (!item) return
+    try {
+      const result = await request(`/creation/source-status?mediaId=${encodeURIComponent(item.id)}`, undefined, controller?.signal)
+      if (version !== sourceGeneration || media.value !== item || !session()) return
+      sourceStatus.value = result
+      if (result.state === 'COMPLETED') {
+        const ready = await request(`/creation/eligibility?mediaId=${encodeURIComponent(item.id)}`, undefined, controller?.signal)
+        if (version !== sourceGeneration || media.value !== item || !session()) return
+        eligibility.value = ready; eligibilityError = ''; error.value = ''
+      }
+    } catch (cause) {
+      if (version === sourceGeneration && media.value === item && session() && cause.name !== 'AbortError') error.value = cause.message
+      // A temporary status failure must not strand a durable background preparation.
+    }
+    if (version === sourceGeneration && media.value === item && session()) pollSource()
+  }
+  async function prepareSource() {
+    const item = media.value, session = captureAuthSession(), version = sourceGeneration
+    if (!item || preparing.value) return
+    preparing.value = true; error.value = ''
+    try {
+      const result = await request(`/creation/prepare-source?mediaId=${encodeURIComponent(item.id)}`, {}, controller?.signal)
+      if (version !== sourceGeneration || media.value !== item || !session()) return
+      sourceStatus.value = result
+      await refreshSource()
+    } catch (cause) {
+      if (version === sourceGeneration && media.value === item && session() && cause.name !== 'AbortError') {
+        error.value = cause.message
+        await refreshSource()
+      }
+    } finally { if (version === sourceGeneration && media.value === item && session()) preparing.value = false }
   }
   async function submit(action, body = {}) {
     if (loading.value) return
@@ -96,5 +138,5 @@ export function useCreationWorkspace({ hidden = () => document.hidden, schedule 
       if (version === generation && session() && task.value?.taskId === current.taskId && artifactRevision(task.value) === revision) { artifact.value = result; error.value = eligibilityError }
     } catch (cause) { if (version === generation && session() && cause.name !== 'AbortError') error.value = cause.message }
   }
-  return { media, eligibility, tasks, task, loading, error, artifact, open, close, select, refresh, submit, loadArtifact, reschedule: poll }
+  return { media, eligibility, tasks, task, loading, error, artifact, sourceStatus, preparing, prepareSource, refreshSource, open, close, select, refresh, submit, loadArtifact, reschedule: () => { poll(); pollSource() } }
 }

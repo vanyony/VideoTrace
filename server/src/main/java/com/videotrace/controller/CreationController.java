@@ -12,7 +12,18 @@ import java.util.List;
 @RequestMapping("/creation")
 public class CreationController {
     private final CreationService service;
-    public CreationController(CreationService service) { this.service=service; }
+    private final com.videotrace.service.SourcePreparationService preparation;
+    public CreationController(CreationService service,com.videotrace.service.SourcePreparationService preparation) {
+        this.service=service; this.preparation=preparation;
+    }
+    @GetMapping("/source-status")
+    public Result<com.videotrace.dto.TaskStatus> sourceStatus(@RequestParam long mediaId,@RequestAttribute(AuthService.REQUEST_USER_ID) long owner) {
+        return Result.ok(preparation.status(owner,mediaId));
+    }
+    @PostMapping("/prepare-source")
+    public ResponseEntity<Result<com.videotrace.dto.TaskStatus>> prepareSource(@RequestParam long mediaId,@RequestAttribute(AuthService.REQUEST_USER_ID) long owner) {
+        return ResponseEntity.accepted().body(Result.ok(preparation.submit(owner,mediaId)));
+    }
     @GetMapping("/eligibility")
     public Result<JsonNode> eligibility(@RequestParam long mediaId,@RequestAttribute(AuthService.REQUEST_USER_ID) long owner) { return Result.ok(service.eligibility(owner,mediaId)); }
     @GetMapping("/tasks")

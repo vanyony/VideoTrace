@@ -2,7 +2,7 @@ package com.videotrace.service;
 
 import com.videotrace.dto.VideoChunk;
 import com.videotrace.dto.VideoContext;
-import com.videotrace.utils.DeepSeekUtils;
+import com.videotrace.utils.TextModelClient;
 import com.videotrace.utils.EmbeddingUtils;
 import org.springframework.stereotype.Service;
 
@@ -17,13 +17,13 @@ public class VideoChunkingService {
 
     private static final long CHUNK_MS = 5 * 60 * 1000L;
 
-    private final DeepSeekUtils deepSeekUtils;
+    private final TextModelClient deepSeekUtils;
     private final EmbeddingUtils embeddingUtils;
-    private final AgentTelemetry telemetry;
+    private final ProcessingTelemetry telemetry;
 
-    public VideoChunkingService(DeepSeekUtils deepSeekUtils,
+    public VideoChunkingService(TextModelClient deepSeekUtils,
                                 EmbeddingUtils embeddingUtils,
-                                AgentTelemetry telemetry) {
+                                ProcessingTelemetry telemetry) {
         this.deepSeekUtils = deepSeekUtils;
         this.embeddingUtils = embeddingUtils;
         this.telemetry = telemetry;

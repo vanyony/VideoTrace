@@ -47,7 +47,7 @@ public class VideoContextService {
     private final MinioUtils minioUtils;
     private final ThreadPoolTaskExecutor asrExecutor;
     private final ThreadPoolTaskExecutor ocrExecutor;
-    private final AgentTelemetry telemetry;
+    private final ProcessingTelemetry telemetry;
     private final VideoParseStageService stages;
     private final ExternalCallLimiter limiter;
 
@@ -56,7 +56,7 @@ public class VideoContextService {
                                MinioUtils minioUtils,
                                @Qualifier("asrExecutor") ThreadPoolTaskExecutor asrExecutor,
                                @Qualifier("ocrExecutor") ThreadPoolTaskExecutor ocrExecutor,
-                               AgentTelemetry telemetry, VideoParseStageService stages, ExternalCallLimiter limiter) {
+                               ProcessingTelemetry telemetry, VideoParseStageService stages, ExternalCallLimiter limiter) {
         this.transcriptionService = transcriptionService;
         this.ocrUtils = ocrUtils;
         this.minioUtils = minioUtils;
@@ -222,17 +222,18 @@ public class VideoContextService {
         });
     }
 
-    public void adoptStages(Long sourceMediaId, Long targetMediaId, String targetSource) {
+    public boolean adoptStages(Long sourceMediaId, Long targetMediaId, String targetSource) {
         var transcripts = stages.load(sourceMediaId, "ASR",
             new com.fasterxml.jackson.core.type.TypeReference<List<TranscriptSegment>>() {});
         var frames = stages.load(sourceMediaId, "OCR",
             new com.fasterxml.jackson.core.type.TypeReference<List<FramePart>>() {});
-        if (transcripts == null || frames == null) throw new IllegalStateException("Source parse stages unavailable");
+        if (transcripts == null || frames == null) return false;
         TaskExecutionContext.guarded(() -> {
             stages.saveSuccess(targetMediaId, "ASR", transcripts);
             stages.saveSuccess(targetMediaId, "OCR", frames.stream().map(frame ->
                 new FramePart(frame.timestampMs(), frame.ocrText(), targetSource + "#timestampMs=" + frame.timestampMs())).toList());
         });
+        return true;
     }
 
     public void deleteParseArtifacts(Long mediaId) {

@@ -25,8 +25,8 @@ class MediaServiceTest {
         ValueOperations<String, String> values = mock(ValueOperations.class);
         when(redis.opsForValue()).thenReturn(values);
         when(values.get("media:list:v3:user:7:generation")).thenReturn("before");
-        AgentCheckpointService checkpoints = mock(AgentCheckpointService.class);
-        AgentTelemetry telemetry = mock(AgentTelemetry.class);
+        SourceCheckpointService checkpoints = mock(SourceCheckpointService.class);
+        ProcessingTelemetry telemetry = mock(ProcessingTelemetry.class);
         QdrantVectorStore vectors = mock(QdrantVectorStore.class);
         VideoContextService contexts = mock(VideoContextService.class);
         MediaService service = new MediaService(mapper, redis, mock(MinioUtils.class),
@@ -63,7 +63,7 @@ class MediaServiceTest {
                 .when(values).set(anyString(), anyString(), anyLong(), any(TimeUnit.class));
         when(redis.delete(anyString())).thenAnswer(call -> cache.remove(call.getArgument(0)) != null);
         MediaService service = new MediaService(mapper, redis, mock(MinioUtils.class), new ObjectMapper(),
-                mock(AgentCheckpointService.class), mock(AgentTelemetry.class),
+                mock(SourceCheckpointService.class), mock(ProcessingTelemetry.class),
                 mock(QdrantVectorStore.class), mock(VideoContextService.class));
         MediaFile deleted = new MediaFile(); deleted.setId(42L);
         when(mapper.selectList(any())).thenAnswer(call -> {

@@ -14,10 +14,10 @@ class HybridEvidenceRetrievalTest {
     }
 
     @Test void preciseTermsAndSemanticParaphrasesRetrieveTimestampedEvidence() {
-        var llm = mock(DeepSeekUtils.class);
+        var llm = mock(TextModelClient.class);
         var embedding = mock(EmbeddingUtils.class);
         var store = mock(QdrantVectorStore.class);
-        var service = new VideoEvidenceRetrievalService(llm, embedding, store, mock(AgentTelemetry.class));
+        var service = new VideoEvidenceRetrievalService(llm, embedding, store, mock(ProcessingTelemetry.class));
         var chunks = List.of(chunk(0, "X1000 display", List.of(0.0, 1.0)),
                 chunk(1000, "X100 camera", List.of(0.0, 1.0)),
                 chunk(2000, "续航改善", List.of(1.0, 0.0)));

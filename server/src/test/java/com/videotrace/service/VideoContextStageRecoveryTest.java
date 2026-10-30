@@ -38,7 +38,7 @@ class VideoContextStageRecoveryTest {
     }
     private VideoContextService service(String version) {
         return spy(new VideoContextService(asr,mock(OcrUtils.class),minio,asrPool,ocrPool,
-            mock(AgentTelemetry.class),new VideoParseStageService(mapper,new ObjectMapper(),version),mock(ExternalCallLimiter.class)));
+            mock(ProcessingTelemetry.class),new VideoParseStageService(mapper,new ObjectMapper(),version),mock(ExternalCallLimiter.class)));
     }
     private List<TranscriptSegment> transcripts() {
         return List.of(new TranscriptSegment(0,60000,"产品信息"));

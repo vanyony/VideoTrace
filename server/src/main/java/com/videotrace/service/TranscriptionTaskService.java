@@ -1,6 +1,6 @@
 package com.videotrace.service;
 
-import com.videotrace.dto.AnalysisTaskMsg;
+import com.videotrace.dto.ProcessingTaskMsg;
 import com.videotrace.dto.TaskStatus;
 import com.videotrace.dto.TaskStage;
 import com.videotrace.entity.MediaFile;
@@ -20,13 +20,13 @@ public class TranscriptionTaskService {
     private final MediaService mediaService;
     private final StringRedisTemplate redisTemplate;
     private final TaskEventService taskEventService;
-    private final AnalysisDeliveryService deliveries;
-    private final AnalysisExecutionService executions;
+    private final ProcessingDeliveryService deliveries;
+    private final ProcessingExecutionService executions;
 
     public TranscriptionTaskService(MediaFileMapper mediaFileMapper,
             VideoTranscriptionService videoTranscriptionService, MediaService mediaService,
             StringRedisTemplate redisTemplate, TaskEventService taskEventService,
-            AnalysisDeliveryService deliveries, AnalysisExecutionService executions) {
+            ProcessingDeliveryService deliveries, ProcessingExecutionService executions) {
         this.mediaFileMapper = mediaFileMapper;
         this.videoTranscriptionService = videoTranscriptionService;
         this.mediaService = mediaService;
@@ -38,8 +38,8 @@ public class TranscriptionTaskService {
 
     public boolean submit(MediaFile mediaFile) {
         try {
-            deliveries.enqueue(mediaFile.getUserId(), new AnalysisTaskMsg(mediaFile.getId(),
-                    AnalysisTaskMsg.TRANSCRIBE, mediaFile.getContentHash(), AnalysisTaskMsg.TRANSCRIPTION_GOAL), null);
+            deliveries.enqueue(mediaFile.getUserId(), new ProcessingTaskMsg(mediaFile.getId(),
+                    ProcessingTaskMsg.TRANSCRIBE, mediaFile.getContentHash(), ProcessingTaskMsg.TRANSCRIPTION_GOAL), null);
         } catch (DuplicateKeyException e) {
             return false;
         }
@@ -65,13 +65,13 @@ public class TranscriptionTaskService {
         mediaService.invalidateUserList(mediaFile.getUserId());
     }
 
-    public void publishOutcome(Long mediaId, AnalysisExecutionService.Outcome outcome) {
-        if (outcome == AnalysisExecutionService.Outcome.IGNORED) return;
+    public void publishOutcome(Long mediaId, ProcessingExecutionService.Outcome outcome) {
+        if (outcome == ProcessingExecutionService.Outcome.IGNORED) return;
         try {
             MediaFile mediaFile = mediaFileMapper.selectById(mediaId);
             if (mediaFile != null) notify(mediaId, status(mediaFile),
-                    outcome == AnalysisExecutionService.Outcome.SUCCEEDED ? TaskStage.COMPLETED
-                    : outcome == AnalysisExecutionService.Outcome.FAILED ? TaskStage.FAILED : TaskStage.RETRYING);
+                    outcome == ProcessingExecutionService.Outcome.SUCCEEDED ? TaskStage.COMPLETED
+                    : outcome == ProcessingExecutionService.Outcome.FAILED ? TaskStage.FAILED : TaskStage.RETRYING);
         } catch (RuntimeException e) {
             log.warn("transcription_outcome_notification_failed mediaId={}", mediaId, e);
         }

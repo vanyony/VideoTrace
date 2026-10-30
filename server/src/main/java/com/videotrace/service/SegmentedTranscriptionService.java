@@ -21,10 +21,10 @@ public class SegmentedTranscriptionService {
     private static final long SEGMENT_MS = 60_000L;
 
     private final AliyunAsrUtils aliyunAsrUtils;
-    private final AgentTelemetry telemetry;
+    private final ProcessingTelemetry telemetry;
     private final ExternalCallLimiter limiter;
 
-    public SegmentedTranscriptionService(AliyunAsrUtils aliyunAsrUtils, AgentTelemetry telemetry, ExternalCallLimiter limiter) {
+    public SegmentedTranscriptionService(AliyunAsrUtils aliyunAsrUtils, ProcessingTelemetry telemetry, ExternalCallLimiter limiter) {
         this.aliyunAsrUtils = aliyunAsrUtils;
         this.telemetry = telemetry;
         this.limiter = limiter;

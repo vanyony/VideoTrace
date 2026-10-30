@@ -4,7 +4,7 @@ import com.videotrace.dto.VideoChunk;
 import com.videotrace.dto.VideoContext;
 import com.videotrace.dto.VideoEvidenceHit;
 import com.videotrace.dto.VideoRetrievalIntent;
-import com.videotrace.utils.DeepSeekUtils;
+import com.videotrace.utils.TextModelClient;
 import com.videotrace.utils.EmbeddingUtils;
 import org.springframework.stereotype.Service;
 
@@ -21,15 +21,15 @@ public class VideoEvidenceRetrievalService {
     private static final int MAX_USER_HITS = 8;
     private static final int MAX_SNIPPET_LENGTH = 180;
 
-    private final DeepSeekUtils deepSeekUtils;
+    private final TextModelClient deepSeekUtils;
     private final EmbeddingUtils embeddingUtils;
     private final QdrantVectorStore vectorStore;
-    private final AgentTelemetry telemetry;
+    private final ProcessingTelemetry telemetry;
 
-    public VideoEvidenceRetrievalService(DeepSeekUtils deepSeekUtils,
+    public VideoEvidenceRetrievalService(TextModelClient deepSeekUtils,
                                          EmbeddingUtils embeddingUtils,
                                          QdrantVectorStore vectorStore,
-                                         AgentTelemetry telemetry) {
+                                         ProcessingTelemetry telemetry) {
         this.deepSeekUtils = deepSeekUtils;
         this.embeddingUtils = embeddingUtils;
         this.vectorStore = vectorStore;

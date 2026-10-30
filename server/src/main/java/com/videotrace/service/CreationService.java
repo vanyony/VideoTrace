@@ -26,24 +26,26 @@ public class CreationService {
     private final TransactionTemplate tx;
     private final ObjectMapper json;
     private final MediaService media;
-    private final AgentCheckpointService checkpoints;
-    private final LongVideoContextService retrieval;
+    private final SourceCheckpointService checkpoints;
+    private final SourceRetrievalService retrieval;
     private final MinioUtils minio;
     private final VideoFrameService frames;
+    private final SourcePreparationService preparation;
     private final String version, token, python;
     private final boolean enabled;
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
     private static final org.slf4j.Logger log=org.slf4j.LoggerFactory.getLogger(CreationService.class);
 
     public CreationService(JdbcTemplate db, org.springframework.transaction.PlatformTransactionManager manager,
-            ObjectMapper json, MediaService media, AgentCheckpointService checkpoints,
-            LongVideoContextService retrieval, MinioUtils minio, VideoFrameService frames,
+            ObjectMapper json, MediaService media, SourceCheckpointService checkpoints,
+            SourceRetrievalService retrieval, MinioUtils minio, VideoFrameService frames, SourcePreparationService preparation,
             @Value("${video.parse.version:v1}") String version,
             @Value("${creation.internal-token:}") String token,
             @Value("${creation.url:http://127.0.0.1:8091}") String python,
             @Value("${creation.enabled:true}") boolean enabled) {
         this.db=db; this.tx=new TransactionTemplate(manager); this.json=json; this.media=media;
         this.checkpoints=checkpoints; this.retrieval=retrieval; this.minio=minio; this.frames=frames;
+        this.preparation=preparation;
         this.version=version; this.token=token; this.python=python.replaceAll("/+$", ""); this.enabled=enabled;
     }
 
@@ -54,8 +56,8 @@ public class CreationService {
 
     public ObjectNode eligibility(long owner, long mediaId) {
         media.requireOwnedMedia(mediaId,owner);
-        boolean ready = ready(checkpoints.loadContext(mediaId));
-        return json.createObjectNode().put("eligible",enabled && ready).put("reason",!enabled ? "创作服务未启用" : ready ? "" : "请先完成当前版本的视频分析，素材需要带时间戳的解析上下文").put("sourceVersion",version);
+        boolean ready = preparation.status(owner,mediaId).state()==com.videotrace.dto.TaskStatus.State.COMPLETED;
+        return json.createObjectNode().put("eligible",enabled && ready).put("reason",!enabled ? "创作服务未启用" : ready ? "" : "请先准备原视频素材，提取带时间戳的语音与画面文字").put("sourceVersion",version);
     }
 
     static boolean ready(VideoContext context) {

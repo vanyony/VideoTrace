@@ -3,7 +3,7 @@ package com.videotrace.controller;
 import com.videotrace.common.Result;
 import com.videotrace.dto.FailedTaskView;
 import com.videotrace.service.AuthService;
-import com.videotrace.service.FailedAnalysisTaskService;
+import com.videotrace.service.FailedProcessingTaskService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,10 +18,10 @@ import java.util.List;
 @RequestMapping("/admin/failed-analysis")
 public class AdminController {
 
-    private final FailedAnalysisTaskService failedTaskService;
+    private final FailedProcessingTaskService failedTaskService;
     private final AuthService authService;
 
-    public AdminController(FailedAnalysisTaskService failedTaskService, AuthService authService) {
+    public AdminController(FailedProcessingTaskService failedTaskService, AuthService authService) {
         this.failedTaskService = failedTaskService;
         this.authService = authService;
     }

@@ -1,6 +1,6 @@
 package com.videotrace.service;
 
-import com.videotrace.dto.AnalysisMode;
+import com.videotrace.dto.ProcessingScope;
 import com.videotrace.dto.TaskStage;
 import com.videotrace.dto.TaskStatus;
 import com.videotrace.dto.TaskEvent;
@@ -31,20 +31,20 @@ class TaskEventServiceTest {
     }
 
     @Test
-    void completedSubscriberDoesNotRemoveAReopenedOrDifferentModeStream() throws Exception {
+    void completedSubscriberDoesNotRemoveAReopenedOrDifferentMediaStream() throws Exception {
         TaskEventService events = new TaskEventService(mock(StringRedisTemplate.class), new ObjectMapper());
         var mvc = MockMvcBuilders.standaloneSetup(new EventController(events)).build();
         MvcResult first = mvc.perform(get("/events").param("mode", "GENERAL")).andReturn();
         MvcResult learning = mvc.perform(get("/events").param("mode", "LEARNING")).andReturn();
-        events.publishAnalysis(7L, "goal", AnalysisMode.GENERAL, TaskStatus.completed("first result"), TaskStage.COMPLETED);
+        events.publishTranscription(7L, TaskStatus.completed("first result"), TaskStage.COMPLETED);
         mvc.perform(asyncDispatch(first));
         assertFalse(learning.getResponse().getContentAsString().contains("first result"));
 
         MvcResult reopened = mvc.perform(get("/events").param("mode", "GENERAL")).andReturn();
-        events.publishAnalysis(7L, "goal", AnalysisMode.GENERAL, TaskStatus.completed("second result"), TaskStage.COMPLETED);
+        events.publishTranscription(7L, TaskStatus.completed("second result"), TaskStage.COMPLETED);
         mvc.perform(asyncDispatch(reopened));
         assertTrue(reopened.getResponse().getContentAsString().contains("second result"));
-        events.publishAnalysis(7L, "goal", AnalysisMode.LEARNING, TaskStatus.completed("learning result"), TaskStage.COMPLETED);
+        events.publishTranscription(8L, TaskStatus.completed("learning result"), TaskStage.COMPLETED);
         mvc.perform(asyncDispatch(learning));
         assertTrue(learning.getResponse().getContentAsString().contains("learning result"));
     }
@@ -55,14 +55,14 @@ class TaskEventServiceTest {
         EventController(TaskEventService events) { this.events = events; }
         @GetMapping(value = "/racing-events", produces = "text/event-stream")
         SseEmitter racingEvents() {
-            return events.subscribe(7L, TaskEventService.ANALYSIS, "goal", AnalysisMode.GENERAL, () -> {
-                events.publishAnalysis(7L, "goal", TaskStatus.completed("fresh completion"), TaskStage.COMPLETED);
+            return events.subscribe(7L, TaskEventService.TRANSCRIPTION, "goal", ProcessingScope.GENERAL, () -> {
+                events.publishTranscription(7L, TaskStatus.completed("fresh completion"), TaskStage.COMPLETED);
                 return TaskEvent.of(TaskStatus.of(TaskStatus.State.PROCESSING, "stale processing"), TaskStage.CONSUMING);
             });
         }
         @GetMapping(value = "/events", produces = "text/event-stream")
-        SseEmitter events(@RequestParam AnalysisMode mode) {
-            return events.subscribe(7L, TaskEventService.ANALYSIS, "goal", mode,
+        SseEmitter events(@RequestParam String mode) {
+            return events.subscribe("LEARNING".equals(mode) ? 8L : 7L, TaskEventService.TRANSCRIPTION, "", ProcessingScope.GENERAL,
                     TaskStatus.of(TaskStatus.State.PROCESSING, "running"), TaskStage.CONSUMING);
         }
     }

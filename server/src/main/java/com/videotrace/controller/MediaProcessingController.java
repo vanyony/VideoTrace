@@ -2,7 +2,7 @@ package com.videotrace.controller;
 
 import com.videotrace.common.ErrorCode;
 import com.videotrace.common.Result;
-import com.videotrace.dto.AnalysisMode;
+import com.videotrace.dto.ProcessingScope;
 import com.videotrace.dto.TaskEvent;
 import com.videotrace.dto.TaskStatus;
 import com.videotrace.dto.TaskStage;
@@ -31,7 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 @RestController
-@RequestMapping("/analysis")
+@RequestMapping("/media-processing")
 public class MediaProcessingController {
 
     private final AudioExportService audioExportService;
@@ -78,7 +78,7 @@ public class MediaProcessingController {
                 id,
                 TaskEventService.TRANSCRIPTION,
                 "",
-                AnalysisMode.GENERAL,
+                ProcessingScope.GENERAL,
                 () -> TaskEvent.of(transcriptionTaskService.status(mediaService.requireOwnedMedia(id, userId)),
                         TaskStage.TRANSCRIPTION));
     }

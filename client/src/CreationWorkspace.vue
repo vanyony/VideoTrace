@@ -2,8 +2,18 @@
   <section id="creation-workspace" class="creation-workspace" aria-labelledby="creation-heading">
     <header class="creation-header"><div><p class="page-eyebrow">SHORT VIDEO CREATOR</p><h2 id="creation-heading">短视频创作</h2><p>{{ media.filename }}</p></div><button @click="emit('close')">关闭创作区</button></header>
     <p v-if="error" role="alert" class="creation-error">{{ error }} <button :disabled="loading" @click="open(media)">重新加载</button></p>
+    <div v-if="sourceUrl || sourceError" class="creation-artifact">
+      <p>原视频 · 时间戳证据</p><p v-if="sourceError" role="alert">{{ sourceError }}</p>
+      <video v-if="sourceUrl" ref="sourcePlayer" :src="sourceUrl" controls playsinline preload="metadata" aria-label="原视频证据" @error="sourceError = '原视频暂时无法播放，请再次点击时间戳刷新链接。'" />
+    </div>
     <p v-if="!eligibility" role="status">{{ loading ? '正在检查素材与历史任务…' : '暂时无法检查素材，请重新加载。' }}</p>
-    <p v-else-if="!eligibility.eligible" class="creation-notice">{{ eligibility.reason || '视频尚未完成内容解析，请先运行智能分析。' }} <button @click="emit('analyze', media)">打开智能分析</button></p>
+    <div v-else-if="!eligibility.eligible" class="creation-notice" role="status">
+      <p>{{ sourceStatus?.message || eligibility.reason || '准备原视频素材后即可开始创作。' }}</p>
+      <button :disabled="preparing || ['QUEUED', 'PROCESSING'].includes(sourceStatus?.state)" @click="prepareSource">
+        {{ preparing || ['QUEUED', 'PROCESSING'].includes(sourceStatus?.state) ? '正在准备素材…' : sourceStatus?.state === 'FAILED' ? '重试素材准备' : '准备原视频素材' }}
+      </button>
+      <button type="button" :disabled="preparing" @click="refreshSource">刷新状态</button>
+    </div>
     <form class="creation-form" @submit.prevent="create">
       <label>创作需求<textarea v-model="requirement" required maxlength="2000" rows="3" placeholder="面向普通消费者，总结发布会最值得关注的三个变化，避免宣传语气。" :disabled="!canCreate" /></label>
       <label>成片时长<select v-model.number="duration" :disabled="!canCreate"><option :value="15">15 秒</option><option :value="30">30 秒</option><option :value="45">45 秒</option><option :value="60">60 秒</option></select><span>分镜总时长以此处选择为准；如需改变请先调整时长，再开始新对话。</span></label>
@@ -26,7 +36,7 @@
           <p v-if="scene.visual" class="creation-source">二维图解：{{ visualLayouts[scene.visual.layout] }} · {{ scene.visual.theme }} · {{ scene.visual.motion }}<br>{{ scene.visual.items.map(item => item.label).join(' / ') }}</p>
           <p v-if="scene.canvas" class="creation-source">二维画布：{{ scene.canvas.elements.length }} 个元素 · {{ scene.canvas.elements.reduce((sum, item) => sum + (item.keyframes?.length || 0), 0) }} 个关键帧<span v-if="scene.canvas.continuePrevious"> · 延续上一幕</span><br>{{ scene.canvas.elements.filter(item => item.kind === 'sprite').map(item => ({ sun: '太阳', earth: '地球', cloud: '云', droplet: '水滴', factory: '工厂', truck: '卡车' }[item.sprite] || item.sprite)).join(' / ') }}<br>{{ scene.canvas.elements.filter(item => item.text).map(item => item.text).join(' / ') }}</p>
           <p v-if="scene.motion" class="creation-source">{{ scene.motion.style === 'launch' ? '发布会拼版' : '动态文字' }} · {{ scene.motion.words.join(' / ') }} · {{ scene.motion.transition }}</p>
-          <p class="creation-source">原视频证据：<span v-for="reference in scene.sourceRefs" :key="reference">{{ sourceTimestamp(reference) }} </span></p>
+          <p class="creation-source">原视频证据：<button v-for="reference in scene.sourceRefs" :key="reference" type="button" @click="seekSource(reference)">{{ sourceTimestamp(reference) }}</button></p>
         </article></div>
         <button class="creation-primary" :disabled="!canEdit" @click="submit('render', { baseRevision: task.revision })">确认版本 {{ task.revision }}，生成视频</button>
       </template>
@@ -37,13 +47,44 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { apiRequest, captureAuthSession } from './api.js'
 import { useCreationWorkspace, creationLabels, sourceTimestamp, artifactRevision } from './useCreationWorkspace.js'
 const props = defineProps({ media: { type: Object, required: true } })
-const emit = defineEmits(['close', 'analyze'])
+const emit = defineEmits(['close'])
 const workspace = useCreationWorkspace()
-const { eligibility, tasks, task, loading, error, artifact, open, close, select, submit, loadArtifact } = workspace
+const { eligibility, tasks, task, loading, error, artifact, sourceStatus, preparing, prepareSource, refreshSource, open, close, select, submit, loadArtifact } = workspace
 const requirement = ref(''), duration = ref(45), instruction = ref(''), targetScenes = ref([])
+const sourceUrl = ref(''), sourceError = ref(''), sourcePlayer = ref(null)
+let sourceVersion = 0
+async function seekSource(reference) {
+  const match = /^e_(\d+)_(\d+)$/.exec(reference)
+  if (!match) return
+  const version = ++sourceVersion, session = captureAuthSession(), mediaId = props.media.id
+  sourceError.value = ''
+  try {
+    if (!sourceUrl.value || sourcePlayer.value?.error) {
+      const response = await apiRequest(`/media/playback?id=${encodeURIComponent(mediaId)}`)
+      if (!response.ok) throw new Error(await response.text())
+      const url = await response.json()
+      if (version !== sourceVersion || !session() || props.media.id !== mediaId) return
+      sourceUrl.value = url
+    }
+    await nextTick()
+    if (version !== sourceVersion || !session()) return
+    const player = sourcePlayer.value
+    if (!player) return
+    const seek = () => {
+      if (version !== sourceVersion || !session()) return
+      const maximum = Number.isFinite(player.duration) ? Math.max(0, player.duration - 0.1) : Infinity
+      player.currentTime = Math.min(Number(match[1]) / 1000, maximum)
+      player.play().catch(() => {})
+    }
+    if (player.readyState) seek()
+    else player.addEventListener('loadedmetadata', seek, { once: true })
+    player.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  } catch (cause) { if (version === sourceVersion && session()) sourceError.value = cause.message || '原视频暂时无法播放' }
+}
 const templates = { title: '标题卡', points: '要点卡', flow: '流程卡' }
 const visualLayouts = { pipeline: '串联流程', split: '分发', merge: '汇聚', compare: '对比', bars: '比例柱图', orbit: '中心关系' }
 const canCreate = computed(() => eligibility.value?.eligible && !loading.value)
@@ -56,9 +97,9 @@ async function sendMessage() {
 }
 function selectTask(id) { const selected = tasks.value.find(item => String(item.taskId) === id); if (selected) select(selected) }
 watch(() => [task.value?.taskId, task.value?.revision], () => { targetScenes.value = []; instruction.value = '' })
-watch(() => props.media.id, () => open(props.media), { immediate: true })
+watch(() => props.media.id, () => { sourceVersion++; sourceUrl.value = ''; sourceError.value = ''; open(props.media) }, { immediate: true })
 onMounted(() => document.addEventListener('visibilitychange', workspace.reschedule))
-onUnmounted(() => { document.removeEventListener('visibilitychange', workspace.reschedule); close() })
+onUnmounted(() => { sourceVersion++; document.removeEventListener('visibilitychange', workspace.reschedule); close() })
 </script>
 
 <style scoped>

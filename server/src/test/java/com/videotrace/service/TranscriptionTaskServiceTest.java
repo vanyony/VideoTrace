@@ -23,7 +23,7 @@ class TranscriptionTaskServiceTest {
         MediaFile media = new MediaFile(); media.setId(7L); media.setTranscriptText("saved transcript");
         TranscriptionTaskService service = new TranscriptionTaskService(mock(MediaFileMapper.class),
                 mock(VideoTranscriptionService.class), mock(MediaService.class), redis, mock(TaskEventService.class),
-                mock(AnalysisDeliveryService.class), mock(AnalysisExecutionService.class));
+                mock(ProcessingDeliveryService.class), mock(ProcessingExecutionService.class));
 
         assertEquals(TaskStatus.completed("saved transcript"), service.status(media));
         media.setTranscriptText(null);
@@ -38,12 +38,12 @@ class TranscriptionTaskServiceTest {
         when(values.get("transcription:state:7")).thenReturn("PROCESSING");
         when(redis.hasKey("transcription:active:7")).thenReturn(true);
         MediaFile media = new MediaFile(); media.setId(7L); media.setTranscriptText("previous transcript");
-        AnalysisExecutionService executions = mock(AnalysisExecutionService.class);
-        when(executions.latestTranscription(7L)).thenReturn(new com.videotrace.dto.AnalysisExecution(
+        ProcessingExecutionService executions = mock(ProcessingExecutionService.class);
+        when(executions.latestTranscription(7L)).thenReturn(new com.videotrace.dto.ProcessingExecution(
                 "task", 3L, 7L, "RUNNING", 1, null));
         TranscriptionTaskService service = new TranscriptionTaskService(mock(MediaFileMapper.class),
                 mock(VideoTranscriptionService.class), mock(MediaService.class), redis, mock(TaskEventService.class),
-                mock(AnalysisDeliveryService.class), executions);
+                mock(ProcessingDeliveryService.class), executions);
         assertEquals(TaskStatus.State.PROCESSING, service.status(media).state());
         when(executions.latestTranscription(7L)).thenReturn(null);
         when(values.get("transcription:state:7")).thenReturn("COMPLETED");
@@ -74,7 +74,7 @@ class TranscriptionTaskServiceTest {
         when(mapper.updateById(any(MediaFile.class))).thenReturn(1);
 
         new TranscriptionTaskService(mapper, transcriber, media, redis, events,
-                mock(AnalysisDeliveryService.class), mock(AnalysisExecutionService.class)).transcribe(7L);
+                mock(ProcessingDeliveryService.class), mock(ProcessingExecutionService.class)).transcribe(7L);
 
         ArgumentCaptor<MediaFile> update = ArgumentCaptor.forClass(MediaFile.class);
         verify(mapper).updateById(update.capture());
@@ -95,7 +95,7 @@ class TranscriptionTaskServiceTest {
         TaskEventService events = mock(TaskEventService.class);
         TranscriptionTaskService service = new TranscriptionTaskService(mapper,
                 mock(VideoTranscriptionService.class), mock(MediaService.class), redis, events,
-                mock(AnalysisDeliveryService.class), mock(AnalysisExecutionService.class));
+                mock(ProcessingDeliveryService.class), mock(ProcessingExecutionService.class));
 
         assertThrows(IllegalStateException.class, () -> service.transcribe(7L));
         verifyNoInteractions(redis, events);

@@ -16,6 +16,6 @@ public final class TaskExecutionContext {
     }
     public static void check() { guarded(() -> {}); }
     public static final class LeaseLostException extends IllegalStateException {
-        public LeaseLostException() { super("Analysis execution lease is no longer valid"); }
+        public LeaseLostException() { super("Source processing execution lease is no longer valid"); }
     }
 }

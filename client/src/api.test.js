@@ -49,7 +49,7 @@ test('SSE and binary responses are never consumed by JSON unwrapping', async () 
   for (const contentType of ['text/event-stream', 'audio/mpeg']) {
     const response = new Response('payload', { headers: { 'Content-Type': contentType } })
     globalThis.fetch = async () => response
-    assert.equal(await apiRequest('/analysis/events'), response)
+    assert.equal(await apiRequest('/media-processing/transcription-events'), response)
     assert.equal(response.bodyUsed, false)
   }
 })

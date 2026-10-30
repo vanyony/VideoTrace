@@ -2,7 +2,7 @@
 
 ## 系统边界
 
-VideoTrace 从已解析的视频证据出发，讨论创作需求、生成分镜，经用户确认后渲染文字及二维动画。当前没有调用文生视频模型，也不剪辑原片。模板版与自由画布版都由程序绘制画面。
+VideoTrace 在创作工作区内准备原视频素材，从带时间戳的视频证据出发，讨论创作需求、生成分镜，经用户确认后渲染文字及二维动画。当前没有调用文生视频模型，也不剪辑原片。模板版与自由画布版都由程序绘制画面。
 
 ```mermaid
 flowchart TD
@@ -104,3 +104,9 @@ stateDiagram-v2
 Pillow 生成帧，MoviePy 调度帧并调用 FFmpeg 编码，最后拼接和加入音乐。模板跨幕转场在 Python 中合成；它是视觉衔接，不是通用的物体跨幕追踪。缓存包含内容、时长、渲染版本及字体等信息；带转场时还依赖前一幕。
 
 更多字段和示例见 [渲染协议](diagram-rendering.md)，已知容量及质量边界见 [测试记录](testing-and-api-configuration.md)。
+
+## 2026-10-30 二次创作精简
+
+独立分析页面、分析模式、Planner/Executor/Critic、分析追问和评测已删除。原视频理解保留为创作工具能力：`SourcePreparationService` → ASR/OCR 阶段 Checkpoint → `SourceCheckpointService` → `SourceRetrievalService` → 创作 Agent。素材准备由创作页触发并轮询状态，失败可复用阶段结果重试。
+
+Java 文本模型使用 `TextModelClient`（OkHttp + Jackson）直接请求配置的 Chat Completions 接口，仅用于分块摘要和检索意图。LangChain4j 已移除；Python LangGraph 创作 Agent 保留。已有 SQL 表名、缓存键及 RocketMQ 配置名中部分保留 analysis/agent 字样以兼容旧部署与已解析素材，不代表继续提供独立分析功能。新素材任务使用 PREPARE_SOURCE 动作及 PREPARATION 任务类型，旧分析消息只收敛为失败，不执行分析。

@@ -17,8 +17,8 @@ class DurableTranscriptionTest {
     private final MediaService media = mock(MediaService.class);
     private final StringRedisTemplate redis = mock(StringRedisTemplate.class);
     private final TaskEventService events = mock(TaskEventService.class);
-    private final AnalysisDeliveryService deliveries = mock(AnalysisDeliveryService.class);
-    private final AnalysisExecutionService executions = mock(AnalysisExecutionService.class);
+    private final ProcessingDeliveryService deliveries = mock(ProcessingDeliveryService.class);
+    private final ProcessingExecutionService executions = mock(ProcessingExecutionService.class);
     private final TranscriptionTaskService service = new TranscriptionTaskService(
             mapper, transcriber, media, redis, events, deliveries, executions);
 
@@ -43,9 +43,9 @@ class DurableTranscriptionTest {
 
     @Test void durableStateOverridesStaleRedisAndOldTranscript() {
         MediaFile file = file(); file.setTranscriptText("old");
-        when(executions.latestTranscription(7L)).thenReturn(new AnalysisExecution("id",3L,7L,"QUEUED",1,null));
+        when(executions.latestTranscription(7L)).thenReturn(new ProcessingExecution("id",3L,7L,"QUEUED",1,null));
         assertEquals(TaskStatus.State.QUEUED, service.status(file).state());
-        when(executions.latestTranscription(7L)).thenReturn(new AnalysisExecution("id",3L,7L,"FAILED",3,"LeaseExpired"));
+        when(executions.latestTranscription(7L)).thenReturn(new ProcessingExecution("id",3L,7L,"FAILED",3,"LeaseExpired"));
         assertEquals(TaskStatus.State.FAILED, service.status(file).state());
         verifyNoInteractions(redis);
     }

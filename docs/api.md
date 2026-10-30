@@ -43,16 +43,15 @@ Java JSON 接口统一响应：
 
 | 方法与路径 | 参数 | 用途 |
 | --- | --- | --- |
-| `POST /analysis/ai` | query：`id`、`goal`、`mode`（例：`GENERAL`） | 提交视频理解任务，建立当前版本的带时间戳上下文 |
-| `GET /analysis/analysis-status` | 相同 `id`、`goal`、`mode` | 查询 `state/result/message` |
-| `GET /analysis/analysis-events` | 相同 `id`、`goal`、`mode` | SSE 进度；已缓存完成结果也应通过状态接口读取 |
-| `POST /analysis/transcribe` | query：`id` | 仅提取全文，不能据此保证已满足创作条件 |
-| `GET /analysis/transcription-status` | query：`id` | 文字提取状态 |
-| `GET /analysis/transcription-events` | query：`id` | 文字提取 SSE |
-| `GET /analysis/download` | query：`id` | 音频 MP3 流式导出 |
+| `POST /creation/prepare-source` | query：`mediaId` | 异步准备创作素材，返回 HTTP 202 与 `state/result/message`；重复提交返回已有状态 |
+| `GET /creation/source-status` | query：`mediaId` | 素材准备状态，刷新后可恢复进度 |
+| `POST /media-processing/transcribe` | query：`id` | 仅提取全文，不替代完整素材准备 |
+| `GET /media-processing/transcription-status` | query：`id` | 文字提取状态 |
+| `GET /media-processing/transcription-events` | query：`id` | 文字提取 SSE |
+| `GET /media-processing/download` | query：`id` | 音频 MP3 导出 |
 | `GET /creation/eligibility` | query：`mediaId` | 返回 `eligible/reason/sourceVersion` |
 
-分析 `state` 包括 `NOT_STARTED/QUEUED/PROCESSING/COMPLETED/FAILED`。创作要求当前解析版本中至少存在一个有效时间区间和非空 ASR/OCR 文本；上传成功、全文转写成功、HTTP 健康检查成功都不能替代就绪检查。
+素材状态包括 `NOT_STARTED/QUEUED/PROCESSING/COMPLETED/FAILED`。创作页直接发起准备，不再调用独立分析。准备失败后可重试；已完成的 ASR/OCR 阶段及上下文复用，执行租约过期后自动恢复。所有素材接口校验登录与媒体归属。旧 `/analysis/*` 产品接口已移除。
 
 ## 创作对话与分镜
 

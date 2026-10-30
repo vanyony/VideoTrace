@@ -8,7 +8,7 @@
             <svg width="23" height="23" viewBox="0 0 24 24" fill="none"><path d="M8 5v14l11-7L8 5Z" fill="currentColor"/><path d="M4 5v14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           </span>
           <span class="brand-name">VideoTrace</span>
-          <span class="brand-caption">视频分析与证据溯源</span>
+          <span class="brand-caption">原视频驱动的二次创作</span>
         </div>
 
         <div class="nav-controls">
@@ -40,8 +40,8 @@
       <div class="workspace-heading">
         <div>
           <p class="page-eyebrow">VIDEOTRACE WORKSPACE</p>
-          <h1>视频分析工作台</h1>
-          <p class="page-description">提炼长视频中的关键信息，让每个结论都有迹可循。</p>
+          <h1>视频二次创作工作台</h1>
+          <p class="page-description">理解原视频，讨论创作方向，生成可编辑分镜与动画短视频。</p>
         </div>
         <div class="workspace-summary" aria-label="工作台概况">
           <div><strong>{{ list.length }}</strong><span>资料库视频</span></div>
@@ -146,14 +146,14 @@
             <button type="button" @click="discardResumableUpload">重新开始</button>
           </div>
         </div>
-        <aside class="workflow-guide" aria-label="视频分析流程">
-          <p class="guide-eyebrow">从内容到证据</p>
-          <h2>少一点等待，<br />多一点洞察。</h2>
-          <p class="guide-description">按你的目标阅读视频，快速找到值得关注的结论与原始片段。</p>
+        <aside class="workflow-guide" aria-label="视频二次创作流程">
+          <p class="guide-eyebrow">从原片到新作品</p>
+          <h2>理解原片，<br />创作新内容。</h2>
+          <p class="guide-description">围绕原视频讨论方向，将有据可查的内容组织成分镜与动画。</p>
           <ol>
             <li><span>01</span><div><strong>添加视频</strong><p>集中管理长视频内容</p></div></li>
-            <li><span>02</span><div><strong>明确分析目标</strong><p>速览、学习笔记或自定义问题</p></div></li>
-            <li><span>03</span><div><strong>回到原视频核验</strong><p>通过时间戳定位对应片段</p></div></li>
+            <li><span>02</span><div><strong>准备素材并讨论需求</strong><p>提取原片证据，确定创作方向</p></div></li>
+            <li><span>03</span><div><strong>确认分镜，渲染成片</strong><p>局部修改后生成动画短视频</p></div></li>
           </ol>
         </aside>
         <transition name="toast-pop">
@@ -240,21 +240,7 @@
                 <span class="item-label">提取文字</span>
               </button>
 
-              <button
-                  class="dock-item"
-                  :disabled="item.status !== 'COMPLETED'"
-                  :title="actionTitle(item, '打开智能分析')"
-                  @click="openAgent(item)"
-              >
-                <span class="item-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>
-                </span>
-                <div class="label-group">
-                  <span class="item-label">智能分析</span>
-                </div>
-                <div class="shimmer"></div>
-              </button>
-              <button class="dock-item ai-core" title="使用已解析素材创作短视频" @click="openCreation(item)"><span class="item-icon" aria-hidden="true">▶</span><span class="item-label">短视频创作</span></button>
+              <button class="dock-item ai-core" title="基于原视频创作短视频" @click="openCreation(item)"><span class="item-icon" aria-hidden="true">▶</span><span class="item-label">短视频创作</span></button>
             </div>
           </div>
         </div>
@@ -267,13 +253,13 @@
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="15" rx="3"/><path d="M7 5V3h10v2M10 10l5 3-5 3v-6Z"/></svg>
           </span>
           <h3>{{ currentUser ? '从第一个视频开始' : '你的内容，汇集于此' }}</h3>
-          <p>{{ !currentUser ? '登录后保存视频、查看任务进度，并随时回到分析结果。' : listLoading ? '正在加载视频资料库…' : listError || '上传视频后，即可创建分析任务、提取文字与定位证据。' }}</p>
+          <p>{{ !currentUser ? '登录后管理原视频、继续创作对话与查看成片。' : listLoading ? '正在加载视频资料库…' : listError || '上传视频后，即可准备素材并开始二次创作。' }}</p>
           <button v-if="!currentUser" type="button" @click="openAuthModal">登录 / 注册</button>
           <button v-else-if="listError" type="button" :disabled="listLoading" @click="fetchList({ notify: true })">重新加载</button>
         </div>
       </section>
-      <CreationWorkspace v-if="creationMedia && currentUser" :media="creationMedia" @close="creationMedia = null" @analyze="openAgent" />
-      <footer class="workspace-footer"><span>VideoTrace</span><span>理解内容 · 回溯证据</span></footer>
+      <CreationWorkspace v-if="creationMedia && currentUser" :media="creationMedia" @close="creationMedia = null" />
+      <footer class="workspace-footer"><span>VideoTrace</span><span>理解素材 · 创作新内容</span></footer>
 
       <div class="sidebar-backdrop" v-if="sidebar.visible" @click="closeSidebar"></div>
       <div
@@ -289,203 +275,24 @@
       >
         <div class="sidebar-header">
           <div class="sidebar-title">
-            <span class="icon" v-if="sidebar.type === 'ai'">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="M20.2 6.47l-1.4 1.4"></path><path d="M15.9 5.35l-1.4-1.4"></path><path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0-6 0"></path></svg>
-            </span>
-            <span class="icon" v-else>
+            <span class="icon">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
             </span>
             {{ sidebar.title }}
           </div>
-          <button class="close-btn" @click="closeSidebar" aria-label="关闭分析面板">×</button>
+          <button class="close-btn" @click="closeSidebar" aria-label="关闭素材文字">×</button>
         </div>
         <div ref="sidebarBody" class="sidebar-body">
-          <div class="analysis-layout" :class="{ 'is-analysis': sidebar.type === 'ai' }">
-          <section v-if="sidebar.type === 'ai'" class="video-evidence" aria-label="原视频证据">
-            <div class="evidence-heading"><strong>原视频</strong><span>证据核验</span></div>
-            <video
-                v-if="sidebar.playbackUrl"
-                ref="videoPlayer"
-                :src="sidebar.playbackUrl"
-                controls
-                playsinline
-                preload="metadata"
-                @error="handlePlaybackError"
-            ></video>
-            <div v-else-if="sidebar.playbackLoading" class="video-evidence-loading">正在载入原视频...</div>
-            <div v-else-if="sidebar.playbackError" class="video-evidence-error" role="alert">
-              <span>{{ sidebar.playbackError }}</span>
-              <button type="button" @click="retryPlayback">重新加载</button>
-            </div>
-            <p v-if="sidebar.playbackUrl">点击结果中的时间戳，跳转到对应片段进行核验。</p>
-            <p v-else-if="DEMO_MODE" class="demo-video-note">当前为演示数据，未关联真实视频。</p>
-            <div class="evidence-tip"><span aria-hidden="true">↗</span><div><strong>每个结论，都可以回到现场</strong><p>查看原始画面与上下文，确认分析依据。</p></div></div>
-          </section>
-          <div class="analysis-content">
-          <div v-if="sidebar.type === 'ai' && sidebar.mode === 'compose'" class="agent-composer">
-            <p class="agent-caption">选择分析模式</p>
-            <div class="goal-presets agent-mode-row">
-              <button
-                  v-for="m in analysisModes"
-                  :key="m.value"
-                  :class="{ active: sidebar.analysisMode === m.value }"
-                  @click="sidebar.analysisMode = m.value"
-              >
-                <strong>{{ m.title }}</strong>
-                <span>{{ m.description }}</span>
-              </button>
-            </div>
-            <p class="agent-caption">你希望从视频中了解什么？</p>
+          <div v-if="sidebar.loading" class="loading-state">
+            <div class="quantum-loader small"></div><p aria-live="polite">{{ loadingHeadline }}</p>
+            <p v-if="sidebar.streamOffline" role="status">连接中断，正在重新连接…</p>
+          </div>
+          <div v-else class="text-content">
             <p v-if="sidebar.error" class="inline-error" role="alert">{{ sidebar.error }}</p>
-            <textarea
-                v-model="sidebar.goal"
-                aria-label="分析目标"
-                maxlength="500"
-                placeholder="例如：梳理核心观点，给出带时间戳的证据和可执行建议（Ctrl / ⌘ + Enter 提交）"
-                @keydown.ctrl.enter.prevent="submitAgent"
-                @keydown.meta.enter.prevent="submitAgent"
-            ></textarea>
-            <p v-if="sidebar.goal.length > 400" class="field-counter">已输入 {{ sidebar.goal.length }} / 500 字</p>
-            <div class="goal-presets">
-              <button
-                  v-for="preset in goalPresets"
-                  :key="preset.title"
-                  :class="{ active: sidebar.goal === preset.prompt }"
-                  @click="sidebar.goal = preset.prompt"
-              >
-                <strong>{{ preset.title }}</strong>
-                <span>{{ preset.description }}</span>
-              </button>
-            </div>
-            <button class="agent-run-btn" :disabled="!sidebar.goal.trim()" @click="submitAgent">
-              {{ sidebar.error ? '重新分析' : '开始分析' }}
-            </button>
-          </div>
-
-          <div v-else-if="sidebar.loading" class="agent-running">
-            <div class="loading-state">
-              <div class="quantum-loader small"></div>
-              <p aria-live="polite">{{ loadingHeadline }}</p>
-              <p v-if="sidebar.streamOffline" class="stream-offline" role="status">
-                连接中断，正在自动重连（第 {{ sidebar.streamRetry }} 次）· 任务仍在服务端继续
-              </p>
-              <p class="loading-hint">可以关闭本面板，任务会在后台继续，完成后会通知你</p>
-            </div>
-            <div v-if="sidebar.plan?.tasks?.length" class="agent-meta-block">
-              <span class="meta-label">任务计划</span>
-              <ol><li v-for="task in sidebar.plan.tasks" :key="task">{{ task }}</li></ol>
-            </div>
-            <div v-if="traceStages.length" class="agent-meta-block">
-              <span class="meta-label">已完成阶段</span>
-              <div class="stage-list"><span v-for="stage in traceStages" :key="stage[0]">{{ stage[0] }} · {{ stage[1] }}</span></div>
-            </div>
-          </div>
-
-          <div v-else>
-            <div v-if="sidebar.type === 'ai'">
-              <p v-if="sidebar.error" class="inline-error" role="alert">{{ sidebar.error }}</p>
-              <div class="result-actions">
-                <button type="button" @click="startNewAnalysis">调整分析目标</button>
-                <button type="button" :disabled="!sidebar.content" @click="copyResult">复制结果</button>
-                <button type="button" :disabled="!sidebar.content" @click="downloadResult">导出 Markdown</button>
-              </div>
-              <div class="evidence-search">
-                <div class="result-section-heading"><strong>证据定位</strong><span>从原视频中查找相关片段</span></div>
-                <div class="evidence-search-form">
-                  <input
-                      v-model="sidebar.evidenceQuery"
-                      aria-label="视频证据检索"
-                      maxlength="500"
-                      placeholder="定位 PPT、字幕、代码或某段讲解"
-                      @keyup.enter="searchEvidence"
-                  />
-                  <button type="button" :disabled="sidebar.evidenceLoading || !sidebar.evidenceQuery.trim()" @click="searchEvidence">
-                    {{ sidebar.evidenceLoading ? '检索中' : '定位证据' }}
-                  </button>
-                </div>
-                <p v-if="sidebar.evidenceError" class="evidence-search-error" aria-live="polite">{{ sidebar.evidenceError }}</p>
-                <div v-if="sidebar.evidenceResults.length" class="evidence-search-results" aria-live="polite">
-                  <button
-                      v-for="hit in sidebar.evidenceResults"
-                      :key="`${hit.startMs}-${hit.endMs}`"
-                      type="button"
-                      :title="hit.snippet || '该时间段暂无可展示文本'"
-                      @click="seekToEvidence(hit.startMs)"
-                  >
-                    <strong>{{ formatEvidenceTime(hit.startMs) }}</strong>
-                    <small>{{ hit.source || '视频证据' }}</small>
-                    <span>{{ hit.snippet || '该时间段暂无可展示文本' }}</span>
-                  </button>
-                </div>
-              </div>
-              <div class="markdown-content" v-html="renderedMarkdown" @click="seekEvidence"></div>
-              <details v-if="sidebar.plan?.tasks?.length || traceStages.length" class="agent-inspector">
-                <summary>分析详情</summary>
-                <div class="agent-inspector-content">
-                <div v-if="sidebar.plan?.tasks?.length" class="agent-meta-block">
-                  <span class="meta-label">分析计划</span>
-                  <div v-if="sidebar.editingPlan" class="plan-editor">
-                    <div v-for="(_, index) in sidebar.planDraft" :key="index" class="plan-editor-row">
-                      <input v-model="sidebar.planDraft[index]" maxlength="500" :aria-label="`任务 ${index + 1}`" />
-                      <button type="button" title="删除任务" @click="removePlanTask(index)">×</button>
-                    </div>
-                    <button v-if="sidebar.planDraft.length < 5" type="button" @click="addPlanTask">添加任务</button>
-                    <div class="plan-editor-actions">
-                      <button type="button" @click="cancelPlanEdit">取消</button>
-                      <button type="button" :disabled="sidebar.rerunLoading" @click="rerunWithPlan">
-                        {{ sidebar.rerunLoading ? '提交中' : '按新计划重跑' }}
-                      </button>
-                    </div>
-                  </div>
-                  <template v-else>
-                    <ol><li v-for="task in sidebar.plan.tasks" :key="task">{{ task }}</li></ol>
-                    <button type="button" class="plan-edit-trigger" @click="startPlanEdit">调整计划</button>
-                  </template>
-                </div>
-                <div v-if="traceStages.length" class="agent-meta-block">
-                  <span class="meta-label">执行轨迹</span>
-                  <div class="stage-list"><span v-for="stage in traceStages" :key="stage[0]">{{ stage[0] }} · {{ stage[1] }}</span></div>
-                </div>
-                <div v-if="sidebar.evaluation && Object.keys(sidebar.evaluation).length" class="quality-row">
-                  <span>结构完整 {{ sidebar.evaluation.structuredValid ? '通过' : '待完善' }}</span>
-                  <span>证据支持 {{ formatPercent(sidebar.evaluation.evidenceSupportRate) }}</span>
-                  <span>结论核验 {{ sidebar.evaluation.criticPassed ? '通过' : '达到轮次上限' }}</span>
-                </div>
-                </div>
-              </details>
-              <div class="follow-up-box">
-                <textarea
-                    v-model="sidebar.followUp"
-                    aria-label="基于视频继续追问"
-                    maxlength="500"
-                    placeholder="基于视频继续追问...（Ctrl / ⌘ + Enter 发送）"
-                    @keydown.ctrl.enter.prevent="submitFollowUp"
-                    @keydown.meta.enter.prevent="submitFollowUp"
-                ></textarea>
-                <button :disabled="sidebar.followUpLoading || !sidebar.followUp.trim()" @click="submitFollowUp">
-                  {{ sidebar.followUpLoading ? '分析中' : '追问' }}
-                </button>
-              </div>
-              <div class="feedback-row">
-                <span>这个结果有帮助吗？</span>
-                <button :disabled="sidebar.feedbackLoading" :class="{ active: sidebar.feedback === 1 }" :aria-pressed="sidebar.feedback === 1" @click="sendFeedback(1)" title="有帮助">赞</button>
-                <button :disabled="sidebar.feedbackLoading" :class="{ active: sidebar.feedback === -1 }" :aria-pressed="sidebar.feedback === -1" @click="sendFeedback(-1)" title="需改进">踩</button>
-              </div>
-            </div>
-            <div v-else class="text-content">
-              <p v-if="sidebar.error" class="inline-error" role="alert">{{ sidebar.error }}</p>
-              <template v-if="sidebar.content">
-                <div class="result-actions">
-                  <button type="button" @click="copyResult">复制全文</button>
-                  <button type="button" @click="downloadResult">导出文本</button>
-                </div>
-                <p class="text-meta">{{ transcriptMeta }}</p>
-                <pre>{{ sidebar.content }}</pre>
-              </template>
-              <p v-else-if="!sidebar.error" class="text-meta">这个视频还没有可展示的转写文本。</p>
-            </div>
-          </div>
-          </div>
+            <template v-if="sidebar.content">
+              <div class="result-actions"><button @click="copyResult">复制全文</button><button @click="downloadResult">导出文本</button></div>
+              <p class="text-meta">{{ transcriptMeta }}</p><pre>{{ sidebar.content }}</pre>
+            </template>
           </div>
         </div>
       </div>
@@ -553,7 +360,7 @@ import {
 } from './chunkUpload'
 import { DEMO_ITEM } from './demoData'
 import { createTaskStreams } from './taskEvents'
-import { useAnalysisWorkspace } from './useAnalysisWorkspace'
+import { useMediaProcessingWorkspace } from './useMediaProcessingWorkspace'
 import CreationWorkspace from './CreationWorkspace.vue'
 
 // --- 变量定义 ---
@@ -632,15 +439,13 @@ const cardStatusClass = item => {
 }
 const cardStatusLabel = item => {
   const task = activeTaskOf(item.id)
-  if (task) return task.type === 'ai' ? '分析中' : '转写中'
+  if (task) return '素材处理中'
   return mediaStatusLabel(item.status)
 }
 const cardStatusTitle = item => {
   const task = activeTaskOf(item.id)
   if (!task) return null
-  return task.type === 'ai'
-    ? 'AI 分析正在后台执行，完成后会提示你'
-    : '文字提取正在后台执行，完成后会提示你'
+  return '素材处理正在后台执行，完成后会提示你'
 }
 const actionTitle = (item, label) => item.status === 'COMPLETED'
   ? null
@@ -654,9 +459,7 @@ const elapsedLabel = computed(() => {
 })
 
 const loadingHeadline = computed(() => {
-  const fallback = sidebar.value.type === 'ai'
-    ? '正在分析视频证据'
-    : '正在识别视频语音'
+  const fallback = '正在识别视频语音'
   const headline = sidebar.value.statusMessage || fallback
   // 用“已等待”而不是“已运行”：接管历史任务时计时是从打开面板算起的。
   return elapsedLabel.value ? `${headline} · 已等待 ${elapsedLabel.value}` : headline
@@ -809,7 +612,7 @@ const uploadFile = async () => {
     showMsg(`✅ ${target.name} 上传完成`)
     await fetchList({ notify: true })
     if (!isCurrentUpload()) return
-    openAgent(uploadedMedia)
+    openCreation(uploadedMedia)
   } catch (error) {
     if (!isCurrentUpload()) return
     rememberResumableUpload(target)
@@ -913,7 +716,7 @@ const handleUrlUpload = async () => {
     videoUrl.value = ''
     await fetchList({ notify: true })
     if (!isCurrentUpload()) return
-    openAgent(uploadedMedia)
+    openCreation(uploadedMedia)
   } catch (error) {
     console.error(error)
     if (!isCurrentUpload()) return
@@ -982,94 +785,14 @@ const mediaStatusClass = status => ['COMPLETED', 'PROCESSING', 'FAILED'].include
   ? status.toLowerCase()
   : 'unknown'
 const mediaStatusLabel = status => ({
-  COMPLETED: '可分析',
+  COMPLETED: '可创作',
   PROCESSING: '处理中',
   FAILED: '处理失败'
 })[status] || '等待处理'
 
-const {
-  sidebar,
-  goalPresets,
-  analysisModes,
-  traceStages,
-  renderedMarkdown,
-  transcribe,
-  closeSidebar,
-  openAgent,
-  submitAgent,
-  startNewAnalysis,
-  showDemoResult,
-  startPlanEdit,
-  cancelPlanEdit,
-  addPlanTask,
-  removePlanTask,
-  rerunWithPlan,
-  submitFollowUp,
-  searchEvidence,
-  sendFeedback,
-  retryPlayback,
-  handlePlaybackError,
-  resetWorkspace,
-  discardMediaWorkspace,
-  formatPercent
-} = useAnalysisWorkspace({
-  demoMode: DEMO_MODE,
-  taskStreams,
-  showMessage: showMsg,
-  refreshMediaList: fetchList,
-  findMediaItem: id => list.value.find(item => item.id === id),
-  onAnswerAppended: () => scrollToLatestAnswer()
+const { sidebar, transcribe, closeSidebar, resetWorkspace, discardMediaWorkspace } = useMediaProcessingWorkspace({
+  taskStreams, showMessage: showMsg, findMediaItem: id => list.value.find(item => item.id === id)
 })
-
-/** 追问的答案追加在长文末尾，主动滚过去，否则用户会以为“点了没反应”。 */
-const scrollToLatestAnswer = async () => {
-  await nextTick()
-  const container = sidebarBody.value?.querySelector('.markdown-content')
-  if (!container) return
-  const headings = container.querySelectorAll('h2, h3')
-  const anchor = headings.length ? headings[headings.length - 1] : container.lastElementChild
-  anchor?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
-
-const seekVideo = seconds => {
-  if (!Number.isFinite(seconds)) return
-  const player = videoPlayer.value
-  if (!player) {
-    if (sidebar.value.playbackError) {
-      showMsg('原视频加载失败，无法跳转，可先点“重新加载”', true)
-    } else if (sidebar.value.playbackLoading) {
-      showMsg('原视频还在载入，稍等一下再点这个时间戳')
-    } else {
-      showMsg('这个视频暂时没有可播放的原片，无法跳转', true)
-    }
-    return
-  }
-  if (player.readyState === 0) {
-    player.addEventListener('loadedmetadata', () => seekVideo(seconds), { once: true })
-    return
-  }
-  const duration = player.duration
-  const maxTime = Number.isFinite(duration) ? Math.max(0, duration - 0.1) : Number.MAX_SAFE_INTEGER
-  player.currentTime = Math.min(Math.max(0, seconds), maxTime)
-  player.play().catch(() => {})
-  player.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-}
-
-const seekEvidence = event => {
-  const link = event.target.closest('a[href^="#video-t="]')
-  if (!link) return
-  event.preventDefault()
-  seekVideo(Number(link.getAttribute('href').split('=')[1]))
-}
-
-const seekToEvidence = timestampMs => seekVideo(Number(timestampMs) / 1000)
-const formatEvidenceTime = timestampMs => {
-  const seconds = Math.max(0, Math.floor(Number(timestampMs) / 1000))
-  const hours = Math.floor(seconds / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-  const time = `${String(minutes).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`
-  return hours ? `${String(hours).padStart(2, '0')}:${time}` : time
-}
 
 /** Clipboard API 在非 HTTPS 环境不可用，这里保留一条降级路径，避免“复制失败”变成死路。 */
 const copyToClipboard = async text => {
@@ -1102,7 +825,7 @@ const copyResult = async () => {
     showMsg('还没有可复制的内容', true)
     return
   }
-  const label = sidebar.value.type === 'ai' ? '分析结果' : '转写全文'
+  const label = '素材文字'
   if (await copyToClipboard(content)) showMsg(`${label}已复制`)
   else showMsg('复制失败，请手动选中内容后复制', true)
 }
@@ -1111,7 +834,7 @@ const resultFileBaseName = () => {
   const title = sidebar.value.title || ''
   const raw = title.split(' · ').slice(1).join(' · ') || title
   const cleaned = raw.replace(/\.[^/.]+$/, '').replace(/[\\/:*?"<>|]/g, '_').trim()
-  return cleaned || (sidebar.value.type === 'ai' ? 'analysis' : 'transcript')
+  return cleaned || 'transcript'
 }
 
 const downloadResult = () => {
@@ -1120,7 +843,7 @@ const downloadResult = () => {
     showMsg('还没有可导出的内容', true)
     return
   }
-  const isMarkdown = sidebar.value.type === 'ai'
+  const isMarkdown = false
   const blob = new Blob([content], {
     type: isMarkdown ? 'text/markdown;charset=utf-8' : 'text/plain;charset=utf-8'
   })
@@ -1188,7 +911,7 @@ const downloadAudio = async (item) => {
   fileName = fileName.replace(/\.[^/.]+$/, "") + ".mp3";
   try {
     showMsg('正在转码并下载...')
-    const res = await apiRequest(`/analysis/download?id=${item.id}`)
+    const res = await apiRequest(`/media-processing/download?id=${item.id}`)
     // 失败时后端返回的是 JSON 信封，api.js 会把 message 解包给 text()，
     // 这里读出来向上抛，避免把“视频不存在 / 无权访问 / 转码失败”统一显示成同一句话。
     if (!res.ok) throw new Error((await res.text()) || '请稍后重试')
@@ -1408,8 +1131,7 @@ onMounted(() => {
   if (DEMO_MODE) {
     currentUser.value = { id: 1, nickname: '演示账号' }
     list.value = [DEMO_ITEM]
-    openAgent(DEMO_ITEM)
-    showDemoResult()
+
     return
   }
   const savedUser = localStorage.getItem('user')

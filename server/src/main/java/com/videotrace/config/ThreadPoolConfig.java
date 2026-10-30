@@ -9,13 +9,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Configuration
 @EnableAsync
 public class ThreadPoolConfig {
-    @Bean("aiTaskExecutor")
-    public ThreadPoolTaskExecutor aiTaskExecutor(
-            @Value("${analysis.pools.ai.core:2}") int core,
-            @Value("${analysis.pools.ai.max:4}") int max,
-            @Value("${analysis.pools.ai.queue:20}") int queue) {
-        return executor("AI-Thread-",core,max,queue);
-    }
 
     @Bean("asrExecutor")
     public ThreadPoolTaskExecutor asrExecutor(
@@ -33,13 +26,6 @@ public class ThreadPoolConfig {
         return executor("OCR-Thread-",core,max,queue);
     }
 
-    @Bean("modelCallExecutor")
-    public ThreadPoolTaskExecutor modelCallExecutor(
-            @Value("${analysis.pools.llm.core:2}") int core,
-            @Value("${analysis.pools.llm.max:4}") int max,
-            @Value("${analysis.pools.llm.queue:8}") int queue) {
-        return executor("LLM-Thread-",core,max,queue);
-    }
 
     private ThreadPoolTaskExecutor executor(String prefix,int core,int max,int queue) {
         if(core<1 || max<core || queue<0) throw new IllegalArgumentException("Invalid executor limits");

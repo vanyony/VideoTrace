@@ -3,8 +3,6 @@ package com.videotrace.controller;
 import com.videotrace.common.ErrorCode;
 import com.videotrace.common.Result;
 import com.videotrace.exception.BusinessException;
-import com.videotrace.service.AgentLoopService;
-import com.videotrace.service.VideoContextNotReadyException;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,17 +107,7 @@ public class ApiExceptionHandler {
         return build(HttpStatus.FORBIDDEN, ErrorCode.FORBIDDEN.code(), safe(error.getMessage(), "无访问权限"));
     }
 
-    @ExceptionHandler(AgentLoopService.BudgetExceededException.class)
-    public ResponseEntity<Result<Void>> budgetExceeded(AgentLoopService.BudgetExceededException error) {
-        return build(HttpStatus.UNPROCESSABLE_ENTITY, ErrorCode.UNPROCESSABLE.code(),
-                safe(error.getMessage(), "任务已超出预算"));
-    }
 
-    @ExceptionHandler(VideoContextNotReadyException.class)
-    public ResponseEntity<Result<Void>> videoContextNotReady(VideoContextNotReadyException error) {
-        return build(HttpStatus.CONFLICT, ErrorCode.CONFLICT.code(),
-                safe(error.getMessage(), "视频上下文尚未就绪"));
-    }
 
     /**
      * CompletableFuture 会把工作线程里的业务异常包成 CompletionException。
@@ -132,12 +120,6 @@ public class ApiExceptionHandler {
             cause = nested.getCause();
         }
         if (cause instanceof BusinessException businessException) return business(businessException);
-        if (cause instanceof AgentLoopService.BudgetExceededException budgetException) {
-            return budgetExceeded(budgetException);
-        }
-        if (cause instanceof VideoContextNotReadyException contextException) {
-            return videoContextNotReady(contextException);
-        }
         if (cause instanceof NoSuchElementException notFoundException) return notFound(notFoundException);
         if (cause instanceof SecurityException securityException) return forbidden(securityException);
         if (cause instanceof IllegalArgumentException argumentException) return badRequest(argumentException);

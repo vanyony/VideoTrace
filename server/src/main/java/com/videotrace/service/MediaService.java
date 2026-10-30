@@ -37,8 +37,8 @@ public class MediaService {
     private final StringRedisTemplate redisTemplate;
     private final MinioUtils minioUtils;
     private final ObjectMapper objectMapper;
-    private final AgentCheckpointService checkpointService;
-    private final AgentTelemetry telemetry;
+    private final SourceCheckpointService checkpointService;
+    private final ProcessingTelemetry telemetry;
     private final QdrantVectorStore vectorStore;
     private final VideoContextService videoContextService;
 
@@ -50,8 +50,8 @@ public class MediaService {
                         StringRedisTemplate redisTemplate,
                         MinioUtils minioUtils,
                         ObjectMapper objectMapper,
-                        AgentCheckpointService checkpointService,
-                        AgentTelemetry telemetry,
+                        SourceCheckpointService checkpointService,
+                        ProcessingTelemetry telemetry,
                         QdrantVectorStore vectorStore,
                         VideoContextService videoContextService) {
         this.mediaFileMapper = mediaFileMapper;

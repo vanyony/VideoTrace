@@ -33,7 +33,7 @@ HTTP `/health` 成功仅说明服务可响应。Python 的 `configured` 只说�
 ## 一次真实验收怎么做
 
 1. 登录并上传一段自己有权处理的短视频，记录 `mediaId`。
-2. 提交 `/analysis/ai`，轮询相同 `id/goal/mode` 的状态，检查成功与质量提示。
+2. 在创作页准备素材，或提交 `POST /creation/prepare-source?mediaId=...`，轮询 `GET /creation/source-status?mediaId=...` 至完成。
 3. 查询 `/creation/eligibility`，确认当前解析版本可用。
 4. 创建 15 秒对话或分镜任务，轮询到 `DISCUSSED` 或 `AWAITING_CONFIRMATION`。
 5. 核对事实、来源时间戳、文字可读性和总时长，再显式确认当前分镜版本。
@@ -83,7 +83,7 @@ Java 的 `MINIO_*` 配置不会自动补全 Python 的 `CREATOR_MINIO_ACCESS_KEY
 
 | 现象 | 优先检查 | 处理方向 |
 | --- | --- | --- |
-| 创作入口提示素材未就绪 | 当前解析版本是否有带时间戳的 ASR/OCR 上下文 | 完成视频分析；单独全文转写不保证可创作 |
+| 创作入口提示素材未就绪 | 当前解析版本是否有带时间戳的 ASR/OCR 上下文 | 在创作页完成素材准备；单独全文转写不保证可创作 |
 | 任务长期 `QUEUED` | Outbox 投递、MQ/Broker、Python 进程与内部地址 | 先定位是解析队列还是创作队列，不重复提交多个新任务 |
 | Python `configured=false` 或内部 401 | 两端令牌、Python 是否读到 `.env` | 配置同一非空令牌并重启；不要把用户 token 当作服务令牌 |
 | 模型返回 401/403/429 | 对应提供商的凭据、模型权限及额度 | 根据 ASR/Embedding/文本/视觉各自配置排查，避免混用 Key |
